@@ -1,6 +1,8 @@
 """AWG5200 device driver module."""
 import time
 
+from functools import cached_property
+from types import MappingProxyType
 from typing import Optional, Tuple
 
 from tm_devices.commands import AWG5200Mixin
@@ -45,6 +47,17 @@ class AWG5200(AWG5200Mixin, AWG):
         memory_max_record_length=16200000,
         memory_min_record_length=1,
     )
+
+    ################################################################################################
+    # Properties
+    ################################################################################################
+    @cached_property
+    def channel(self) -> "MappingProxyType[str, AWG5200Channel]":
+        """Mapping of channel names to AWGChannel objects."""
+        channel_map = {}
+        for channel_name in self.all_channel_names_list:
+            channel_map[channel_name] = AWG5200Channel(self, channel_name)
+        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
 
     ################################################################################################
     # Public Methods
