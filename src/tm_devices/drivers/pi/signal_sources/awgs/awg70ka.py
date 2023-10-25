@@ -71,13 +71,13 @@ class AWG70KAChannel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_and_check(
+        self._pi_device.set_if_needed(
             f"{self.name}:VOLTAGE:HIGH",
             high_voltage,
             tolerance=tolerance,
             percentage=percentage,
         )
-        self._pi_device.set_and_check(
+        self._pi_device.set_if_needed(
             f"{self.name}:VOLTAGE:LOW",
             low_voltage,
             tolerance=tolerance,
