@@ -113,3 +113,29 @@ def test_pi_device(  # noqa: PLR0915
     stdout = capsys.readouterr().out
     assert f"VISA timeout set to: {old_timeout}ms" in stdout
     assert scope.visa_timeout == old_timeout
+
+    # Ensure VERBose is off
+    scope.set_and_check(":VERBose", 0)
+    # Expect set not needed since verbose is already off.
+    set_needed, value = scope.set_if_needed(":VERBose", 0)
+    assert not set_needed
+    assert value == "0"
+    # Expect set needed
+    set_needed, value = scope.set_if_needed(":VERBose", 1)
+    assert set_needed
+    assert value == "1"
+    # Set VERBose back to off
+    scope.set_and_check(":VERBose", "0")
+
+    scope.set_and_check(":DISPLAY:WAVEVIEW:CH1:STATE", 1)
+    scope.poll_query(1, ":DISPLAY:WAVEVIEW:CH1:STATE?", 1.0, sleep_time=0)
+    # Display waveview state is set to 1, but we are wanting 0.
+    with pytest.raises(AssertionError):
+        scope.poll_query(2, ":DISPLAY:WAVEVIEW:CH1:STATE?", 0, sleep_time=0)
+    # Set display waveview state to a maximum bound value.
+    scope.set_and_check(":DISPLAY:WAVEVIEW:CH1:STATE", 9.9e37)
+    with pytest.raises(AssertionError):
+        # Pass in the maximum bound value as invalid values.
+        scope.poll_query(
+            1, ":DISPLAY:WAVEVIEW:CH1:STATE?", 9.9e37, sleep_time=0, invalid_values=[9.9e37]
+        )
