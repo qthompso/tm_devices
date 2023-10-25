@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg70002b:
+  awg70002b208:
     eom:
       USB INSTR:
         q: "\n"
@@ -18,6 +18,8 @@ devices:
       - q: '*OPC'
       - q: '*OPC?'
         r: '1'
+      - q: '*OPT?'
+        r: '208'
       - q: '*RST'
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?

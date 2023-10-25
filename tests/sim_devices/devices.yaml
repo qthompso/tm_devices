@@ -88,8 +88,11 @@ resources:
 
   # --- awg ---
   #   awg5200
-  TCPIP::AWG5200-HOSTNAME::INSTR:
-    device: awg5200
+  TCPIP::AWG520050-HOSTNAME::INSTR:
+    device: awg520050
+    filename: awg/awg5200.yaml
+  TCPIP::AWG520025-HOSTNAME::INSTR:
+    device: awg520025
     filename: awg/awg5200.yaml
   #   awg5k
   TCPIP::AWG5K-HOSTNAME::INSTR:
@@ -102,22 +105,32 @@ resources:
     device: awg5012c
     filename: awg/awg5kc.yaml
   #   awg7k
-  TCPIP::AWG7K-HOSTNAME::INSTR:
-    device: awg7122
+  TCPIP::AWG7K01-HOSTNAME::INSTR:
+    device: awg705101
     filename: awg/awg7k.yaml
-  TCPIP::AWG7KB-HOSTNAME::INSTR:
-    device: awg7122b
+  TCPIP::AWG7K06-HOSTNAME::INSTR:
+    device: awg710206
+    filename: awg/awg7k.yaml
+  TCPIP::AWG7KB02-HOSTNAME::INSTR:
+    device: awg7062B02
     filename: awg/awg7kb.yaml
-  TCPIP::AWG7KC-HOSTNAME::INSTR:
-    device: awg7122c
-    filename: awg/awg7kc.yaml
+  TCPIP::AWG7KB01-HOSTNAME::INSTR:
+    device: awg712101
+    filename: awg/awg7kb.yaml
+
   #   awg70k
-  TCPIP::AWG70KB-HOSTNAME::INSTR:
-    device: awg70002b
-    filename: awg/awg70kb.yaml
-  TCPIP::AWG70KA-HOSTNAME::INSTR:
-    device: awg70001a
+  TCPIP::AWG70KA150-HOSTNAME::INSTR:
+    device: awg70001a150
     filename: awg/awg70ka.yaml
+  TCPIP::AWG70KA225-HOSTNAME::INSTR:
+    device: awg70002a225
+    filename: awg/awg70ka.yaml
+  TCPIP::AWG70KA216-HOSTNAME::INSTR:
+    device: awg70002a216
+    filename: awg/awg70ka.yaml
+  TCPIP::AWG70KB208-HOSTNAME::INSTR:
+    device: awg70002b208
+    filename: awg/awg70kb.yaml
 
   # --- TekScope ---
   #   lpd6

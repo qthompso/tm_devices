@@ -1,12 +1,16 @@
 """Base AFG device driver module."""
 import re
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Literal, Type
+from typing import Literal, Optional, Tuple, Type
 
-from tm_devices.driver_mixins.signal_generator_mixin import SourceDeviceConstants
+from tm_devices.driver_mixins.signal_generator_mixin import (
+    ExtendedSourceDeviceConstants,
+    ParameterRange,
+    SourceDeviceConstants,
+)
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
 from tm_devices.helpers import DeviceTypes, SignalSourceFunctionsAFG
@@ -133,6 +137,27 @@ class AFG(SignalSource, ABC):
             # Check for system errors
             self.expect_esr(0)
 
+    def get_waveform_constraints(
+        self,
+        function: Optional[SignalSourceFunctionsAFG] = None,
+        file_name: Optional[str] = None,
+        frequency: Optional[float] = None,
+    ) -> Optional[ExtendedSourceDeviceConstants]:
+        (
+            amplitude_range,
+            offset_range,
+            frequency_range,
+            sample_rate_range,
+        ) = self._get_limited_constraints(function, frequency)
+
+        esdc = ExtendedSourceDeviceConstants(
+            amplitude_range=amplitude_range,
+            frequency_range=frequency_range,
+            offset_range=offset_range,
+            sample_rate_range=sample_rate_range,
+        )
+        return esdc
+
     ################################################################################################
     # Private Methods
     ################################################################################################
@@ -147,3 +172,11 @@ class AFG(SignalSource, ABC):
             target_file: The name of the waveform file.
         """
         # TODO: implement
+
+    @abstractmethod
+    def _get_limited_constraints(
+        self,
+        function,
+        frequency,
+    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
+        raise NotImplementedError
