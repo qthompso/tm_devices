@@ -8,7 +8,12 @@ import pyvisa as visa
 from packaging.version import Version
 
 from tm_devices import DeviceManager
-from tm_devices.drivers.pi.signal_sources.afgs.afg import AFGSourceDeviceConstants
+from tm_devices.drivers.pi.signal_sources.afgs.afg import (
+    AFGSourceDeviceConstants,
+    ExtendedSourceDeviceConstants,
+    ParameterRange,
+    SignalSourceFunctionsAFG,
+)
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
@@ -113,6 +118,18 @@ def test_afg3kc(device_manager: DeviceManager) -> None:
             0.0,
             "all",
         )
+    afg3kc_constraints_1 = afg3kc.get_waveform_constraints(SignalSourceFunctionsAFG.SIN)
+    min_smaple = 300.0
+    max_sample = 2_500_000_000.0
+    assert afg3kc_constraints_1 == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterRange(min=0.1, max=2.0),
+        offset_range=ParameterRange(min=-0.5, max=0.5),
+        frequency_range=ParameterRange(min=min_smaple / 1000.0, max=max_sample / 10.0),
+        sample_rate_range=ParameterRange(min=min_smaple, max=max_sample),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
 
 
 def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:

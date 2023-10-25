@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Literal, Type, TypeVar
+from typing import Literal, NamedTuple, Optional, Type, TypeVar
 
 from tm_devices.driver_mixins.class_extension_mixin import ExtendableMixin
 from tm_devices.helpers.enums import (
@@ -11,6 +11,21 @@ from tm_devices.helpers.enums import (
 
 _SourceDeviceTypeVar = TypeVar("_SourceDeviceTypeVar", bound="SourceDeviceConstants")
 _SignalSourceTypeVar = TypeVar("_SignalSourceTypeVar", bound=SignalSourceFunctionBase)
+
+ParameterRange = NamedTuple("ParameterRange", [("min", float), ("max", float)])
+
+
+@dataclass(frozen=True)
+class ExtendedSourceDeviceConstants:
+    """Class to hold source device constants."""
+
+    amplitude_range: ParameterRange
+    offset_range: ParameterRange
+    frequency_range: ParameterRange
+    sample_rate_range: Optional[ParameterRange] = None
+    square_duty_cycle_range: Optional[ParameterRange] = None
+    pulse_width_range: Optional[ParameterRange] = None
+    ramp_symmetry_range: Optional[ParameterRange] = None
 
 
 @dataclass(frozen=True)
@@ -79,3 +94,12 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
+
+    @abstractmethod
+    def get_waveform_constraints(
+        self,
+        function: Optional[SignalSourceFunctionBase] = None,
+        file_name: Optional[str] = None,
+        frequency: Optional[float] = None,
+    ) -> ExtendedSourceDeviceConstants:
+        raise NotImplementedError

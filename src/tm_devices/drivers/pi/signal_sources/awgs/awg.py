@@ -3,15 +3,18 @@ import inspect
 import os
 import struct
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
-from types import MappingProxyType
-from typing import Literal, Type
+from pathlib import Path
+from typing import Dict, Literal, Optional, Tuple, Type
 
-from tm_devices.driver_mixins.signal_generator_mixin import SourceDeviceConstants
+from tm_devices.driver_mixins.signal_generator_mixin import (
+    ExtendedSourceDeviceConstants,
+    ParameterRange,
+    SourceDeviceConstants,
+)
 from tm_devices.drivers.device import family_base_class
-from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
 from tm_devices.helpers import DeviceTypes, SignalSourceFunctionsAWG
 
@@ -21,79 +24,6 @@ class AWGSourceDeviceConstants(SourceDeviceConstants):
     """Class to hold source device constants."""
 
     functions: Type[SignalSourceFunctionsAWG] = SignalSourceFunctionsAWG
-
-
-class AWGChannel:
-    """AWG channel driver."""
-
-    def __init__(self, pi_device: PIDevice, channel_name: str) -> None:
-        """Create an AWG channel object.
-
-        Args:
-            pi_device: A PI device object.
-            channel_name: The channel name for the AWG channel.
-        """
-        self._name = channel_name
-        self._num = int("".join(filter(str.isdigit, channel_name)))
-        self._pi_device = pi_device
-
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
-
-        Args:
-            value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            f"{self.name}:VOLTAGE:OFFSET",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
-
-    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the amplitude on the source.
-
-        Args:
-            value: The amplitude value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            f"{self.name}:VOLTAGE:AMPLITUDE",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
-
-    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the frequency on the source.
-
-        Args:
-            value: The frequency value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage
-        )
-
-    @property
-    def name(self) -> str:
-        """Return the channel's name."""
-        return self._name
-
-    @property
-    def num(self) -> int:
-        """Return the channel number."""
-        return self._num
 
 
 @family_base_class
@@ -109,14 +39,6 @@ class AWG(SignalSource, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def channel(self) -> "MappingProxyType[str, AWGChannel]":
-        """Mapping of channel names to AWGChannel objects."""
-        channel_map = {}
-        for channel_name in self.all_channel_names_list:
-            channel_map[channel_name] = AWGChannel(self, channel_name)
-        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
-
     @property
     def source_device_constants(self) -> AWGSourceDeviceConstants:
         """Return the device constants."""
@@ -181,6 +103,55 @@ class AWG(SignalSource, ABC):
             f" is not yet implemented for the {self.__class__.__name__} driver"
         )
 
+    def get_waveform_constraints(
+        self,
+        function: Optional[SignalSourceFunctionsAWG] = None,
+        file_name: Optional[str] = None,
+        frequency: Optional[float] = None,
+    ) -> Optional[ExtendedSourceDeviceConstants]:
+        if not function and not file_name:
+            raise ValueError(f"Constraints require either a function or filename to be provided.")
+        amplitude_range, offset_range, sample_rate_range = self._get_limited_constraints()
+        if function:
+            func_sample_rate_lookup: Dict[str, ParameterRange] = {
+                SignalSourceFunctionsAWG.SIN.name: ParameterRange(10, 3600),
+                SignalSourceFunctionsAWG.CLOCK.name: ParameterRange(960, 960),
+                SignalSourceFunctionsAWG.SQUARE.name: ParameterRange(10, 1000),
+                SignalSourceFunctionsAWG.RAMP.name: ParameterRange(10, 1000),
+                SignalSourceFunctionsAWG.TRIANGLE.name: ParameterRange(10, 1000),
+                SignalSourceFunctionsAWG.DC.name: ParameterRange(1000, 1000),
+            }
+            # set the low range to the lowest frequency on source divided by longest waveform
+            slowest_frequency = sample_rate_range.min / func_sample_rate_lookup[function.name].max
+
+            # set the high range to the highest frequency on source divided by shortest waveform
+            fastest_frequency = sample_rate_range.max / func_sample_rate_lookup[function.name].min
+        elif file_name:
+            try:
+                target_file = file_name.replace('"', "")
+                wanted_file = Path(target_file).stem
+                page_length = self.query(f'WLIST:WAVEFORM:LENGTH? "{wanted_file}"')
+                page_length = int(page_length)
+                # set the low range to the lowest frequency on source divided by longest waveform
+                slowest_frequency = sample_rate_range.min / page_length
+
+                # set the high range to the highest frequency on source divided by shortest waveform
+                fastest_frequency = sample_rate_range.max / page_length
+            except AssertionError:
+                return None
+            # set the new range
+        else:
+            return None
+        frequency_range = ParameterRange(slowest_frequency, fastest_frequency)
+        esdc = ExtendedSourceDeviceConstants(
+            amplitude_range=amplitude_range,
+            offset_range=offset_range,
+            frequency_range=frequency_range,
+            sample_rate_range=sample_rate_range,
+        )
+
+        return esdc
+
     ################################################################################################
     # Private Methods
     ################################################################################################
@@ -217,3 +188,9 @@ class AWG(SignalSource, ABC):
                 termination="\r\n",
                 encoding="latin-1",
             )
+
+    @abstractmethod
+    def _get_limited_constraints(
+        self,
+    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
+        raise NotImplementedError
