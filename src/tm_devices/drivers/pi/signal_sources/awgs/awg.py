@@ -6,10 +6,12 @@ import struct
 from abc import ABC
 from dataclasses import dataclass
 from functools import cached_property
+from types import MappingProxyType
 from typing import Literal, Type
 
 from tm_devices.driver_mixins.signal_generator_mixin import SourceDeviceConstants
 from tm_devices.drivers.device import family_base_class
+from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
 from tm_devices.helpers import DeviceTypes, SignalSourceFunctionsAWG
 
@@ -19,6 +21,79 @@ class AWGSourceDeviceConstants(SourceDeviceConstants):
     """Class to hold source device constants."""
 
     functions: Type[SignalSourceFunctionsAWG] = SignalSourceFunctionsAWG
+
+
+class AWGChannel:
+    """AWG channel driver."""
+
+    def __init__(self, pi_device: PIDevice, channel_name: str) -> None:
+        """Create an AWG channel object.
+
+        Args:
+            pi_device: A PI device object.
+            channel_name: The channel name for the AWG channel.
+        """
+        self._name = channel_name
+        self._num = int("".join(filter(str.isdigit, channel_name)))
+        self._pi_device = pi_device
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"{self.name}:VOLTAGE:OFFSET",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the amplitude on the source.
+
+        Args:
+            value: The amplitude value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"{self.name}:VOLTAGE:AMPLITUDE",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the frequency on the source.
+
+        Args:
+            value: The frequency value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage
+        )
+
+    @property
+    def name(self) -> str:
+        """Return the channel's name."""
+        return self._name
+
+    @property
+    def num(self) -> int:
+        """Return the channel number."""
+        return self._num
 
 
 @family_base_class
@@ -34,6 +109,14 @@ class AWG(SignalSource, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
+    @cached_property
+    def channel(self) -> "MappingProxyType[str, AWGChannel]":
+        """Mapping of channel names to AWGChannel objects."""
+        channel_map = {}
+        for channel_name in self.all_channel_names_list:
+            channel_map[channel_name] = AWGChannel(self, channel_name)
+        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
+
     @property
     def source_device_constants(self) -> AWGSourceDeviceConstants:
         """Return the device constants."""
