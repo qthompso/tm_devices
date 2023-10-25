@@ -1,4 +1,6 @@
 """AWG70KA device driver module."""
+from functools import cached_property
+from types import MappingProxyType
 from typing import Optional, Tuple
 
 from tm_devices.commands import AWG70KAMixin
@@ -93,6 +95,17 @@ class AWG70KA(AWG70KAMixin, AWG):
         memory_max_record_length=2000000000,
         memory_min_record_length=1,
     )
+
+    ################################################################################################
+    # Properties
+    ################################################################################################
+    @cached_property
+    def channel(self) -> "MappingProxyType[str, AWG70KAChannel]":
+        """Mapping of channel names to AWGChannel objects."""
+        channel_map = {}
+        for channel_name in self.all_channel_names_list:
+            channel_map[channel_name] = AWG70KAChannel(self, channel_name)
+        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
 
     ################################################################################################
     # Public Methods
