@@ -23,13 +23,10 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     def _get_limited_constraints(
         self,
-    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
+    ) -> Tuple[ParameterRange, ParameterRange, ParameterRange]:
         amplitude_range = ParameterRange(100e-3, 2.0)
         offset_range = ParameterRange(-0.5, 0.5)
-        if "50" in self.opt_string:
-            sample_rate_range = ParameterRange(300.0, 2.5e9)
-        elif "25" in self.opt_string:
-            sample_rate_range = ParameterRange(300.0, 2.5e9)
-        else:
-            sample_rate_range = None
+        # option is the sample rate in hundreds of Mega Hertz
+        sample_rate_range = ParameterRange(300.0, int(self.opt_string) * 100.0e6)
+
         return amplitude_range, offset_range, sample_rate_range

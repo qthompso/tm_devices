@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg7182c01:
+  awg7082c01:
     eom:
       USB INSTR:
         q: "\n"

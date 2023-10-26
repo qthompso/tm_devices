@@ -24,19 +24,9 @@ class AWG5K(AWG5KMixin, AWG):
 
     def _get_limited_constraints(
         self,
-    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
-        if "02" in self.opt_string or "06" in self.opt_string:
-            amplitude_range = ParameterRange(500.0e-3, 1.0)
-            offset_range = ParameterRange(-0.0, 0.0)
-        else:
-            amplitude_range = ParameterRange(20.0e-3, 4.5)
-            offset_range = ParameterRange(-2.25, 2.25)
-        # if the model is 500x
-        if self.model in ("AWG5002", "AWG5004"):
-            sample_rate_range = ParameterRange(10.0e6, 600.0e6)
-        # if the model is 501x
-        elif self.model in ("AWG5012", "AWG5014"):
-            sample_rate_range = ParameterRange(10.0e6, 1.2e9)
-        else:
-            sample_rate_range = None
+    ) -> Tuple[ParameterRange, ParameterRange, ParameterRange]:
+        amplitude_range = ParameterRange(20.0e-3, 4.5)
+        offset_range = ParameterRange(-2.25, 2.25)
+        # AWG(Arbitrary Waveform Generator)5(Series)0x(.6 + .6GS/s)x(Channels)z(Model)
+        sample_rate_range = ParameterRange(10.0e6, 600.0e6 + (600.0e6 * int(self.model[5])))
         return amplitude_range, offset_range, sample_rate_range

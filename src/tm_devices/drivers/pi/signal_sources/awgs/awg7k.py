@@ -24,19 +24,15 @@ class AWG7K(AWG7KMixin, AWG):
 
     def _get_limited_constraints(
         self,
-    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
+    ) -> Tuple[ParameterRange, ParameterRange, ParameterRange]:
+        # if we are using the high bandwidth options
         if "02" in self.opt_string or "06" in self.opt_string:
             amplitude_range = ParameterRange(500.0e-3, 1.0)
             offset_range = ParameterRange(-0.0, 0.0)
         else:
-            amplitude_range = ParameterRange(100e-3, 2.0)
+            amplitude_range = ParameterRange(50e-3, 2.0)
             offset_range = ParameterRange(-0.5, 0.5)
-        # AWG(Arbitrary Waveform Generator)7(Series)05(GS/s)1,2(Channels)
-        if self.model in ("AWG7051", "AWG7052"):
-            sample_rate_range = ParameterRange(10.0e6, 5.0e9)
-        # AWG(Arbitrary Waveform Generator)7(Series)10(GS/s)1,2(Channels)
-        elif self.model in ("AWG7101", "AWG7102"):
-            sample_rate_range = ParameterRange(10.0e6, 10.0e9)
-        else:
-            sample_rate_range = None
+        # AWG(Arbitrary Waveform Generator)7(Series)xx(GS/s)x(Channels)z(Model)
+        sample_rate_range = ParameterRange(10.0e6, int(self.model[4:6])*1.0e9)
+
         return amplitude_range, offset_range, sample_rate_range

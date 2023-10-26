@@ -23,18 +23,9 @@ class AWG70KA(AWG70KAMixin, AWG):
     ################################################################################################
     def _get_limited_constraints(
         self,
-    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
+    ) -> Tuple[ParameterRange, ParameterRange, ParameterRange]:
         amplitude_range = ParameterRange(0.5, 1.0)
         offset_range = ParameterRange(-0.5, 0.5)
         # first digit indicates the number of channels, second and third indicate sample rate (GHz)
-        if "150" in self.opt_string:
-            sample_rate_range = ParameterRange(1.5e3, 50.0e9)
-        elif "225" in self.opt_string:
-            sample_rate_range = ParameterRange(1.5e3, 25.0e9)
-        elif "216" in self.opt_string:
-            sample_rate_range = ParameterRange(1.5e3, 16.0e9)
-        elif "208" in self.opt_string:
-            sample_rate_range = ParameterRange(1.5e3, 8.0e9)
-        else:
-            sample_rate_range = None
+        sample_rate_range = ParameterRange(1.5e3, int(self.opt_string[1:3]) * 1.0e9)
         return amplitude_range, offset_range, sample_rate_range
