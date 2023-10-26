@@ -112,12 +112,17 @@ resources:
     device: awg710206
     filename: awg/awg7k.yaml
   TCPIP::AWG7KB02-HOSTNAME::INSTR:
-    device: awg7062B02
+    device: awg7062b02
     filename: awg/awg7kb.yaml
   TCPIP::AWG7KB01-HOSTNAME::INSTR:
-    device: awg712101
+    device: awg7121b01
     filename: awg/awg7kb.yaml
-
+  TCPIP::AWG7KC01-HOSTNAME::INSTR:
+    device: awg7082c01
+    filename: awg/awg7kc.yaml
+  TCPIP::AWG7KC06-HOSTNAME::INSTR:
+    device: awg7122c06
+    filename: awg/awg7kc.yaml
   #   awg70k
   TCPIP::AWG70KA150-HOSTNAME::INSTR:
     device: awg70001a150
