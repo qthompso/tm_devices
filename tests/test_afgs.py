@@ -38,7 +38,7 @@ def test_afg3kc(device_manager: DeviceManager) -> None:
     assert afg3kc.visa_backend == "PyVISA-sim"
     assert afg3kc.source_device_constants == AFGSourceDeviceConstants(
         memory_page_size=2,
-        memory_max_record_length=128 * 1024,
+        memory_max_record_length=128 * 102,
         memory_min_record_length=2,
     )
     assert afg3kc.check_visa_connection()
