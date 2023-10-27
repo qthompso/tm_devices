@@ -46,6 +46,24 @@ devices:
           min: 0
           max: 255
           type: int
+      source1_high_voltage:
+        default: 0.0
+        getter:
+          q: SOURCE1:VOLTAGE:HIGH?
+          r: '{:f}'
+        setter:
+          q: SOURCE1:VOLTAGE:HIGH {:f}
+        specs:
+          type: float
+      source1_low_voltage:
+        default: 0.0
+        getter:
+          q: SOURCE1:VOLTAGE:LOW?
+          r: '{:f}'
+        setter:
+          q: SOURCE1:VOLTAGE:LOW {:f}
+        specs:
+          type: float
   awg70002a225:
     eom:
       USB INSTR:
