@@ -13,6 +13,12 @@ jobs:
   publish-docs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }} && github.ref == 'refs/heads/main'
+    permissions: 
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - run: echo 'The Test docs workflow passed'
       - name: download-artifact
@@ -31,3 +37,5 @@ jobs:
           path: docs_results/.results_docs/html
       - name: deploy-to-github-pages
         uses: actions/deploy-pages@v2
+        id: deployment
+
