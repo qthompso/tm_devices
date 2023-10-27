@@ -1,0 +1,46 @@
+---
+name: Test code
+on:
+  workflow_run:
+    branches: [main]
+    workflows: [Test docs]
+    types:
+      - completed
+# Cancel running jobs for the same workflow and branch.
+concurrency:
+  group: publish-docs
+jobs:
+  publish-docs:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} && github.ref == 'refs/heads/main'
+    steps:
+      - run: echo 'The Test docs workflow passed'
+      - name: download-artifact
+      - uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ${{ github.event.workflow_run.workflow_id }}
+          workflow_conclusion: success
+          name: artifacts_docs
+      - name: unzip-artifact
+        with:
+          args: unzip artifacts_docs.zip
+      - name: unzip-artifact
+        with:
+          args: unzip docs_results.zip
+      - name: upload-pages-artifact
+        uses: actions/upload-pages-artifact@v2
+      - name: Archive artifact
+        shell: sh
+        run: |
+          tar \
+            --dereference --hard-dereference \
+            --directory "docs_results/.results_docs/html/" \
+            -cvf "artifact.tar" \
+            --exclude=.git \
+            --exclude=.github \
+            .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          path: artifact.tar
+          if-no-files-found: error
