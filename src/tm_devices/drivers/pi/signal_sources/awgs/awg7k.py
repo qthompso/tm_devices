@@ -1,5 +1,5 @@
 """AWG7K device driver module."""
-from typing import Literal, Optional, Tuple
+from typing import Literal, Tuple
 
 from tm_devices.commands import AWG7KMixin
 from tm_devices.drivers.pi.signal_sources.awgs.awg import (
@@ -53,9 +53,8 @@ class AWG7K(AWG7KMixin, AWG):
         for channel_name in self._validate_channels(channel):
             source_channel = self.channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            if needed_sample_rate:
-                first_source_channel = self.channel["SOURCE1"]
-                first_source_channel.set_frequency(round(needed_sample_rate, -1))
+            first_source_channel = self.channel["SOURCE1"]
+            first_source_channel.set_frequency(round(needed_sample_rate, -1))
             self._setup_burst_waveform(source_channel.num, predefined_name, burst)
             source_channel.set_amplitude(needed_sample_rate)
             if not ("02" in self.opt_string or "06" in self.opt_string):
@@ -78,6 +77,6 @@ class AWG7K(AWG7KMixin, AWG):
             amplitude_range = ParameterRange(50e-3, 2.0)
             offset_range = ParameterRange(-0.5, 0.5)
         # AWG(Arbitrary Waveform Generator)7(Series)xx(GS/s)x(Channels)z(Model)
-        sample_rate_range = ParameterRange(10.0e6, int(self.model[4:6])*1.0e9)
+        sample_rate_range = ParameterRange(10.0e6, int(self.model[4:6]) * 1.0e9)
 
         return amplitude_range, offset_range, sample_rate_range
