@@ -26,18 +26,5 @@ jobs:
              unzip docs_results.zip
       - name: upload-pages-artifact
         uses: actions/upload-pages-artifact@v2
-      - name: Archive artifact
-        shell: sh
-        run: |
-          tar \
-            --dereference --hard-dereference \
-            --directory "docs_results/.results_docs/html/" \
-            -cvf "artifact.tar" \
-            --exclude=.git \
-            --exclude=.github \
-            .
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
         with:
-          path: artifact.tar
-          if-no-files-found: error
+          path: docs_results/.results_docs/html
