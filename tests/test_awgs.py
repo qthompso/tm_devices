@@ -144,3 +144,25 @@ def test_awg7k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
             length_range,
         )
 
+
+def test_awg5k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
+    awg5k = device_manager.add_awg("awg5k-hostname", alias="awg5k")
+    awg5kb = device_manager.add_awg("awg5kb-hostname", alias="awg5kb")
+    awg5kc = device_manager.add_awg("awg5kc-hostname", alias="awg5kc")
+    length_range = ParameterRange(min=960, max=960)
+    awg_list = [awg5k, awg5kb, awg5kc]
+    offset_range = ParameterRange(min=-2.25, max=2.25)
+    ampl_range = ParameterRange(min=20.0e-3, max=4.5)
+
+    for awg in awg_list:
+        sample_range = ParameterRange(min=10.0e6, max=int(awg.model[5]) * 600.0e6 + 600.0e6)
+
+        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.CLOCK)
+
+        check_constraints(
+            constraints,
+            sample_range,
+            ampl_range,
+            offset_range,
+            length_range,
+        )
