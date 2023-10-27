@@ -3,7 +3,7 @@ name: Upload Artifact
 on:
   workflow_run:
     branches: [main]
-    workflows: [Test docs]
+    workflows: [Create Temp HTML]
     types:
       - completed
 # Cancel running jobs for the same workflow and branch.
