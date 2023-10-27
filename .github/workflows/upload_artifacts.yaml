@@ -1,5 +1,5 @@
 ---
-name: Test code
+name: Upload Artifact
 on:
   workflow_run:
     branches: [main]
