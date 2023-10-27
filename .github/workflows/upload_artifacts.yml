@@ -30,7 +30,7 @@ jobs:
           name: artifact_docs
       - name: unzip-artifact
         run: |
-             unzip docs_results.zip
+             unzip docs_result.zip
       - name: upload-pages-artifact
         uses: actions/upload-pages-artifact@v2
         with:
