@@ -21,4 +21,4 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: artifact_docs
-          path: test1.zip
+          path: test2.zip
