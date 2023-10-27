@@ -271,7 +271,7 @@ class AWG(SignalSource, ABC):
                 # all waveforms have sample sizes of 10, 100 and 1000
                 premade_signal_rl = [1000, 960, 100, 10]
             # for each of these three records lengths
-            for record_length in premade_signal_rl:
+            for record_length in premade_signal_rl:  # pragma: no cover
                 needed_sample_rate = frequency * record_length
                 # try for the highest record length that can generate the frequency
                 if (
@@ -281,7 +281,7 @@ class AWG(SignalSource, ABC):
                 ):
                     predefined_name = f"*{function.value.title()}{record_length}"
                     break
-        elif not function.value.startswith("*"):
+        else:
             predefined_name = "*DC"
             needed_sample_rate = 15000000.0
 
@@ -341,4 +341,8 @@ class AWG(SignalSource, ABC):
             self.set_and_check(
                 "SEQUENCE:ELEMENT1:LOOP:COUNT",
                 burst,
+            )
+        else:
+            raise ValueError(
+                f"{burst} is an invalid burst value. Burst must be >= 0."
             )
