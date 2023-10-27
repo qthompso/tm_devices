@@ -1,0 +1,19 @@
+---
+name: Create Temp HTML
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+# Cancel running jobs for the same workflow and branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+# IMPORTANT: Any new jobs need to be added to the check-docs-passed job to ensure they correctly gate code changes
+jobs:
+  create-fake-doc:
+    - uses: actions/upload-artifact@v3
+      if: ${{ !cancelled() }}
+      with:
+        name: artifact_docs
+        path: artifact_docs.zip
