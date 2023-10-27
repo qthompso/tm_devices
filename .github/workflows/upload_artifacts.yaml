@@ -16,11 +16,11 @@ jobs:
     steps:
       - run: echo 'The Test docs workflow passed'
       - name: download-artifact
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v2.28.0
         with:
-          workflow: test-docs.yml
+          run_id: ${{ github.event.workflow_run.id }}
           workflow_conclusion: success
-          name: artifacts_docs
+          name: artifact_docs
       - name: unzip-artifact
         run: |
              unzip artifacts_docs.zip
