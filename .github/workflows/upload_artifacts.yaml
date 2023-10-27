@@ -22,11 +22,9 @@ jobs:
           workflow_conclusion: success
           name: artifacts_docs
       - name: unzip-artifact
-        with:
-          args: unzip artifacts_docs.zip
+        run: unzip artifacts_docs.zip
       - name: unzip-artifact
-        with:
-          args: unzip docs_results.zip
+        run: unzip docs_results.zip
       - name: upload-pages-artifact
         uses: actions/upload-pages-artifact@v2
       - name: Archive artifact
