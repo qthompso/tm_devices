@@ -25,10 +25,6 @@ jobs:
         run: |
              unzip artifacts_docs.zip
              unzip docs_results.zip
-      - name: cleanup folder 
-        uses: actions/delete-workspace@v1  
-        with:  
-          path: docs_results/.results_docs/html/.doctrees
       - name: upload-pages-artifact
         uses: actions/upload-pages-artifact@v2
       - name: Archive artifact
