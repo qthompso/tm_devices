@@ -18,7 +18,7 @@ jobs:
       - name: download-artifact
         uses: dawidd6/action-download-artifact@v2
         with:
-          workflow: test-docs.yaml
+          workflow: test-docs.yml
           workflow_conclusion: success
           name: artifacts_docs
       - name: unzip-artifact
