@@ -3,7 +3,7 @@ import time
 
 from functools import cached_property
 from types import MappingProxyType
-from typing import Literal, Optional, Tuple
+from typing import Literal, Tuple
 
 from tm_devices.commands import AWG5200Mixin
 from tm_devices.drivers.pi.signal_sources.awgs.awg import (
@@ -96,8 +96,7 @@ class AWG5200(AWG5200Mixin, AWG):
         for channel_name in self._validate_channels(channel):
             source_channel = self.channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            if needed_sample_rate:
-                source_channel.set_frequency(round(needed_sample_rate, -1))
+            source_channel.set_frequency(round(needed_sample_rate, -1))
             self._setup_burst_waveform(source_channel.num, predefined_name, burst)
             source_channel.set_amplitude(amplitude)
             source_channel.set_offset(offset)
@@ -110,7 +109,7 @@ class AWG5200(AWG5200Mixin, AWG):
         time.sleep(0.1)
         self.ieee_cmds.opc()
         self.ieee_cmds.cls()
-        self.poll_command(30, "AWGControl:RSTate?", 2.0)
+        self.poll_query(30, "AWGControl:RSTate?", 2.0)
         self.expect_esr(0)
 
     ################################################################################################

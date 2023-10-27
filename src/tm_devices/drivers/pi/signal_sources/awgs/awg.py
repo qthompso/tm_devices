@@ -180,9 +180,8 @@ class AWG(SignalSource, ABC):
         for channel_name in self._validate_channels(channel):
             source_channel = self.channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            if needed_sample_rate:
-                first_source_channel = self.channel["SOURCE1"]
-                first_source_channel.set_frequency(round(needed_sample_rate, -1))
+            first_source_channel = self.channel["SOURCE1"]
+            first_source_channel.set_frequency(round(needed_sample_rate, -1))
             self._setup_burst_waveform(source_channel.num, predefined_name, burst)
             source_channel.set_amplitude(amplitude)
             source_channel.set_offset(offset)
@@ -257,8 +256,8 @@ class AWG(SignalSource, ABC):
             frequency: The frequency of the waveform to generate.
             function: The waveform shape to generate.
         """
-        predefined_name = None
-        needed_sample_rate = 15000000.0
+        predefined_name = function.value
+        needed_sample_rate = None
 
         if function != SignalSourceFunctionsAWG.DC and not function.value.startswith("*"):
             device_constraints = self.get_waveform_constraints(
@@ -284,9 +283,7 @@ class AWG(SignalSource, ABC):
                     break
         elif not function.value.startswith("*"):
             predefined_name = "*DC"
-        else:
-            predefined_name = function
-            needed_sample_rate = None
+            needed_sample_rate = 15000000.0
 
         return predefined_name, needed_sample_rate
 
