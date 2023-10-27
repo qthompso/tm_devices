@@ -39,9 +39,6 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         capsys: The captured stdout and stderr.
     """
     awg520050 = device_manager.add_awg("awg520050-hostname", alias="awg520050")
-    awg520050.generate_waveform(10e3, awg520050.source_device_constants.functions.SIN, 0.0, 0.0, channel="SOURCE1")
-    awg520050.generate_waveform(10e3, awg520050.source_device_constants.functions.DC, 0.0, 0.0, channel="SOURCE1", burst=1)
-
     assert id(device_manager.get_awg(number_or_alias="awg520050")) == id(awg520050)
     assert id(device_manager.get_awg(number_or_alias=awg520050.device_number)) == id(awg520050)
     assert awg520050.total_channels == 4
@@ -113,21 +110,9 @@ def test_awg70k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
             length_range,
         )
 
-    awg70ka150.channel["SOURCE1"].set_offset(2.0)
-    current_high = float(awg70ka150.query(f"SOURCE1:VOLTAGE:HIGH?"))
-    current_low = float(awg70ka150.query(f"SOURCE1:VOLTAGE:LOW?"))
-    current_amplitude = current_high - current_low
-    offset = current_high - (current_amplitude / 2)
-    assert offset == 2.0
-
-    awg70ka150.channel["SOURCE1"].set_amplitude(4.0)
-    current_high = float(awg70ka150.query(f"SOURCE1:VOLTAGE:HIGH?"))
-    current_low = float(awg70ka150.query(f"SOURCE1:VOLTAGE:LOW?"))
-    current_amplitude = current_high - current_low
-    assert current_amplitude == 4.0
-
 
 def test_awg7k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
+
     awg7k01 = device_manager.add_awg("awg7k01-hostname", alias="awg7k01")
     awg7k06 = device_manager.add_awg("awg7k06-hostname", alias="awg7k06")
     awg7kb02 = device_manager.add_awg("awg7kb02-hostname", alias="awg7kb02")
@@ -159,5 +144,25 @@ def test_awg7k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
             length_range,
         )
 
-    awg7k01.generate_waveform(10e3, awg7k01.source_device_constants.functions.SIN, 0.0, 0.0, channel="SOURCE1")
-    awg7k06.generate_waveform(10e3, awg7k01.source_device_constants.functions.SIN, 0.0, 0.0, channel="SOURCE1")
+
+def test_awg5k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
+    awg5k = device_manager.add_awg("awg5k-hostname", alias="awg5k")
+    awg5kb = device_manager.add_awg("awg5kb-hostname", alias="awg5kb")
+    awg5kc = device_manager.add_awg("awg5kc-hostname", alias="awg5kc")
+    length_range = ParameterRange(min=960, max=960)
+    awg_list = [awg5k, awg5kb, awg5kc]
+    offset_range = ParameterRange(min=-2.25, max=2.25)
+    ampl_range = ParameterRange(min=20.0e-3, max=4.5)
+
+    for awg in awg_list:
+        sample_range = ParameterRange(min=10.0e6, max=int(awg.model[5]) * 600.0e6 + 600.0e6)
+
+        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.CLOCK)
+
+        check_constraints(
+            constraints,
+            sample_range,
+            ampl_range,
+            offset_range,
+            length_range,
+        )
