@@ -14,9 +14,10 @@ jobs:
   create-fake-doc:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: upload-temp-artifact
         uses: actions/upload-artifact@v3
         if: ${{ !cancelled() }}
         with:
           name: artifact_docs
-          path: artifact_docs.zip
+          path: docs_results.zip
