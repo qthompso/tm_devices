@@ -30,7 +30,7 @@ jobs:
           name: artifact_docs
       - name: unzip-artifact
         run: |
-             unzip test1.zip
+             unzip test2.zip
              rm -r docs_results/.results_docs/html/.doctrees
       - name: upload-pages-artifact
         uses: actions/upload-pages-artifact@v2
