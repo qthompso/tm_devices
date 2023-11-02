@@ -13,8 +13,8 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
     SourceDeviceConstants,
 )
 from tm_devices.drivers.device import family_base_class
-from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
 from tm_devices.drivers.pi.pi_device import PIDevice
+from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
 from tm_devices.helpers import DeviceTypes, SignalSourceFunctionsAFG
 
 
@@ -89,6 +89,16 @@ class AFGChannel:
             tolerance=tolerance,
             percentage=percentage,
         )
+
+    @property
+    def name(self) -> str:
+        """Return the channel's name."""
+        return self._name
+
+    @property
+    def num(self) -> int:
+        """Return the channel number."""
+        return self._num
 
 
 @family_base_class
