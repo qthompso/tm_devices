@@ -4,6 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
+from types import MappingProxyType
 from typing import Literal, Optional, Tuple, Type
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
@@ -13,6 +14,7 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
 )
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
+from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.helpers import DeviceTypes, SignalSourceFunctionsAFG
 
 
@@ -21,6 +23,72 @@ class AFGSourceDeviceConstants(SourceDeviceConstants):
     """Class to hold source device constants."""
 
     functions: Type[SignalSourceFunctionsAFG] = SignalSourceFunctionsAFG
+
+
+class AFGChannel:
+    """AFG channel driver."""
+
+    def __init__(self, pi_device: PIDevice, channel_name: str) -> None:
+        """Create an AFG channel object.
+
+        Args:
+            pi_device: A PI device object.
+            channel_name: The channel name for the AFG channel.
+        """
+        self._name = channel_name
+        self._num = int("".join(filter(str.isdigit, channel_name)))
+        self._pi_device = pi_device
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"{self._name}:VOLTAGE:OFFSET",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the amplitude on the source.
+
+        Args:
+            value: The amplitude value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"{self._name}:VOLTAGE:AMPLITUDE",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the frequency on the source.
+
+        Args:
+            value: The frequency value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"{self._name}:FREQUENCY:FIXED",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
 
 
 @family_base_class
@@ -32,6 +100,14 @@ class AFG(SignalSource, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
+    @cached_property
+    def channel(self) -> "MappingProxyType[str, AFGChannel]":
+        """Mapping of channel names to AFGChannel objects."""
+        channel_map = {}
+        for channel_name in self.all_channel_names_list:
+            channel_map[channel_name] = AFGChannel(self, channel_name)
+        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
+
     @property
     def source_device_constants(self) -> AFGSourceDeviceConstants:
         """Return the device constants."""
