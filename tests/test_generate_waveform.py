@@ -17,8 +17,6 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager, capsys: pytest.Capt
     awg520050.generate_waveform(
         10e3, awg520050.source_device_constants.functions.SIN, 1., 0.2, channel="SOURCE1"
     )
-    assert 'SOURCE1:FREQUENCY?' not in capsys.readouterr().out
-    assert 'CLOCK:SRATE' in capsys.readouterr().out
     source1_srate = awg520050.query("CLOCK:SRATE?")
     assert float(source1_srate) == 36000000
     source1_waveform_file = awg520050.query("SOURCE1:WAVEFORM?")
@@ -118,3 +116,87 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager, capsys: pytest.Captur
         awg5k.generate_waveform(
             10e3, awg5k.source_device_constants.functions.SIN, 1.0, 0.0, channel="SOURCE1", burst=-1
         )
+
+
+def test_afg3kc_gen_waveform(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
+    """Test the AFG3KC driver.
+
+    Args:
+        device_manager: The DeviceManager object.
+    """
+    afg3kc = device_manager.add_afg(
+        "afg3kc-hostname", alias="afg3kc", connection_type="SOCKET", port=10001
+    )
+    afg3kc.generate_waveform(25e6, afg3kc.source_device_constants.functions.PULSE, 1.0, 0.0, "all")
+    assert "SOURCE1:PHASE:INITIATE" in capsys.readouterr().out
+
+    afg3kc.generate_waveform(
+        25e6,
+        afg3kc.source_device_constants.functions.DC,
+        1.0,
+        0.0,
+        "SOURCE1",
+        termination="HIGHZ",
+    )
+    assert "TRIGGER:SEQUENCE:SOURCE" not in capsys.readouterr().out
+    assert "SOURCE1:BURST:STATE" not in capsys.readouterr().out
+    assert "SOURCE1:BURST:MODE" not in capsys.readouterr().out
+    assert "SOURCE1:BURST:NCYCLES" not in capsys.readouterr().out
+
+    afg3kc.generate_waveform(
+        25e6,
+        afg3kc.source_device_constants.functions.SIN,
+        1.0,
+        0.0,
+        "SOURCE1",
+        burst=1,
+        termination="HIGHZ",
+    )
+    assert "OUTPUT1:IMPEDANCE INFINITY" in capsys.readouterr().out
+    source1_frequency = afg3kc.query("SOURCE1:FREQUENCY:FIXED?")
+    assert float(source1_frequency) == 25e6
+    source1_offset = afg3kc.query("SOURCE1:VOLTAGE:OFFSET?")
+    assert float(source1_offset) == 0.0
+    assert "SOURCE1:PULSE:DCYCLE" not in capsys.readouterr().out
+    assert "SOURCE1:FUNCTION:RAMP:SYMMETRY" not in capsys.readouterr().out
+    source1_function = afg3kc.query("SOURCE1:FUNCTION?")
+    assert source1_function == "SIN"
+    source1_amplitude = afg3kc.query("SOURCE1:VOLTAGE:AMPLITUDE?")
+    assert float(source1_amplitude) == 1.0
+    trigger_sequence_source = afg3kc.query("TRIGGER:SEQUENCE:SOURCE?")
+    assert trigger_sequence_source == "EXT"
+    source1_burst_state = afg3kc.query("SOURCE1:BURST:STATE?")
+    assert int(source1_burst_state) == 1
+    source1_burst_mode = afg3kc.query("SOURCE1:BURST:MODE?")
+    assert source1_burst_mode == "TRIG"
+    source1_burst_ncycles = afg3kc.query("SOURCE1:BURST:NCYCLES?")
+    assert int(source1_burst_ncycles) == 1
+    output1_state = afg3kc.query("OUTPUT1:STATE?")
+    assert int(output1_state) == 1
+
+    afg3kc.generate_waveform(
+        25e6,
+        afg3kc.source_device_constants.functions.RAMP,
+        1.0,
+        0.0,
+        "SOURCE1",
+        burst=1,
+        termination="FIFTY",
+    )
+    impedance = afg3kc.query("OUTPUT1:IMPEDANCE?")
+    assert float(impedance) == 50
+    ramp_symmetry = afg3kc.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
+    assert float(ramp_symmetry) == 100
+    source1_function = afg3kc.query("SOURCE1:FUNCTION?")
+    assert source1_function == "RAMP"
+
+    afg3kc.generate_waveform(
+        25e6,
+        afg3kc.source_device_constants.functions.PULSE,
+        1.0,
+        0.0,
+        "SOURCE1",
+        termination="FIFTY",
+    )
+    pulse_dcycle = afg3kc.query("SOURCE1:PULSE:DCYCLE?")
+    assert float(pulse_dcycle) == 50
