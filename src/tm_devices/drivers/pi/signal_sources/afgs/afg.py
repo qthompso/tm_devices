@@ -169,41 +169,41 @@ class AFG(SignalSource, ABC):
 
         # Generate the waveform on the given channel
         for channel_name in self._validate_channels(channel):
+            source_channel = self.channel[channel_name]
             # grab the number(s) in the channel name
-            channel_num = "".join(filter(str.isdigit, channel_name))
             # Temporarily turn off this channel
-            self.set_and_check(f"OUTPUT{channel_num}:STATE", 0)
+            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", 0)
             # Termination
             if termination == "FIFTY":
-                self.set_and_check(f"OUTPUT{channel_num}:IMPEDANCE", 50)
+                self.set_and_check(f"OUTPUT{source_channel.num}:IMPEDANCE", 50)
             elif termination == "HIGHZ":
-                self.write(f"OUTPUT{channel_num}:IMPEDANCE INFINITY")
+                self.write(f"OUTPUT{source_channel.num}:IMPEDANCE INFINITY")
             else:  # pragma: no cover
                 # if termination is MAXIMUM or MINIMUM or INFINITY
-                self.set_and_check(f"OUTPUT{channel_num}:IMPEDANCE", termination)
+                self.set_and_check(f"OUTPUT{source_channel.num}:IMPEDANCE", termination)
             # Frequency
-            self.set_and_check(f"SOURCE{channel_num}:FREQUENCY:FIXED", frequency)
+            source_channel.set_frequency(frequency)
             # Offset
-            self.set_and_check(f"SOURCE{channel_num}:VOLTAGE:OFFSET", offset, tolerance=0.01)
+            source_channel.set_offset(offset, tolerance=0.01)
             if function == SignalSourceFunctionsAFG.PULSE:
                 # Duty cycle is only valid for pulse
-                self.set_and_check(f"SOURCE{channel_num}:PULSE:DCYCLE", duty_cycle)
+                self.set_and_check(f"{source_channel.name}:PULSE:DCYCLE", duty_cycle)
             # Polarity
-            self.set_and_check(f"OUTPUT{channel_num}:POLARITY", polarity_mapping[polarity])
+            self.set_and_check(f"OUTPUT{source_channel.num}:POLARITY", polarity_mapping[polarity])
             # Function
             if function == SignalSourceFunctionsAFG.RAMP:
-                self.set_and_check(f"SOURCE{channel_num}:FUNCTION:RAMP:SYMMETRY", symmetry)
-            self.set_and_check(f"SOURCE{channel_num}:FUNCTION", function.value)
+                self.set_and_check(f"{source_channel.name}:FUNCTION:RAMP:SYMMETRY", symmetry)
+            self.set_and_check(f"{source_channel.name}:FUNCTION", function.value)
             # Amplitude, needs to be after termination so that the amplitude is properly adjusted
-            self.set_and_check(f"SOURCE{channel_num}:VOLTAGE:AMPLITUDE", amplitude, tolerance=0.01)
+            source_channel.set_amplitude(amplitude, tolerance=0.01)
             if burst > 0:
                 # set to external as to not burst every millisecond
                 self.set_and_check("TRIGGER:SEQUENCE:SOURCE", "EXT")
-                self.set_and_check(f"SOURCE{channel_num}:BURST:STATE", 1)
-                self.set_and_check(f"SOURCE{channel_num}:BURST:MODE", "TRIG")
-                self.set_and_check(f"SOURCE{channel_num}:BURST:NCYCLES", burst)
+                self.set_and_check(f"{source_channel.name}:BURST:STATE", 1)
+                self.set_and_check(f"{source_channel.name}:BURST:MODE", "TRIG")
+                self.set_and_check(f"{source_channel.name}:BURST:NCYCLES", burst)
             # Turn on the channel
-            self.set_and_check(f"OUTPUT{channel_num}:STATE", 1)
+            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", 1)
 
             # Check if burst is enabled on any channel of the AFG
             burst_state = False
