@@ -494,9 +494,9 @@ class TekScope(
             self.set_and_check("AFG:BURST:CCOUNT", f"{burst}")
         # Generate the waveform from the Internal AFG
         # Frequency
-        self.set_and_check("AFG:FREQUENCY", frequency)
+        self.internal_afg.set_frequency(frequency)
         # Offset
-        self.set_and_check("AFG:OFFSET", offset)
+        self.internal_afg.set_offset(offset)
         # Duty Cycle
         self.set_and_check("AFG:SQUARE:DUTY", duty_cycle)
         # Function
@@ -506,7 +506,7 @@ class TekScope(
         # Termination impedance
         self.set_and_check("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
-        self.set_and_check("AFG:AMPLITUDE", amplitude)
+        self.internal_afg.set_amplitude(amplitude)
         # Turn on the Internal AFG
         self.set_and_check("AFG:OUTPUT:STATE", 1)
         if burst > 0:
