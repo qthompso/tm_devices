@@ -136,16 +136,6 @@ class InternalAFGChannel:
             percentage=percentage,
         )
 
-    @property
-    def name(self) -> str:
-        """Return the channel's name."""
-        return self._name
-
-    @property
-    def num(self) -> int:
-        """Return the channel number."""
-        return self._num
-
 
 # pylint: disable=too-many-public-methods
 @family_base_class
