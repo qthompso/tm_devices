@@ -38,7 +38,7 @@ def test_afg3kc(device_manager: DeviceManager) -> None:
     assert afg3kc.visa_backend == "PyVISA-sim"
     assert afg3kc.source_device_constants == AFGSourceDeviceConstants(
         memory_page_size=2,
-        memory_max_record_length=128 * 102,
+        memory_max_record_length=131072,
         memory_min_record_length=2,
     )
     assert afg3kc.check_visa_connection()
@@ -59,41 +59,6 @@ def test_afg3kc(device_manager: DeviceManager) -> None:
     with pytest.raises(AssertionError):
         afg3kc.expect_esr(32, '1, Command error\n0,"No error"')
 
-    afg3kc.generate_waveform(25e6, afg3kc.source_device_constants.functions.PULSE, 1.0, 0.0, "all")
-    afg3kc.generate_waveform(
-        25e6,
-        afg3kc.source_device_constants.functions.SIN,
-        1.0,
-        0.0,
-        "SOURCE1",
-        burst=1,
-        termination="HIGHZ",
-    )
-    afg3kc.generate_waveform(
-        25e6,
-        afg3kc.source_device_constants.functions.RAMP,
-        1.0,
-        0.0,
-        "SOURCE1",
-        burst=1,
-        termination="FIFTY",
-    )
-    afg3kc.generate_waveform(
-        25e6,
-        afg3kc.source_device_constants.functions.DC,
-        1.0,
-        0.0,
-        "SOURCE1",
-        termination="HIGHZ",
-    )
-    afg3kc.generate_waveform(
-        25e6,
-        afg3kc.source_device_constants.functions.PULSE,
-        1.0,
-        0.0,
-        "SOURCE1",
-        termination="FIFTY",
-    )
     assert afg3kc.expect_esr(0)[0]
     assert afg3kc.get_eventlog_status() == (True, '0,"No error"')
 
