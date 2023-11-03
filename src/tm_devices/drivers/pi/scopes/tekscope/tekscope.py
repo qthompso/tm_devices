@@ -40,6 +40,7 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
 )
 from tm_devices.driver_mixins.usb_drives_mixin import USBDrivesMixin
 from tm_devices.drivers.device import family_base_class
+from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.scopes.scope import Scope
 from tm_devices.helpers import DeviceConfigEntry, SignalSourceFunctionsIAFG
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
@@ -71,6 +72,79 @@ class TekScopeChannel:
     """Details about channel setup and any connected probe."""
     termination: Optional[Literal[50, 250_000, 1_000_000]] = None
     """Defines impedance at channel port."""
+
+
+class InternalAFGChannel:
+    """Internal AFG channel driver."""
+
+    def __init__(self, pi_device: PIDevice) -> None:
+        """Create an InternalAFG channel object.
+
+        Args:
+            pi_device: A PI device object.
+        """
+        self._pi_device = pi_device
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"AFG:OFFSet",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the amplitude on the source.
+
+        Args:
+            value: The amplitude value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"AFG:AMPLitude",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the frequency on the source.
+
+        Args:
+            value: The frequency value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"AFG:FREQuency",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    @property
+    def name(self) -> str:
+        """Return the channel's name."""
+        return self._name
+
+    @property
+    def num(self) -> int:
+        """Return the channel number."""
+        return self._num
 
 
 # pylint: disable=too-many-public-methods
@@ -172,6 +246,10 @@ class TekScope(
             # Set scope PI verbosity back to previous value
             self.set_and_check(":VERBose", old_pi_verbosity)
         return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
+
+    @cached_property
+    def internal_afg(self) -> InternalAFGChannel:
+        return InternalAFGChannel(self)
 
     @property
     def commands(
