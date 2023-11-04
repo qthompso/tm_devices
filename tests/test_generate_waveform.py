@@ -2,7 +2,10 @@
 """Test generate_waveform."""
 import pytest
 
+from typing import cast
+
 from tm_devices import DeviceManager
+from tm_devices.drivers import MSO5
 
 
 def test_awg5200_gen_waveform(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
@@ -200,3 +203,58 @@ def test_afg3kc_gen_waveform(device_manager: DeviceManager, capsys: pytest.Captu
     )
     pulse_dcycle = afg3kc.query("SOURCE1:PULSE:DCYCLE?")
     assert float(pulse_dcycle) == 50
+
+
+def test_internal_afg_gen_waveform(
+        device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scope: MSO5 = cast(
+        MSO5, device_manager.add_scope("MSO56-SERIAL1", alias="mso56", connection_type="USB")
+    )
+
+    scope.generate_waveform(10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0)
+    assert "AFG:OUTPUT:MODE" not in capsys.readouterr().out
+    assert "AFG:BURST:CCOUNT" not in capsys.readouterr().out
+    frequency = scope.query("AFG:FREQUENCY?")
+    assert float(frequency) == 10e3
+    offset = scope.query("AFG:OFFSET?")
+    assert float(offset) == 0
+    square_duty = scope.query("AFG:SQUARE:DUTY?")
+    assert float(square_duty) == 50
+    assert "AFG:RAMP:SYMMETRY" not in capsys.readouterr().out
+    function = scope.query("AFG:FUNCTION?")
+    assert function == "SINE"
+    impedance = scope.query("AFG:OUTPUT:LOAD:IMPEDANCE?")
+    assert impedance == "FIFTY"
+    amplitude = scope.query("AFG:AMPLITUDE?")
+    assert float(amplitude) == 0.5
+    output_state = scope.query("AFG:OUTPUT:STATE?")
+    assert int(output_state) == 1
+    assert "AFG:BURST:TRIGGER" not in capsys.readouterr().out
+
+    scope.generate_waveform(
+        10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0, termination="HIGHZ"
+    )
+    impedance = scope.query("AFG:OUTPUT:LOAD:IMPEDANCE?")
+    assert impedance == "HIGHZ"
+
+    scope.generate_waveform(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst=1)
+    output_mode = scope.query("AFG:OUTPUT:MODE?")
+    assert output_mode == "BURST"
+    burst_ccount = scope.query("AFG:BURST:CCOUNT?")
+    assert int(burst_ccount) == 1
+    ramp_symmetry = scope.query("AFG:RAMP:SYMMETRY?")
+    assert float(ramp_symmetry) == 50
+    assert "AFG:BURST:TRIGGER" in capsys.readouterr().out
+    with pytest.raises(
+            TypeError,
+            match="Generate Waveform does not accept functions as non Enums. "
+                  "Please use 'source_device_constants.functions'.",
+    ):
+        scope.generate_waveform(
+            25e6,
+            scope.source_device_constants.functions.PULSE.value,  # type: ignore
+            1.0,
+            0.0,
+            "all",
+        )
