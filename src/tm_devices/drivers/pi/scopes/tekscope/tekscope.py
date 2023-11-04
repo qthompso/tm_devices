@@ -96,7 +96,7 @@ class InternalAFGChannel:
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
         self._pi_device.set_if_needed(
-            f"AFG:OFFSet",
+            f"AFG:OFFSET",
             value,
             tolerance=tolerance,
             percentage=percentage,
@@ -113,7 +113,7 @@ class InternalAFGChannel:
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
         self._pi_device.set_if_needed(
-            f"AFG:AMPLitude",
+            f"AFG:AMPLITUDE",
             value,
             tolerance=tolerance,
             percentage=percentage,
@@ -130,7 +130,7 @@ class InternalAFGChannel:
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
         self._pi_device.set_if_needed(
-            f"AFG:FREQuency",
+            f"AFG:FREQUENCY",
             value,
             tolerance=tolerance,
             percentage=percentage,
