@@ -13,8 +13,15 @@ import pyvisa as visa
 from packaging.version import Version
 
 from tm_devices import DeviceManager
-from tm_devices.drivers import MSO2, MSO5, MSO70KDX, TekScopeSW
-from tm_devices.drivers.pi.scopes.tekscope.tekscope import TekProbeData, TekScope, TekScopeChannel
+from tm_devices.drivers import MSO2, MSO5, MSO5B, MSO70KDX, TekScopeSW
+from tm_devices.drivers.pi.scopes.tekscope.tekscope import (
+    ExtendedSourceDeviceConstants,
+    ParameterRange,
+    SignalSourceFunctionsIAFG,
+    TekProbeData,
+    TekScope,
+    TekScopeChannel,
+)
 
 
 class TmDevicesUnitTestOnlyCustomMSO5(MSO5):
@@ -221,6 +228,97 @@ def test_tekscope(device_manager: DeviceManager) -> None:  # noqa: PLR0915
             name="DCH1",
             probe=TekProbeData(probetype="DIGITAL", probe_id_sernumber="N/A", probe_id_type="N/A"),
         )
+
+
+def test_iafg(device_manager: DeviceManager) -> None:
+    mso56: MSO5 = cast(
+        MSO5, device_manager.add_scope("MSO56-SERIAL1", alias="mso56", connection_type="USB")
+    )
+    mso56_constraints = mso56.get_waveform_constraints(
+        SignalSourceFunctionsIAFG.SIN,
+        frequency=25.0e6,
+    )
+
+    assert mso56_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterRange(min=20.0e-3, max=5.0),
+        offset_range=ParameterRange(min=-2.5, max=2.5),
+        frequency_range=ParameterRange(min=100.0e-3, max=50.0e6),
+        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        square_duty_cycle_range=ParameterRange(min=25.0, max=75.0),
+        pulse_width_range=ParameterRange(min=1.0e-8, max=3.0e-8),
+        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+    )
+
+    mso56_constraints = mso56.get_waveform_constraints(
+        SignalSourceFunctionsIAFG.SQUARE,
+    )
+
+    assert mso56_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterRange(min=20.0e-3, max=5.0),
+        offset_range=ParameterRange(min=-2.5, max=2.5),
+        frequency_range=ParameterRange(min=100.0e-3, max=25.0e6),
+        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        pulse_width_range=None,
+        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+    )
+
+    mso56_constraints = mso56.get_waveform_constraints(
+        SignalSourceFunctionsIAFG.RAMP,
+    )
+
+    assert mso56_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterRange(min=20.0e-3, max=5.0),
+        offset_range=ParameterRange(min=-2.5, max=2.5),
+        frequency_range=ParameterRange(min=100.0e-3, max=500.0e3),
+        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        pulse_width_range=None,
+        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+    )
+
+    mso56_constraints = mso56.get_waveform_constraints(
+        SignalSourceFunctionsIAFG.SINC,
+    )
+
+    assert mso56_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterRange(min=20.0e-3, max=3.0),
+        offset_range=ParameterRange(min=-2.5, max=2.5),
+        frequency_range=ParameterRange(min=100.0e-3, max=2.0e6),
+        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        pulse_width_range=None,
+        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+    )
+
+    mso56_constraints = mso56.get_waveform_constraints(
+        SignalSourceFunctionsIAFG.HAVERSINE,
+    )
+
+    assert mso56_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterRange(min=20.0e-3, max=2.5),
+        offset_range=ParameterRange(min=-2.5, max=2.5),
+        frequency_range=ParameterRange(min=100.0e-3, max=5.0e6),
+        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        pulse_width_range=None,
+        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+    )
+
+    mso56b: MSO5 = cast(MSO5B, device_manager.add_scope("MSO58B-HOSTNAME", alias="mso56b"))
+    mso56b_constraints = mso56b.get_waveform_constraints(
+        SignalSourceFunctionsIAFG.SIN,
+    )
+
+    assert mso56b_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterRange(min=20.0e-3, max=5.0),
+        offset_range=ParameterRange(min=-2.5, max=2.5),
+        frequency_range=ParameterRange(min=100.0e-3, max=100.0e6),
+        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        pulse_width_range=None,
+        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+    )
 
 
 def test_exceptions(device_manager: DeviceManager) -> None:
