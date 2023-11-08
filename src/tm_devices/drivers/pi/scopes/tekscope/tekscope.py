@@ -1,5 +1,4 @@
 """Base TekScope scope device driver module."""
-import math
 import os
 import warnings
 
@@ -33,16 +32,13 @@ from tm_devices.driver_mixins.analysis_object_mixins import (
 )
 from tm_devices.driver_mixins.licensed_mixin import LicensedMixin
 from tm_devices.driver_mixins.signal_generator_mixin import (
-    ExtendedSourceDeviceConstants,
-    ParameterBounds,
     SignalGeneratorMixin,
     SourceDeviceConstants,
 )
 from tm_devices.driver_mixins.usb_drives_mixin import USBDrivesMixin
 from tm_devices.drivers.device import family_base_class
-from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.scopes.scope import Scope
-from tm_devices.helpers import DeviceConfigEntry, LoadImpedanceAFG, SignalSourceFunctionsIAFG
+from tm_devices.helpers import DeviceConfigEntry, SignalSourceFunctionsIAFG
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
@@ -72,69 +68,6 @@ class TekScopeChannel:
     """Details about channel setup and any connected probe."""
     termination: Optional[Literal[50, 250_000, 1_000_000]] = None
     """Defines impedance at channel port."""
-
-
-class InternalAFGChannel:
-    """Internal AFG channel driver."""
-
-    def __init__(self, pi_device: PIDevice) -> None:
-        """Create an InternalAFG channel object.
-
-        Args:
-            pi_device: A PI device object.
-        """
-        self._pi_device = pi_device
-
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
-
-        Args:
-            value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            "AFG:OFFSET",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
-
-    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the amplitude on the source.
-
-        Args:
-            value: The amplitude value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            "AFG:AMPLITUDE",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
-
-    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the frequency on the source.
-
-        Args:
-            value: The frequency value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            "AFG:FREQUENCY",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
 
 
 # pylint: disable=too-many-public-methods
@@ -236,11 +169,6 @@ class TekScope(
             # Set scope PI verbosity back to previous value
             self.set_and_check(":VERBose", old_pi_verbosity)
         return MappingProxyType(channel_map)
-
-    @cached_property
-    def internal_afg(self) -> InternalAFGChannel:
-        """The scope's internal AFG."""
-        return InternalAFGChannel(self)
 
     @property
     def commands(
@@ -484,9 +412,9 @@ class TekScope(
             self.set_and_check("AFG:BURST:CCOUNT", f"{burst}")
         # Generate the waveform from the Internal AFG
         # Frequency
-        self.internal_afg.set_frequency(frequency)
+        self.set_and_check("AFG:FREQUENCY", frequency)
         # Offset
-        self.internal_afg.set_offset(offset)
+        self.set_and_check("AFG:OFFSET", offset)
         # Duty Cycle
         self.set_and_check("AFG:SQUARE:DUTY", duty_cycle)
         # Function
@@ -496,115 +424,12 @@ class TekScope(
         # Termination impedance
         self.set_and_check("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
-        self.internal_afg.set_amplitude(amplitude)
+        self.set_and_check("AFG:AMPLITUDE", amplitude)
         # Turn on the Internal AFG
         self.set_and_check("AFG:OUTPUT:STATE", 1)
         if burst > 0:
             self.write("AFG:BURST:TRIGGER")
         # Don't check for errors as any measurement with low amplitude will generate an error
-
-    # pylint: disable=too-many-locals
-    def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self,
-        function: Optional[SignalSourceFunctionsIAFG] = None,
-        waveform_length: Optional[int] = None,
-        frequency: Optional[float] = None,
-        load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
-    ) -> ExtendedSourceDeviceConstants:
-        """Get the constraints that restrict the waveform to certain parameter ranges.
-
-        Args:
-            function: The function that needs to be generated.
-            waveform_length: The length of the waveform if no function or arbitrary is provided.
-            frequency: The frequency of the waveform that needs to be generated.
-            load_impedance: The suggested impedance on the source.
-        """
-        if not function:
-            msg = "IAFGs must have a waveform defined."
-            raise ValueError(msg)
-
-        del waveform_length
-        base_frequency_low = 100.0e-3
-        base_frequency_high = 50.0e6 * self._get_driver_specific_multipliers()
-
-        load_impedance_multiplier = 1.0 if load_impedance == LoadImpedanceAFG.HIGHZ else 0.5
-
-        base_amplitude_low = 20.0e-3
-        base_amplitude_high = 5.0
-
-        square_duty_cycle_range = ParameterBounds(lower=10.0, upper=90.0)
-        pulse_width_range = None
-        # handle logic to constrain limits of duty cycle and pulse width range due to frequency
-        if frequency is not None:
-            max_duty = 90.0
-            min_duty = 10.0
-            max_square_pulse_freq = base_frequency_high / 2
-            # limit to valid range for calcs, otherwise values are outside valid ranges
-            calc_freq = max((base_amplitude_high, min((max_square_pulse_freq, frequency))))
-            # above 10MHz (or 20MHz), then SQUARE duty cycle and PULSE width ranges get coerced
-            if frequency > (duty_cycle_coercion_start_freq := base_frequency_high / 5):
-                # 15 percent change over the difference between max frequency and start of coercion
-                coercion_slope = 15.0 / (max_square_pulse_freq - duty_cycle_coercion_start_freq)
-                max_duty = 90.0 - (coercion_slope * (calc_freq - duty_cycle_coercion_start_freq))
-                min_duty = 10.0 + (coercion_slope * (calc_freq - duty_cycle_coercion_start_freq))
-                # one decimal place of accuracy as percentage,
-                # and uses floor/ceil on the max/min to stay in valid zone
-                square_duty_cycle_range = ParameterBounds(
-                    lower=math.ceil(min_duty * 10) / 10, upper=math.floor(max_duty * 10) / 10
-                )
-            # TODO: There is an edge case where the IAFG period doesn't exactly equal 1/frequency
-            #  this can cause the pulse width max and min to be outside valid range by tiny bit,
-            #  workaround is to query actual period time and set frequency=1/<actual_period>
-            # limited to 0.1ns resolution regardless of frequency
-            # also uses floor/ceil to stay in valid zone
-            pulse_width_range = ParameterBounds(
-                lower=math.ceil(min_duty / 100 * 1e10 / calc_freq) / 1e10,
-                upper=math.floor(max_duty / 100 * 1e10 / calc_freq) / 1e10,
-            )
-        amplitude_multiplier = 1
-
-        if function in {SignalSourceFunctionsIAFG.SIN}:
-            frequency_multiplier = 1
-        elif function in {
-            SignalSourceFunctionsIAFG.SQUARE,
-            SignalSourceFunctionsIAFG.PULSE,
-            SignalSourceFunctionsIAFG.ARBITRARY,
-        }:
-            frequency_multiplier = 0.5
-        elif function in {SignalSourceFunctionsIAFG.SINC}:
-            frequency_multiplier = 0.04
-            amplitude_multiplier = 0.6
-        elif function in {
-            SignalSourceFunctionsIAFG.RAMP,
-            SignalSourceFunctionsIAFG.CARDIAC,
-        }:
-            frequency_multiplier = 0.01
-        else:
-            frequency_multiplier = 0.1
-            amplitude_multiplier = 0.5 if function != SignalSourceFunctionsIAFG.LORENTZ else 0.48
-
-        frequency_range = ParameterBounds(
-            lower=base_frequency_low, upper=base_frequency_high * frequency_multiplier
-        )
-        amplitude_range = ParameterBounds(
-            lower=base_amplitude_low * load_impedance_multiplier,
-            upper=base_amplitude_high * amplitude_multiplier * load_impedance_multiplier,
-        )
-        offset_range = ParameterBounds(
-            lower=-2.5 * load_impedance_multiplier, upper=2.5 * load_impedance_multiplier
-        )
-        # RAMP symmetry range never changes with frequency
-        ramp_symmetry_range = ParameterBounds(lower=0.0, upper=100.0)
-        sample_rate_range = ParameterBounds(lower=250.0e6, upper=250.0e6)
-        return ExtendedSourceDeviceConstants(
-            amplitude_range=amplitude_range,
-            frequency_range=frequency_range,
-            offset_range=offset_range,
-            sample_rate_range=sample_rate_range,
-            square_duty_cycle_range=square_duty_cycle_range,
-            pulse_width_range=pulse_width_range,
-            ramp_symmetry_range=ramp_symmetry_range,
-        )
 
     def recall_reference(self, reference_path: str, ref_number: Union[int, str]) -> None:
         """Recall a reference waveform file.
@@ -872,11 +697,6 @@ class TekScope(
     def _reboot(self) -> None:
         """Reboot the device."""
         self.write(":SCOPEAPP REBOOT")
-
-    @staticmethod
-    def _get_driver_specific_multipliers() -> float:
-        """Get constraints for specific drivers."""
-        return 1.0
 
     def _set_channel_display_state(
         self, channel_str: str, state: bool, turn_on_group: bool = True
