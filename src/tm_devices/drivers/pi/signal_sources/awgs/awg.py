@@ -6,7 +6,6 @@ import struct
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
-from pathlib import Path
 from typing import Dict, Literal, Optional, Tuple, Type
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
@@ -106,11 +105,14 @@ class AWG(SignalSource, ABC):
     def get_waveform_constraints(
         self,
         function: Optional[SignalSourceFunctionsAWG] = None,
-        file_name: Optional[str] = None,
+        waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
     ) -> Optional[ExtendedSourceDeviceConstants]:
-        if not function and not file_name:
-            raise ValueError(f"Constraints require either a function or filename to be provided.")
+        if (function and waveform_length) or (not function and not waveform_length):
+            raise ValueError(
+                f"Arbitrary Waveform Generator Constraints require exclusively either a function "
+                f"or waveform_length to be provided."
+            )
         amplitude_range, offset_range, sample_rate_range = self._get_limited_constraints()
         if function:
             func_sample_rate_lookup: Dict[str, ParameterRange] = {
@@ -121,27 +123,12 @@ class AWG(SignalSource, ABC):
                 SignalSourceFunctionsAWG.TRIANGLE.name: ParameterRange(10, 1000),
                 SignalSourceFunctionsAWG.DC.name: ParameterRange(1000, 1000),
             }
-            # set the low range to the lowest frequency on source divided by longest waveform
             slowest_frequency = sample_rate_range.min / func_sample_rate_lookup[function.name].max
-
-            # set the high range to the highest frequency on source divided by shortest waveform
             fastest_frequency = sample_rate_range.max / func_sample_rate_lookup[function.name].min
-        elif file_name:
-            try:
-                target_file = file_name.replace('"', "")
-                wanted_file = Path(target_file).stem
-                page_length = self.query(f'WLIST:WAVEFORM:LENGTH? "{wanted_file}"')
-                page_length = int(page_length)
-                # set the low range to the lowest frequency on source divided by longest waveform
-                slowest_frequency = sample_rate_range.min / page_length
-
-                # set the high range to the highest frequency on source divided by shortest waveform
-                fastest_frequency = sample_rate_range.max / page_length
-            except AssertionError:
-                return None
-            # set the new range
         else:
-            return None
+            slowest_frequency = sample_rate_range.min / waveform_length
+            fastest_frequency = sample_rate_range.max / waveform_length
+
         frequency_range = ParameterRange(slowest_frequency, fastest_frequency)
         esdc = ExtendedSourceDeviceConstants(
             amplitude_range=amplitude_range,

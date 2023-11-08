@@ -140,15 +140,15 @@ class AFG(SignalSource, ABC):
     def get_waveform_constraints(
         self,
         function: Optional[SignalSourceFunctionsAFG] = None,
-        file_name: Optional[str] = None,
+        waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
     ) -> Optional[ExtendedSourceDeviceConstants]:
         (
             amplitude_range,
-            offset_range,
             frequency_range,
+            offset_range,
             sample_rate_range,
-        ) = self._get_limited_constraints(function, frequency)
+        ) = self._get_limited_constraints(function, waveform_length, frequency)
 
         esdc = ExtendedSourceDeviceConstants(
             amplitude_range=amplitude_range,
@@ -177,6 +177,8 @@ class AFG(SignalSource, ABC):
     def _get_limited_constraints(
         self,
         function,
-        frequency,
-    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
+        waveform_length: Optional[int] = None,
+        frequency: Optional[float] = None,
+    ) -> Tuple[ParameterRange, ParameterRange, ParameterRange, ParameterRange]:
+        """"""
         raise NotImplementedError

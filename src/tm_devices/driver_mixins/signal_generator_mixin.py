@@ -99,7 +99,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
     def get_waveform_constraints(
         self,
         function: Optional[SignalSourceFunctionBase] = None,
-        file_name: Optional[str] = None,
+        waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
     ) -> ExtendedSourceDeviceConstants:
         raise NotImplementedError
