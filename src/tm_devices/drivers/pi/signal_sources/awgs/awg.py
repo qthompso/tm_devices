@@ -137,7 +137,7 @@ class AWG(SignalSource, ABC):
             fastest_frequency = (
                 sample_rate_range.upper / func_sample_rate_lookup[function.name].lower
             )
-        if waveform_length:
+        elif waveform_length:
             slowest_frequency = sample_rate_range.lower / waveform_length
             fastest_frequency = sample_rate_range.upper / waveform_length
         else:
