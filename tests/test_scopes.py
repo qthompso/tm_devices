@@ -16,7 +16,7 @@ from tm_devices import DeviceManager
 from tm_devices.drivers import MSO2, MSO5, MSO5B, MSO70KDX, TekScopeSW
 from tm_devices.drivers.pi.scopes.tekscope.tekscope import (
     ExtendedSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
     SignalSourceFunctionsIAFG,
     TekProbeData,
     TekScope,
@@ -249,6 +249,11 @@ def test_tekscope(device_manager: DeviceManager) -> None:  # noqa: PLR0915
 
 
 def test_iafg(device_manager: DeviceManager) -> None:
+    """Test the IAFG.
+
+    Args:
+        device_manager: The DeviceManager object.
+    """
     mso56: MSO5 = cast(
         MSO5, device_manager.add_scope("MSO56-SERIAL1", alias="mso56", connection_type="USB")
     )
@@ -258,13 +263,13 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     assert mso56_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=5.0),
-        offset_range=ParameterRange(min=-2.5, max=2.5),
-        frequency_range=ParameterRange(min=100.0e-3, max=50.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
-        square_duty_cycle_range=ParameterRange(min=25.0, max=75.0),
-        pulse_width_range=ParameterRange(min=1.0e-8, max=3.0e-8),
-        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=5.0),
+        offset_range=ParameterBounds(lower=-2.5, upper=2.5),
+        frequency_range=ParameterBounds(lower=100.0e-3, upper=50.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=ParameterBounds(lower=25.0, upper=75.0),
+        pulse_width_range=ParameterBounds(lower=1.0e-8, upper=3.0e-8),
+        ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
     mso56_constraints = mso56.get_waveform_constraints(
@@ -272,13 +277,13 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     assert mso56_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=5.0),
-        offset_range=ParameterRange(min=-2.5, max=2.5),
-        frequency_range=ParameterRange(min=100.0e-3, max=25.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
-        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=5.0),
+        offset_range=ParameterBounds(lower=-2.5, upper=2.5),
+        frequency_range=ParameterBounds(lower=100.0e-3, upper=25.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=ParameterBounds(lower=10.0, upper=90.0),
         pulse_width_range=None,
-        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+        ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
     mso56_constraints = mso56.get_waveform_constraints(
@@ -286,13 +291,13 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     assert mso56_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=5.0),
-        offset_range=ParameterRange(min=-2.5, max=2.5),
-        frequency_range=ParameterRange(min=100.0e-3, max=500.0e3),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
-        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=5.0),
+        offset_range=ParameterBounds(lower=-2.5, upper=2.5),
+        frequency_range=ParameterBounds(lower=100.0e-3, upper=500.0e3),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=ParameterBounds(lower=10.0, upper=90.0),
         pulse_width_range=None,
-        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+        ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
     mso56_constraints = mso56.get_waveform_constraints(
@@ -300,13 +305,13 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     assert mso56_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=3.0),
-        offset_range=ParameterRange(min=-2.5, max=2.5),
-        frequency_range=ParameterRange(min=100.0e-3, max=2.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
-        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=3.0),
+        offset_range=ParameterBounds(lower=-2.5, upper=2.5),
+        frequency_range=ParameterBounds(lower=100.0e-3, upper=2.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=ParameterBounds(lower=10.0, upper=90.0),
         pulse_width_range=None,
-        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+        ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
     mso56_constraints = mso56.get_waveform_constraints(
@@ -314,13 +319,13 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     assert mso56_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=2.5),
-        offset_range=ParameterRange(min=-2.5, max=2.5),
-        frequency_range=ParameterRange(min=100.0e-3, max=5.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
-        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=2.5),
+        offset_range=ParameterBounds(lower=-2.5, upper=2.5),
+        frequency_range=ParameterBounds(lower=100.0e-3, upper=5.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=ParameterBounds(lower=10.0, upper=90.0),
         pulse_width_range=None,
-        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+        ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
     mso56b: MSO5 = cast(MSO5B, device_manager.add_scope("MSO58B-HOSTNAME", alias="mso56b"))
@@ -329,13 +334,13 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     assert mso56b_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=5.0),
-        offset_range=ParameterRange(min=-2.5, max=2.5),
-        frequency_range=ParameterRange(min=100.0e-3, max=100.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
-        square_duty_cycle_range=ParameterRange(min=10.0, max=90.0),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=5.0),
+        offset_range=ParameterBounds(lower=-2.5, upper=2.5),
+        frequency_range=ParameterBounds(lower=100.0e-3, upper=100.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=ParameterBounds(lower=10.0, upper=90.0),
         pulse_width_range=None,
-        ramp_symmetry_range=ParameterRange(min=0.0, max=100.0),
+        ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
 

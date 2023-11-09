@@ -3,7 +3,7 @@ import re
 
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Final, List, Mapping, Optional, Protocol, runtime_checkable
+from typing import Final, List, Mapping, Optional, Protocol, runtime_checkable, Union
 
 import pyvisa as visa
 
@@ -11,7 +11,7 @@ from tm_devices.helpers.dataclass_mixins import (
     AsDictionaryMixin,
     AsDictionaryUseEnumNameUseCustEnumStrValueMixin,
 )
-from tm_devices.helpers.enums import ConnectionTypes, DeviceTypes, SupportedModels
+from tm_devices.helpers.enums import ConnectionTypes, DeviceTypes, LoadImpedanceAFG, SupportedModels
 from tm_devices.helpers.standalone_functions import validate_address
 
 
@@ -636,6 +636,16 @@ USB_MODEL_ID_LOOKUP: Final[Mapping[str, USBTMCConfiguration]] = MappingProxyType
         SupportedModels.AWG70KB.value: USBTMCConfiguration(
             vendor_id=_TEKTRONIX_USBTMC_VENDOR_ID, model_id="0x0503"
         ),
+    }
+)
+
+LOAD_IMPEDANCE_LOOKUP: Final[Mapping[Union[float, str], LoadImpedanceAFG]] = MappingProxyType(
+    {
+        9.97e37: LoadImpedanceAFG.HIGHZ,
+        10.0e6: LoadImpedanceAFG.HIGHZ,
+        "HIGHZ": LoadImpedanceAFG.HIGHZ,
+        50.0: LoadImpedanceAFG.FIFTY,
+        "FIFTY": LoadImpedanceAFG.FIFTY,
     }
 )
 """Dict[str, tm_devices.helpers.USBTMCConfiguration]: Mapping of model USBTMC info."""

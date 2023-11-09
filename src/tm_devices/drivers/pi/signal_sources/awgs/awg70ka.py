@@ -1,11 +1,11 @@
 """AWG70KA device driver module."""
-from typing import Optional, Tuple
+from typing import Tuple
 
 from tm_devices.commands import AWG70KAMixin
 from tm_devices.drivers.pi.signal_sources.awgs.awg import (
     AWG,
     AWGSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
 )
 
 
@@ -21,11 +21,12 @@ class AWG70KA(AWG70KAMixin, AWG):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    def _get_limited_constraints(
+    def _get_series_specific_constraints(
         self,
-    ) -> Tuple[ParameterRange, ParameterRange, ParameterRange]:
-        amplitude_range = ParameterRange(0.5, 1.0)
-        offset_range = ParameterRange(-0.5, 0.5)
+    ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
+        """Get constraints which are dependent on the model series."""
+        amplitude_range = ParameterBounds(lower=0.5, upper=1.0)
+        offset_range = ParameterBounds(lower=-0.5, upper=0.5)
         # first digit indicates the number of channels, second and third indicate sample rate (GHz)
-        sample_rate_range = ParameterRange(1.5e3, int(self.opt_string[1:3]) * 1.0e9)
+        sample_rate_range = ParameterBounds(lower=1.5e3, upper=int(self.opt_string[1:3]) * 1.0e9)
         return amplitude_range, offset_range, sample_rate_range

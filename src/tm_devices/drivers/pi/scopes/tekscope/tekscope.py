@@ -34,14 +34,14 @@ from tm_devices.driver_mixins.analysis_object_mixins import (
 from tm_devices.driver_mixins.licensed_mixin import LicensedMixin
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
     SignalGeneratorMixin,
     SourceDeviceConstants,
 )
 from tm_devices.driver_mixins.usb_drives_mixin import USBDrivesMixin
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.scopes.scope import Scope
-from tm_devices.helpers import DeviceConfigEntry, SignalSourceFunctionsIAFG
+from tm_devices.helpers import DeviceConfigEntry, LoadImpedanceAFG, SignalSourceFunctionsIAFG
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
@@ -435,19 +435,36 @@ class TekScope(
             self.write("AFG:BURST:TRIGGER")
         # Don't check for errors as any measurement with low amplitude will generate an error
 
-    def get_waveform_constraints(
+    # pylint: disable=too-many-locals
+    def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         function: Optional[SignalSourceFunctionsIAFG] = None,
-        file_name: Optional[str] = None,
+        waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-    ) -> Optional[ExtendedSourceDeviceConstants]:
+        load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
+    ) -> ExtendedSourceDeviceConstants:
+        """Get the constraints that restrict the waveform to certain parameter ranges.
+
+        Args:
+            function: The function that needs to be generated.
+            waveform_length: The length of the waveform if no function or arbitrary is provided.
+            frequency: The frequency of the waveform that needs to be generated.
+            load_impedance: The suggested impedance on the source.
+        """
+        if not function:
+            msg = "IAFGs must have a waveform defined."
+            raise ValueError(msg)
+
+        del waveform_length
         base_frequency_low = 100.0e-3
-        base_frequency_high = self._get_limited_constraints()
+        base_frequency_high = 50.0e6 * self._get_driver_specific_multipliers()
+
+        load_impedance_multiplier = 1.0 if load_impedance == LoadImpedanceAFG.HIGHZ else 0.5
 
         base_amplitude_low = 20.0e-3
         base_amplitude_high = 5.0
 
-        square_duty_cycle_range = ParameterRange(10.0, 90.0)
+        square_duty_cycle_range = ParameterBounds(lower=10.0, upper=90.0)
         pulse_width_range = None
         # handle logic to constrain limits of duty cycle and pulse width range due to frequency
         if frequency is not None:
@@ -464,17 +481,17 @@ class TekScope(
                 min_duty = 10.0 + (coercion_slope * (calc_freq - duty_cycle_coercion_start_freq))
                 # one decimal place of accuracy as percentage,
                 # and uses floor/ceil on the max/min to stay in valid zone
-                square_duty_cycle_range = ParameterRange(
-                    min=math.ceil(min_duty * 10) / 10, max=math.floor(max_duty * 10) / 10
+                square_duty_cycle_range = ParameterBounds(
+                    lower=math.ceil(min_duty * 10) / 10, upper=math.floor(max_duty * 10) / 10
                 )
-            # todo: There is an edge case where the IAFG period doesn't exactly equal 1/frequency
+            # TODO: There is an edge case where the IAFG period doesn't exactly equal 1/frequency
             #  this can cause the pulse width max and min to be outside valid range by tiny bit,
             #  workaround is to query actual period time and set frequency=1/<actual_period>
             # limited to 0.1ns resolution regardless of frequency
             # also uses floor/ceil to stay in valid zone
-            pulse_width_range = ParameterRange(
-                min=math.ceil(min_duty / 100 * 1e10 / calc_freq) / 1e10,
-                max=math.floor(max_duty / 100 * 1e10 / calc_freq) / 1e10,
+            pulse_width_range = ParameterBounds(
+                lower=math.ceil(min_duty / 100 * 1e10 / calc_freq) / 1e10,
+                upper=math.floor(max_duty / 100 * 1e10 / calc_freq) / 1e10,
             )
         amplitude_multiplier = 1
 
@@ -498,17 +515,20 @@ class TekScope(
             frequency_multiplier = 0.1
             amplitude_multiplier = 0.5 if function != SignalSourceFunctionsIAFG.LORENTZ else 0.48
 
-        frequency_range = ParameterRange(
-            base_frequency_low, base_frequency_high * frequency_multiplier
+        frequency_range = ParameterBounds(
+            lower=base_frequency_low, upper=base_frequency_high * frequency_multiplier
         )
-        amplitude_range = ParameterRange(
-            base_amplitude_low, base_amplitude_high * amplitude_multiplier
+        amplitude_range = ParameterBounds(
+            lower=base_amplitude_low * load_impedance_multiplier,
+            upper=base_amplitude_high * amplitude_multiplier * load_impedance_multiplier,
         )
-        offset_range = ParameterRange(-2.5, 2.5)
+        offset_range = ParameterBounds(
+            lower=-2.5 * load_impedance_multiplier, upper=2.5 * load_impedance_multiplier
+        )
         # RAMP symmetry range never changes with frequency
-        ramp_symmetry_range = ParameterRange(0.0, 100.0)
-        sample_rate_range = ParameterRange(250.0e6, 250.0e6)
-        esdc = ExtendedSourceDeviceConstants(
+        ramp_symmetry_range = ParameterBounds(lower=0.0, upper=100.0)
+        sample_rate_range = ParameterBounds(lower=250.0e6, upper=250.0e6)
+        return ExtendedSourceDeviceConstants(
             amplitude_range=amplitude_range,
             frequency_range=frequency_range,
             offset_range=offset_range,
@@ -517,7 +537,6 @@ class TekScope(
             pulse_width_range=pulse_width_range,
             ramp_symmetry_range=ramp_symmetry_range,
         )
-        return esdc
 
     def recall_reference(self, reference_path: str, ref_number: Union[int, str]) -> None:
         """Recall a reference waveform file.
@@ -786,10 +805,10 @@ class TekScope(
         """Reboot the device."""
         self.write(":SCOPEAPP REBOOT")
 
-    def _get_limited_constraints(
-        self,
-    ) -> float:
-        return 50.0e6
+    @staticmethod
+    def _get_driver_specific_multipliers() -> float:
+        """Get constraints for specific drivers."""
+        return 1.0
 
     def _set_channel_display_state(
         self, channel_str: str, state: bool, turn_on_group: bool = True

@@ -28,9 +28,9 @@ class AFG3KC(AFG3K):
         """Reboot the device."""
         self.write("SYSTem:RESTart")
 
-    def _acquire_frequency_multipliers(self) -> Tuple[float, float]:
-        """"""
-        model_number = self.model[4:6]
+    @staticmethod
+    def _get_driver_specific_multipliers(model_number: str) -> Tuple[float, float]:
+        """Get multipliers for frequency dependant for different functions."""
         # handle amplitude
         if model_number == "02":
             square_wave_multiplier = 1
