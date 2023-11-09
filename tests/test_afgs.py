@@ -11,13 +11,13 @@ from tm_devices import DeviceManager
 from tm_devices.drivers.pi.signal_sources.afgs.afg import (
     AFGSourceDeviceConstants,
     ExtendedSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
     SignalSourceFunctionsAFG,
 )
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
-def test_afg3k(device_manager: DeviceManager) -> None:
+def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     """Test the AFG3KC driver.
 
     Args:
@@ -126,10 +126,10 @@ def test_afg3k(device_manager: DeviceManager) -> None:
     afg3051_constraints = afg3051.get_waveform_constraints(SignalSourceFunctionsAFG.RAMP)
 
     assert afg3051_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=20.0),
-        offset_range=ParameterRange(min=-10.0, max=10.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=500.0e3),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=500.0e3),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -140,10 +140,10 @@ def test_afg3k(device_manager: DeviceManager) -> None:
     afg3011c_constraints = afg3011c.get_waveform_constraints(SignalSourceFunctionsAFG.SIN)
 
     assert afg3011c_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=40.0e-3, max=40.0),
-        offset_range=ParameterRange(min=-20.0, max=20.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=10.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=40.0e-3, upper=40.0),
+        offset_range=ParameterBounds(lower=-20.0, upper=20.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=10.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -154,10 +154,10 @@ def test_afg3k(device_manager: DeviceManager) -> None:
     afg3021c_constraints = afg3021c.get_waveform_constraints(SignalSourceFunctionsAFG.SQUARE)
 
     assert afg3021c_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=20.0),
-        offset_range=ParameterRange(min=-10.0, max=10.0),
-        frequency_range=ParameterRange(min=1.0e-3, max=25.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-3, upper=25.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -168,10 +168,10 @@ def test_afg3k(device_manager: DeviceManager) -> None:
     afg3052c_constraints = afg3052c.get_waveform_constraints(SignalSourceFunctionsAFG.RAMP)
 
     assert afg3052c_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=20.0e-3, max=20.0),
-        offset_range=ParameterRange(min=-10.0, max=10.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=800.0e3),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=800.0e3),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -184,10 +184,10 @@ def test_afg3k(device_manager: DeviceManager) -> None:
     )
 
     assert afg3101c_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=40.0e-3, max=20.0),
-        offset_range=ParameterRange(min=-10.0, max=10.0),
-        frequency_range=ParameterRange(min=1.0e-3, max=50.0e6),
-        sample_rate_range=ParameterRange(min=1.0e9, max=1.0e9),
+        amplitude_range=ParameterBounds(lower=40.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-3, upper=50.0e6),
+        sample_rate_range=ParameterBounds(lower=1.0e9, upper=1.0e9),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -198,10 +198,10 @@ def test_afg3k(device_manager: DeviceManager) -> None:
     afg3151c_constraints = afg3151c.get_waveform_constraints(SignalSourceFunctionsAFG.LORENTZ)
 
     assert afg3151c_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=40.0e-3, max=16.0),
-        offset_range=ParameterRange(min=-10.0, max=10.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=1.5e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=40.0e-3, upper=16.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=1.5e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -210,10 +210,10 @@ def test_afg3k(device_manager: DeviceManager) -> None:
     afg3252c_constraints = afg3252c.get_waveform_constraints(SignalSourceFunctionsAFG.SIN)
 
     assert afg3252c_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=100.0e-3, max=8.0),
-        offset_range=ParameterRange(min=-5.0, max=5.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=240.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=100.0e-3, upper=8.0),
+        offset_range=ParameterBounds(lower=-5.0, upper=5.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=240.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -244,10 +244,10 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
     )
 
     assert afg31021_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=2.0e-3, max=20.0),
-        offset_range=ParameterRange(min=-10.0, max=10.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=25.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=25.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -261,10 +261,10 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
     )
 
     assert afg31051_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=2.0e-3, max=16.0),
-        offset_range=ParameterRange(min=-10.0, max=10.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=40.0e6),
-        sample_rate_range=ParameterRange(min=1.0e9, max=1.0e9),
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=16.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=40.0e6),
+        sample_rate_range=ParameterBounds(lower=1.0e9, upper=1.0e9),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -277,10 +277,10 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
     )
 
     assert afg31101_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=2.0e-3, max=12.0),
-        offset_range=ParameterRange(min=-10.0, max=10.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=1.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=12.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=1.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -294,10 +294,10 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
     )
 
     assert afg31152_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=2.0e-3, max=10.0),
-        offset_range=ParameterRange(min=-5.0, max=5.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=75.0e6),
-        sample_rate_range=ParameterRange(min=2.0e9, max=2.0e9),
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=10.0),
+        offset_range=ParameterBounds(lower=-5.0, upper=5.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=75.0e6),
+        sample_rate_range=ParameterBounds(lower=2.0e9, upper=2.0e9),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -310,10 +310,10 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
     )
 
     assert afg31251_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=2.0e-3, max=8.0),
-        offset_range=ParameterRange(min=-5.0, max=5.0),
-        frequency_range=ParameterRange(min=1.0e-6, max=250.0e6),
-        sample_rate_range=ParameterRange(min=250.0e6, max=250.0e6),
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=8.0),
+        offset_range=ParameterBounds(lower=-5.0, upper=5.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=250.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,

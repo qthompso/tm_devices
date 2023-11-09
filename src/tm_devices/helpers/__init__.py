@@ -16,6 +16,7 @@ from tm_devices.helpers.enums import (
     ConfigFileType,
     ConnectionTypes,
     DeviceTypes,
+    LoadImpedanceAFG,
     SignalSourceFunctionBase,
     SignalSourceFunctionsAFG,
     SignalSourceFunctionsAWG,
@@ -77,4 +78,5 @@ __all__ = [
     "SignalSourceFunctionsAWG",
     "SignalSourceFunctionsAFG",
     "SignalSourceFunctionsIAFG",
+    "LoadImpedanceAFG",
 ]

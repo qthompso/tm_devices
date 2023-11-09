@@ -6,26 +6,32 @@ from typing import Literal, NamedTuple, Optional, Type, TypeVar
 
 from tm_devices.driver_mixins.class_extension_mixin import ExtendableMixin
 from tm_devices.helpers.enums import (
+    LoadImpedanceAFG,
     SignalSourceFunctionBase,
 )
 
 _SourceDeviceTypeVar = TypeVar("_SourceDeviceTypeVar", bound="SourceDeviceConstants")
 _SignalSourceTypeVar = TypeVar("_SignalSourceTypeVar", bound=SignalSourceFunctionBase)
 
-ParameterRange = NamedTuple("ParameterRange", [("min", float), ("max", float)])
+
+class ParameterBounds(NamedTuple):
+    """The upper and lower bounds of a parameter."""
+
+    lower: float
+    upper: float
 
 
 @dataclass(frozen=True)
 class ExtendedSourceDeviceConstants:
     """Class to hold source device constants."""
 
-    amplitude_range: ParameterRange
-    offset_range: ParameterRange
-    frequency_range: ParameterRange
-    sample_rate_range: Optional[ParameterRange] = None
-    square_duty_cycle_range: Optional[ParameterRange] = None
-    pulse_width_range: Optional[ParameterRange] = None
-    ramp_symmetry_range: Optional[ParameterRange] = None
+    amplitude_range: ParameterBounds
+    offset_range: ParameterBounds
+    frequency_range: ParameterBounds
+    sample_rate_range: Optional[ParameterBounds] = None
+    square_duty_cycle_range: Optional[ParameterBounds] = None
+    pulse_width_range: Optional[ParameterBounds] = None
+    ramp_symmetry_range: Optional[ParameterBounds] = None
 
 
 @dataclass(frozen=True)
@@ -101,5 +107,14 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         function: Optional[SignalSourceFunctionBase] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
+        load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
+        """Get the constraints that restrict the waveform to certain parameter ranges.
+
+        Args:
+            function: The function that needs to be generated.
+            waveform_length: The length of the waveform if no function or arbitrary is provided.
+            frequency: The frequency of the waveform that needs to be generated.
+            load_impedance: The suggested impedance on the source.
+        """
         raise NotImplementedError
