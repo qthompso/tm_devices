@@ -60,8 +60,8 @@ resources:
   TCPIP::AFG3051-HOSTNAME::INSTR:
     device: afg3051
     filename: afg/afg3k.yaml
-  TCPIP::AFG3KB-HOSTNAME::INSTR:
-    device: afg3kb
+  TCPIP::AFG3022B-HOSTNAME::INSTR:
+    device: afg3022b
     filename: afg/afg3kb.yaml
   TCPIP::AFG3KC-TIMEOUT::INSTR:
     device: afg3kc-timeout
@@ -114,45 +114,45 @@ resources:
     device: awg520025
     filename: awg/awg5200.yaml
   #   awg5k
-  TCPIP::AWG5K-HOSTNAME::INSTR:
+  TCPIP::AWG5012-HOSTNAME::INSTR:
     device: awg5012
     filename: awg/awg5k.yaml
-  TCPIP::AWG5KB-HOSTNAME::INSTR:
-    device: awg5012b
+  TCPIP::AWG5002B-HOSTNAME::INSTR:
+    device: awg5002b
     filename: awg/awg5kb.yaml
-  TCPIP::AWG5KC-HOSTNAME::INSTR:
+  TCPIP::AWG5012C-HOSTNAME::INSTR:
     device: awg5012c
     filename: awg/awg5kc.yaml
   #   awg7k
-  TCPIP::AWG7K01-HOSTNAME::INSTR:
+  TCPIP::AWG705101-HOSTNAME::INSTR:
     device: awg705101
     filename: awg/awg7k.yaml
-  TCPIP::AWG7K06-HOSTNAME::INSTR:
+  TCPIP::AWG710206-HOSTNAME::INSTR:
     device: awg710206
     filename: awg/awg7k.yaml
-  TCPIP::AWG7KB02-HOSTNAME::INSTR:
+  TCPIP::AWG7062B02-HOSTNAME::INSTR:
     device: awg7062b02
     filename: awg/awg7kb.yaml
-  TCPIP::AWG7KB01-HOSTNAME::INSTR:
+  TCPIP::AWG7121B01-HOSTNAME::INSTR:
     device: awg7121b01
     filename: awg/awg7kb.yaml
-  TCPIP::AWG7KC01-HOSTNAME::INSTR:
+  TCPIP::AWG7082C01-HOSTNAME::INSTR:
     device: awg7082c01
     filename: awg/awg7kc.yaml
-  TCPIP::AWG7KC06-HOSTNAME::INSTR:
+  TCPIP::AWG7122C06-HOSTNAME::INSTR:
     device: awg7122c06
     filename: awg/awg7kc.yaml
   #   awg70k
-  TCPIP::AWG70KA150-HOSTNAME::INSTR:
+  TCPIP::AWG70001A150-HOSTNAME::INSTR:
     device: awg70001a150
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70KA225-HOSTNAME::INSTR:
+  TCPIP::AWG70002A225-HOSTNAME::INSTR:
     device: awg70002a225
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70KA216-HOSTNAME::INSTR:
+  TCPIP::AWG70002A216-HOSTNAME::INSTR:
     device: awg70002a216
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70KB208-HOSTNAME::INSTR:
+  TCPIP::AWG70002B208-HOSTNAME::INSTR:
     device: awg70002b208
     filename: awg/awg70kb.yaml
 
