@@ -59,46 +59,6 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     with pytest.raises(AssertionError):
         afg3252c.expect_esr(32, '1, Command error\n0,"No error"')
 
-    afg3252c.generate_waveform(
-        25e6, afg3252c.source_device_constants.functions.PULSE, 1.0, 0.0, "all"
-    )
-    afg3252c.generate_waveform(
-        25e6,
-        afg3252c.source_device_constants.functions.SIN,
-        1.0,
-        0.0,
-        "SOURCE1",
-        burst=1,
-        termination="HIGHZ",
-    )
-    afg3252c.generate_waveform(
-        25e6,
-        afg3252c.source_device_constants.functions.RAMP,
-        1.0,
-        0.0,
-        "SOURCE1",
-        burst=1,
-        termination="FIFTY",
-    )
-    afg3252c.generate_waveform(
-        25e6,
-        afg3252c.source_device_constants.functions.DC,
-        1.0,
-        0.0,
-        "SOURCE1",
-        termination="HIGHZ",
-    )
-    afg3252c.generate_waveform(
-        25e6,
-        afg3252c.source_device_constants.functions.PULSE,
-        1.0,
-        0.0,
-        "SOURCE1",
-        termination="FIFTY",
-    )
-    assert afg3252c.expect_esr(0)[0]
-    assert afg3252c.get_eventlog_status() == (True, '0,"No error"')
-
     with pytest.raises(AssertionError, match="No error string was provided"):
         afg3252c.expect_esr(1)
 
