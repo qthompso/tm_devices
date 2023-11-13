@@ -269,9 +269,9 @@ class AWG(SignalSource, ABC):
                 needed_sample_rate = frequency * record_length
                 # try for the highest record length that can generate the frequency
                 if (
-                    device_constraints.sample_rate_range.min
+                    device_constraints.sample_rate_range.lower
                     <= needed_sample_rate
-                    <= device_constraints.sample_rate_range.max
+                    <= device_constraints.sample_rate_range.upper
                 ):
                     predefined_name = f"*{function.value.title()}{record_length}"
                     break
