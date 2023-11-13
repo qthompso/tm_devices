@@ -379,7 +379,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         assert generated_contents == golden_contents
 
         # Test the custom added properties
-        afg = device_manager.add_afg("afg3kc-hostname", alias="testing")
+        afg = device_manager.add_afg("afg3252c-hostname", alias="testing")
         # noinspection PyUnresolvedReferences
         assert afg.class_name == "AFG3KC"  # type: ignore
         # noinspection PyUnresolvedReferences
@@ -465,7 +465,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         device_manager.remove_all_devices()
 
         # Test getting a device type that was not the specified type
-        device_manager.add_afg("afg3kc-hostname", alias="my-device")
+        device_manager.add_afg("afg3252c-hostname", alias="my-device")
         with pytest.raises(TypeError):
             device_manager.get_scope("my-device")
         device_manager.remove_all_devices()
@@ -483,10 +483,10 @@ class Device(ABC, metaclass=abc.ABCMeta):
             mock.MagicMock(return_value="data"),
         ):
             with pytest.warns(UserWarning), pytest.raises(SystemError) as error:
-                device_manager.add_afg("afg3kc-hostname")
+                device_manager.add_afg("afg3252c-hostname")
             assert str(error.value) == (
                 "Unable to read *IDN? response.\n"
-                "\tThe device `TCPIP0::AFG3KC-HOSTNAME::inst0::INSTR` likely has data sitting "
+                "\tThe device `TCPIP0::AFG3252C-HOSTNAME::inst0::INSTR` likely has data sitting "
                 "in the VISA Output Buffer that survived device_clear()."
             )
 
@@ -503,7 +503,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         ):
             # patched the stb to return 16 (message available)
             with pytest.warns(UserWarning), pytest.raises(SystemError) as error:
-                device_manager.add_afg("afg3kc-hostname")
+                device_manager.add_afg("afg3252c-hostname")
             assert str(error.value) == (
                 "VI_ERROR_TMO (-1073807339): Timeout expired before operation completed.\n"
                 "\tUnable to read data after 2s.\n"
@@ -520,7 +520,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
             mock.MagicMock(return_value="bad IDN"),
         ):
             with pytest.raises(SystemError) as error:
-                device_manager.add_afg("afg3kc-hostname")
+                device_manager.add_afg("afg3252c-hostname")
             assert (
                 str(error.value)
                 == "Unable to determine which device driver to use. *IDN? returned 'bad IDN'"
@@ -554,7 +554,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
             device_manager.get_available_devices()
 
         with pytest.raises(TypeError):
-            device_manager.add_awg("afg3kc-hostname", alias="mismatch")
+            device_manager.add_awg("afg3252c-hostname", alias="mismatch")
 
         device_manager.close()
         with pytest.raises(AttributeError):
@@ -587,7 +587,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         local_rm.close()
 
         device_manager.remove_all_devices()
-        afg = device_manager.add_afg("afg3kc-hostname")
+        afg = device_manager.add_afg("afg3252c-hostname")
         assert afg.query("*IDN?") == "TEKTRONIX,AFG3252C,SERIAL1,SCPI:99.0 FV:3.2.3"
 
         available_devices = device_manager.get_available_devices(
@@ -605,7 +605,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         assert afg.query("*IDN?") == "TEKTRONIX,AFG3252C,SERIAL1,SCPI:99.0 FV:3.2.3"
         assert available_devices["local"] == device_tuple
         assert available_devices["configured"] == (
-            "address=AFG3KC-HOSTNAME,connection_type=TCPIP,device_type=AFG",
+            "address=AFG3252C-HOSTNAME,connection_type=TCPIP,device_type=AFG",
         )
 
     def test_deleting_device_manager(self) -> None:
