@@ -1,14 +1,16 @@
 # pyright: reportPrivateUsage=none
 """Test generate_waveform."""
-import pytest
-
 from typing import cast
+
+import pytest
 
 from tm_devices import DeviceManager
 from tm_devices.drivers import MSO5
 
 
-def test_awg5200_gen_waveform(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
+def test_awg5200_gen_waveform(
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Test the AWG5200 driver.
 
     Args:
@@ -18,7 +20,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager, capsys: pytest.Capt
     awg520050 = device_manager.add_awg("awg520050-hostname", alias="awg520050")
 
     awg520050.generate_waveform(
-        10e3, awg520050.source_device_constants.functions.SIN, 1., 0.2, channel="SOURCE1"
+        10e3, awg520050.source_device_constants.functions.SIN, 1.0, 0.2, channel="SOURCE1"
     )
     source1_srate = awg520050.query("CLOCK:SRATE?")
     assert float(source1_srate) == 36000000
@@ -39,9 +41,11 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager, capsys: pytest.Capt
     assert source1_waveform_file != '"*DC"'
 
 
-def test_awg7k_gen_waveform(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
-    awg7k01 = device_manager.add_awg("awg7k01-hostname", alias="awg7k01")
-    awg7k06 = device_manager.add_awg("awg7k06-hostname", alias="awg7k06")
+def test_awg7k_gen_waveform(
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
+    awg7k01 = device_manager.add_awg("AWG705101-hostname", alias="awg7k01")
+    awg7k06 = device_manager.add_awg("AWG710206-hostname", alias="awg7k06")
 
     default_offset = 0
     awg7k06.channel["SOURCE1"].set_offset(default_offset)
@@ -68,8 +72,10 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager, capsys: pytest.Captur
     assert float(source1_offset) == 0.2
 
 
-def test_awg5k_gen_waveform(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
-    awg5k = device_manager.add_awg("awg5k-hostname", alias="awg5k")
+def test_awg5k_gen_waveform(
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
+    awg5k = device_manager.add_awg("AWG5012-hostname", alias="awg5k")
     # Sine
     awg5k.generate_waveform(
         10e3, awg5k.source_device_constants.functions.SIN, 2.0, 2.0, channel="SOURCE1"
@@ -121,14 +127,16 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager, capsys: pytest.Captur
         )
 
 
-def test_afg3kc_gen_waveform(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
+def test_afg3kc_gen_waveform(
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Test the AFG3KC driver.
 
     Args:
         device_manager: The DeviceManager object.
     """
     afg3kc = device_manager.add_afg(
-        "afg3kc-hostname", alias="afg3kc", connection_type="SOCKET", port=10001
+        "afg3252c-hostname", alias="afg3kc", connection_type="SOCKET", port=10001
     )
     afg3kc.generate_waveform(25e6, afg3kc.source_device_constants.functions.PULSE, 1.0, 0.0, "all")
     assert "SOURCE1:PHASE:INITIATE" in capsys.readouterr().out
@@ -206,7 +214,7 @@ def test_afg3kc_gen_waveform(device_manager: DeviceManager, capsys: pytest.Captu
 
 
 def test_internal_afg_gen_waveform(
-        device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
 ) -> None:
     scope: MSO5 = cast(
         MSO5, device_manager.add_scope("MSO56-SERIAL1", alias="mso56", connection_type="USB")
@@ -247,9 +255,9 @@ def test_internal_afg_gen_waveform(
     assert float(ramp_symmetry) == 50
     assert "AFG:BURST:TRIGGER" in capsys.readouterr().out
     with pytest.raises(
-            TypeError,
-            match="Generate Waveform does not accept functions as non Enums. "
-                  "Please use 'source_device_constants.functions'.",
+        TypeError,
+        match="Generate Waveform does not accept functions as non Enums. "
+        "Please use 'source_device_constants.functions'.",
     ):
         scope.generate_waveform(
             25e6,

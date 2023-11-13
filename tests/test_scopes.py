@@ -236,9 +236,7 @@ def test_iafg(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    mso56: MSO5 = cast(
-        MSO5, device_manager.add_scope("MSO56-SERIAL1", alias="mso56", connection_type="USB")
-    )
+    mso56: MSO5 = cast(MSO5, device_manager.get_scope("mso56"))
     mso56_constraints = mso56.get_waveform_constraints(
         SignalSourceFunctionsIAFG.SIN,
         frequency=25.0e6,
