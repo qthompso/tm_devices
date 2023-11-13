@@ -11,86 +11,209 @@ from tm_devices import DeviceManager
 from tm_devices.drivers.pi.signal_sources.afgs.afg import (
     AFGSourceDeviceConstants,
     ExtendedSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
     SignalSourceFunctionsAFG,
 )
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
-def test_afg3kc(device_manager: DeviceManager) -> None:
+def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     """Test the AFG3KC driver.
 
     Args:
         device_manager: The DeviceManager object.
     """
-    afg3kc = device_manager.add_afg(
-        "afg3kc-hostname", alias="afg3kc", connection_type="SOCKET", port=10001
+    afg3252c = device_manager.add_afg(
+        "afg3252c-hostname", alias="afg3252c", connection_type="SOCKET", port=10001
     )
-    assert id(device_manager.get_afg(number_or_alias="afg3kc")) == id(afg3kc)
-    assert id(device_manager.get_afg(number_or_alias=1)) == id(afg3kc)
-    assert afg3kc.visa_timeout == UNIT_TEST_TIMEOUT
-    assert afg3kc.default_visa_timeout == UNIT_TEST_TIMEOUT
-    assert afg3kc.resource_expression == "TCPIP0::AFG3KC-HOSTNAME::10001::SOCKET"
-    assert afg3kc.total_channels == 2
-    assert afg3kc.idn_string == "TEKTRONIX,AFG3252C,SERIAL1,SCPI:99.0 FV:3.2.3"
-    assert afg3kc.sw_version == Version("3.2.3")
-    assert afg3kc.all_channel_names_list == ("SOURCE1", "SOURCE2")
-    assert afg3kc.visa_backend == "PyVISA-sim"
-    assert afg3kc.source_device_constants == AFGSourceDeviceConstants(
+    assert id(device_manager.get_afg(number_or_alias="afg3252c")) == id(afg3252c)
+    assert id(device_manager.get_afg(number_or_alias=1)) == id(afg3252c)
+    assert afg3252c.visa_timeout == UNIT_TEST_TIMEOUT
+    assert afg3252c.default_visa_timeout == UNIT_TEST_TIMEOUT
+    assert afg3252c.resource_expression == "TCPIP0::AFG3252C-HOSTNAME::10001::SOCKET"
+    assert afg3252c.total_channels == 2
+    assert afg3252c.idn_string == "TEKTRONIX,AFG3252C,SERIAL1,SCPI:99.0 FV:3.2.3"
+    assert afg3252c.sw_version == Version("3.2.3")
+    assert afg3252c.all_channel_names_list == ("SOURCE1", "SOURCE2")
+    assert afg3252c.visa_backend == "PyVISA-sim"
+    assert afg3252c.source_device_constants == AFGSourceDeviceConstants(
         memory_page_size=2,
-        memory_max_record_length=131072,
+        memory_max_record_length=128 * 1024,
         memory_min_record_length=2,
     )
-    assert afg3kc.check_visa_connection()
-    afg3kc.write("*OPC?")
-    assert afg3kc.read() == "1"
-    assert afg3kc.opt_string == "0"
-    assert afg3kc.query("SYSTEM:ERROR?") == '0,"No error"'
-    assert afg3kc.query("SYSTEM:ERROR?", remove_quotes=True) == "0,No error"
-    assert afg3kc.expect_esr(0)[0]
+    assert afg3252c.check_visa_connection()
+    afg3252c.write("*OPC?")
+    assert afg3252c.read() == "1"
+    assert afg3252c.opt_string == "0"
+    assert afg3252c.query("SYSTEM:ERROR?") == '0,"No error"'
+    assert afg3252c.query("SYSTEM:ERROR?", remove_quotes=True) == "0,No error"
+    assert afg3252c.expect_esr(0)[0]
     with mock.patch("pyvisa.highlevel.VisaLibraryBase.clear", mock.MagicMock(return_value=None)):
-        assert afg3kc.query_expect_timeout("INVALID?", timeout_ms=1) == ""
+        assert afg3252c.query_expect_timeout("INVALID?", timeout_ms=1) == ""
     with mock.patch(
         "pyvisa.resources.messagebased.MessageBasedResource.query",
         mock.MagicMock(side_effect=visa.errors.Error("custom error")),
     ), pytest.raises(visa.errors.Error):
-        assert afg3kc.query_expect_timeout("INVALID?", timeout_ms=1) == ""
-    assert afg3kc.expect_esr(32, '1, Command error\n0,"No error"')[0]
+        assert afg3252c.query_expect_timeout("INVALID?", timeout_ms=1) == ""
+    assert afg3252c.expect_esr(32, '1, Command error\n0,"No error"')[0]
     with pytest.raises(AssertionError):
-        afg3kc.expect_esr(32, '1, Command error\n0,"No error"')
+        afg3252c.expect_esr(32, '1, Command error\n0,"No error"')
 
-    assert afg3kc.expect_esr(0)[0]
-    assert afg3kc.get_eventlog_status() == (True, '0,"No error"')
+    afg3252c.generate_waveform(
+        25e6, afg3252c.source_device_constants.functions.PULSE, 1.0, 0.0, "all"
+    )
+    afg3252c.generate_waveform(
+        25e6,
+        afg3252c.source_device_constants.functions.SIN,
+        1.0,
+        0.0,
+        "SOURCE1",
+        burst=1,
+        termination="HIGHZ",
+    )
+    afg3252c.generate_waveform(
+        25e6,
+        afg3252c.source_device_constants.functions.RAMP,
+        1.0,
+        0.0,
+        "SOURCE1",
+        burst=1,
+        termination="FIFTY",
+    )
+    afg3252c.generate_waveform(
+        25e6,
+        afg3252c.source_device_constants.functions.DC,
+        1.0,
+        0.0,
+        "SOURCE1",
+        termination="HIGHZ",
+    )
+    afg3252c.generate_waveform(
+        25e6,
+        afg3252c.source_device_constants.functions.PULSE,
+        1.0,
+        0.0,
+        "SOURCE1",
+        termination="FIFTY",
+    )
+    assert afg3252c.expect_esr(0)[0]
+    assert afg3252c.get_eventlog_status() == (True, '0,"No error"')
 
     with pytest.raises(AssertionError, match="No error string was provided"):
-        afg3kc.expect_esr(1)
+        afg3252c.expect_esr(1)
 
     with pytest.raises(AssertionError, match="Invalid channel name 'ch', valid items: "):
-        afg3kc._validate_channels("ch")  # noqa: SLF001
+        afg3252c._validate_channels("ch")  # noqa: SLF001
 
     with pytest.raises(AssertionError, match="Invalid channel name '99', valid items: "):
-        afg3kc._validate_channels("99")  # noqa: SLF001
+        afg3252c._validate_channels("99")  # noqa: SLF001
 
     with pytest.raises(
         TypeError,
         match="Generate Waveform does not accept functions as non Enums. "
         "Please use 'source_device_constants.functions'.",
     ):
-        afg3kc.generate_waveform(
+        afg3252c.generate_waveform(
             25e6,
-            afg3kc.source_device_constants.functions.PULSE.value,  # type: ignore
+            afg3252c.source_device_constants.functions.PULSE.value,  # type: ignore
             1.0,
             0.0,
             "all",
         )
-    afg3kc_constraints_1 = afg3kc.get_waveform_constraints(SignalSourceFunctionsAFG.SIN)
-    min_smaple = 300.0
-    max_sample = 2_500_000_000.0
-    assert afg3kc_constraints_1 == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterRange(min=0.1, max=2.0),
-        offset_range=ParameterRange(min=-0.5, max=0.5),
-        frequency_range=ParameterRange(min=min_smaple / 1000.0, max=max_sample / 10.0),
-        sample_rate_range=ParameterRange(min=min_smaple, max=max_sample),
+
+    afg3051 = device_manager.add_afg("afg3051-hostname", alias="afg3051")
+
+    afg3051_constraints = afg3051.get_waveform_constraints(SignalSourceFunctionsAFG.RAMP)
+
+    assert afg3051_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=500.0e3),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg3011c = device_manager.add_afg("afg3011c-hostname", alias="afg3011c")
+
+    afg3011c_constraints = afg3011c.get_waveform_constraints(SignalSourceFunctionsAFG.SIN)
+
+    assert afg3011c_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=40.0e-3, upper=40.0),
+        offset_range=ParameterBounds(lower=-20.0, upper=20.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=10.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg3021c = device_manager.add_afg("afg3021c-hostname", alias="afg3021c")
+
+    afg3021c_constraints = afg3021c.get_waveform_constraints(SignalSourceFunctionsAFG.SQUARE)
+
+    assert afg3021c_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-3, upper=25.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg3052c = device_manager.add_afg("afg3052c-hostname", alias="afg3052c")
+
+    afg3052c_constraints = afg3052c.get_waveform_constraints(SignalSourceFunctionsAFG.RAMP)
+
+    assert afg3052c_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=800.0e3),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg3101c = device_manager.add_afg("afg3101c-hostname", alias="afg3101c")
+
+    afg3101c_constraints = afg3101c.get_waveform_constraints(
+        SignalSourceFunctionsAFG.ARBITRARY, waveform_length=5_000
+    )
+
+    assert afg3101c_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=40.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-3, upper=50.0e6),
+        sample_rate_range=ParameterBounds(lower=1.0e9, upper=1.0e9),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg3151c = device_manager.add_afg("afg3151c-hostname", alias="afg3151c")
+
+    afg3151c_constraints = afg3151c.get_waveform_constraints(SignalSourceFunctionsAFG.LORENTZ)
+
+    assert afg3151c_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=40.0e-3, upper=16.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=1.5e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg3252c_constraints = afg3252c.get_waveform_constraints(SignalSourceFunctionsAFG.SIN)
+
+    assert afg3252c_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=100.0e-3, upper=8.0),
+        offset_range=ParameterBounds(lower=-5.0, upper=5.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=240.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
@@ -104,13 +227,94 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
         device_manager: The DeviceManager object.
         capsys: The pytest capture fixture.
     """
-    afg31k = device_manager.add_afg("afg31k-hostname")
+    afg31021 = device_manager.add_afg("afg31021-hostname")
 
     _ = capsys.readouterr().out  # throw away stdout
     # simulate a reboot
-    afg31k.reboot()
+    afg31021.reboot()
 
     stdout = capsys.readouterr().out
     assert "SYSTem:RESTart" in stdout
 
-    assert not afg31k.has_errors()
+    assert not afg31021.has_errors()
+
+    afg31021_constraints = afg31021.get_waveform_constraints(
+        SignalSourceFunctionsAFG.SIN,
+        frequency=20.0e6,
+    )
+
+    assert afg31021_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=20.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=25.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg31051 = device_manager.add_afg("afg31051-hostname")
+    afg31051_constraints = afg31051.get_waveform_constraints(
+        SignalSourceFunctionsAFG.SQUARE,
+        waveform_length=16383,
+        frequency=70.0e6,
+    )
+
+    assert afg31051_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=16.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=40.0e6),
+        sample_rate_range=ParameterBounds(lower=1.0e9, upper=1.0e9),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg31101 = device_manager.add_afg("afg31101-hostname")
+    afg31101_constraints = afg31101.get_waveform_constraints(
+        SignalSourceFunctionsAFG.RAMP,
+        frequency=90.0e6,
+    )
+
+    assert afg31101_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=12.0),
+        offset_range=ParameterBounds(lower=-10.0, upper=10.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=1.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg31152 = device_manager.add_afg("afg31152-hostname")
+    afg31152_constraints = afg31152.get_waveform_constraints(
+        SignalSourceFunctionsAFG.ARBITRARY,
+        waveform_length=16383,
+        frequency=0.5e6,
+    )
+
+    assert afg31152_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=10.0),
+        offset_range=ParameterBounds(lower=-5.0, upper=5.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=75.0e6),
+        sample_rate_range=ParameterBounds(lower=2.0e9, upper=2.0e9),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
+    afg31251 = device_manager.add_afg("afg31251-hostname")
+    afg31251_constraints = afg31251.get_waveform_constraints(
+        SignalSourceFunctionsAFG.SIN,
+        frequency=210.0e6,
+    )
+
+    assert afg31251_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=2.0e-3, upper=8.0),
+        offset_range=ParameterBounds(lower=-5.0, upper=5.0),
+        frequency_range=ParameterBounds(lower=1.0e-6, upper=250.0e6),
+        sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )

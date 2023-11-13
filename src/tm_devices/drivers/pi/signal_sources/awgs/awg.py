@@ -5,19 +5,18 @@ import struct
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
-from pathlib import Path
 from types import MappingProxyType
 from typing import Dict, Literal, Optional, Tuple, Type, Union
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
     SourceDeviceConstants,
 )
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
-from tm_devices.helpers import DeviceTypes, SignalSourceFunctionsAWG
+from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAWG
 
 
 @dataclass(frozen=True)
@@ -189,64 +188,59 @@ class AWG(SignalSource, ABC):
         self.write("AWGCONTROL:RUN")
         self.expect_esr(0)
 
-    def get_waveform_constraints(
+    def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         function: Optional[SignalSourceFunctionsAWG] = None,
-        file_name: Optional[str] = None,
+        waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-    ) -> Optional[ExtendedSourceDeviceConstants]:
-        if not function and not file_name:
-            raise ValueError(f"Constraints require either a function or filename to be provided.")
-        amplitude_range, offset_range, sample_rate_range = self._get_limited_constraints()
+        load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
+    ) -> ExtendedSourceDeviceConstants:
+        """Get the constraints that restrict the waveform to certain parameter ranges.
+
+        Args:
+            function: The function that needs to be generated.
+            waveform_length: The length of the waveform if no function or arbitrary is provided.
+            frequency: The frequency of the waveform that needs to be generated.
+            load_impedance: The suggested impedance on the source.
+        """
+        del frequency, load_impedance
+        if (function and waveform_length) or (not function and not waveform_length):
+            msg = "AWG Constraints require function XOR waveform_length."
+            raise ValueError(msg)
+        amplitude_range, offset_range, sample_rate_range = self._get_series_specific_constraints()
         if function:
-            func_sample_rate_lookup: Dict[str, ParameterRange] = {
-                SignalSourceFunctionsAWG.SIN.name: ParameterRange(10, 3600),
-                SignalSourceFunctionsAWG.CLOCK.name: ParameterRange(960, 960),
-                SignalSourceFunctionsAWG.SQUARE.name: ParameterRange(10, 1000),
-                SignalSourceFunctionsAWG.RAMP.name: ParameterRange(10, 1000),
-                SignalSourceFunctionsAWG.TRIANGLE.name: ParameterRange(10, 1000),
-                SignalSourceFunctionsAWG.DC.name: ParameterRange(1000, 1000),
+            func_sample_rate_lookup: Dict[str, ParameterBounds] = {
+                SignalSourceFunctionsAWG.SIN.name: ParameterBounds(lower=10, upper=3600),
+                SignalSourceFunctionsAWG.CLOCK.name: ParameterBounds(lower=960, upper=960),
+                SignalSourceFunctionsAWG.SQUARE.name: ParameterBounds(lower=10, upper=1000),
+                SignalSourceFunctionsAWG.RAMP.name: ParameterBounds(lower=10, upper=1000),
+                SignalSourceFunctionsAWG.TRIANGLE.name: ParameterBounds(lower=10, upper=1000),
+                SignalSourceFunctionsAWG.DC.name: ParameterBounds(lower=1000, upper=1000),
             }
-            # set the low range to the lowest frequency on source divided by longest waveform
-            slowest_frequency = sample_rate_range.min / func_sample_rate_lookup[function.name].max
-
-            # set the high range to the highest frequency on source divided by shortest waveform
-            fastest_frequency = sample_rate_range.max / func_sample_rate_lookup[function.name].min
-        elif file_name:
-            try:
-                target_file = file_name.replace('"', "")
-                wanted_file = Path(target_file).stem
-                page_length = self.query(f'WLIST:WAVEFORM:LENGTH? "{wanted_file}"')
-                page_length = int(page_length)
-                # set the low range to the lowest frequency on source divided by longest waveform
-                slowest_frequency = sample_rate_range.min / page_length
-
-                # set the high range to the highest frequency on source divided by shortest waveform
-                fastest_frequency = sample_rate_range.max / page_length
-            except AssertionError:
-                return None
-            # set the new range
+            slowest_frequency = (
+                sample_rate_range.lower / func_sample_rate_lookup[function.name].upper
+            )
+            fastest_frequency = (
+                sample_rate_range.upper / func_sample_rate_lookup[function.name].lower
+            )
+        elif waveform_length:
+            slowest_frequency = sample_rate_range.lower / waveform_length
+            fastest_frequency = sample_rate_range.upper / waveform_length
         else:
-            return None
-        frequency_range = ParameterRange(slowest_frequency, fastest_frequency)
-        esdc = ExtendedSourceDeviceConstants(
+            slowest_frequency = 0.0
+            fastest_frequency = 0.0
+
+        frequency_range = ParameterBounds(lower=slowest_frequency, upper=fastest_frequency)
+        return ExtendedSourceDeviceConstants(
             amplitude_range=amplitude_range,
             offset_range=offset_range,
             frequency_range=frequency_range,
             sample_rate_range=sample_rate_range,
         )
 
-        return esdc
-
     ################################################################################################
     # Private Methods
     ################################################################################################
-    @abstractmethod
-    def _get_limited_constraints(
-        self,
-    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
-        raise NotImplementedError
-
     def _get_predefined_filename(
         self, frequency: float, function: SignalSourceFunctionsAWG
     ) -> Tuple[Union[str, None], Union[float, None]]:
@@ -287,9 +281,39 @@ class AWG(SignalSource, ABC):
 
         return predefined_name, needed_sample_rate
 
+    @abstractmethod
+    def _get_series_specific_constraints(
+        self,
+    ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
+        raise NotImplementedError
+
     def _reboot(self) -> None:
         """Reboot the device."""
         # TODO: overwrite the reboot code here
+
+    def _setup_burst_waveform(self, channel_num: int, filename: str, burst: int):
+        """Prepare device for burst waveform.
+
+        Args:
+            channel_num: The channel number to output the signal from.
+            filename: The filename for the burst waveform to generate.
+            burst: The number of wavelengths to be generated.
+        """
+        if burst == 0:
+            self.set_and_check(f"SOURCE{channel_num}:WAVEFORM", f'"{filename}"')
+        elif burst > 0:
+            self.set_and_check("AWGCONTROL:RMODE", "SEQ")
+            self.set_and_check("SEQUENCE:LENGTH", "1")
+            self.set_and_check(
+                f"SEQUENCE:ELEMENT1:WAVEFORM{channel_num}",
+                f'"{filename}"',
+            )
+            self.set_and_check(
+                "SEQUENCE:ELEMENT1:LOOP:COUNT",
+                burst,
+            )
+        else:
+            raise ValueError(f"{burst} is an invalid burst value. Burst must be >= 0.")
 
     # TODO: add testing for this
     def _send_waveform(self, target_file: str) -> None:  # pragma: no cover
@@ -319,30 +343,4 @@ class AWG(SignalSource, ABC):
                 is_big_endian=True,
                 termination="\r\n",
                 encoding="latin-1",
-            )
-
-    def _setup_burst_waveform(self, channel_num: int, filename: str, burst: int):
-        """Prepare device for burst waveform.
-
-        Args:
-            channel_num: The channel number to output the signal from.
-            filename: The filename for the burst waveform to generate.
-            burst: The number of wavelengths to be generated.
-        """
-        if burst == 0:
-            self.set_and_check(f"SOURCE{channel_num}:WAVEFORM", f'"{filename}"')
-        elif burst > 0:
-            self.set_and_check("AWGCONTROL:RMODE", "SEQ")
-            self.set_and_check("SEQUENCE:LENGTH", "1")
-            self.set_and_check(
-                f"SEQUENCE:ELEMENT1:WAVEFORM{channel_num}",
-                f'"{filename}"',
-            )
-            self.set_and_check(
-                "SEQUENCE:ELEMENT1:LOOP:COUNT",
-                burst,
-            )
-        else:
-            raise ValueError(
-                f"{burst} is an invalid burst value. Burst must be >= 0."
             )

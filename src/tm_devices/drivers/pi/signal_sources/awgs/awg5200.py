@@ -10,7 +10,7 @@ from tm_devices.drivers.pi.signal_sources.awgs.awg import (
     AWG,
     AWGChannel,
     AWGSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
 )
 from tm_devices.helpers import SignalSourceFunctionsAWG
 
@@ -115,13 +115,14 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Private Methods
     ################################################################################################
-    def _get_limited_constraints(
+    def _get_series_specific_constraints(
         self,
-    ) -> Tuple[ParameterRange, ParameterRange, ParameterRange]:
-        amplitude_range = ParameterRange(100e-3, 2.0)
-        offset_range = ParameterRange(-0.5, 0.5)
+    ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
+        """Get constraints which are dependent on the model series."""
+        amplitude_range = ParameterBounds(lower=100e-3, upper=2.0)
+        offset_range = ParameterBounds(lower=-0.5, upper=0.5)
         # option is the sample rate in hundreds of Mega Hertz
-        sample_rate_range = ParameterRange(300.0, int(self.opt_string) * 100.0e6)
+        sample_rate_range = ParameterBounds(lower=300.0, upper=int(self.opt_string) * 100.0e6)
 
         return amplitude_range, offset_range, sample_rate_range
 

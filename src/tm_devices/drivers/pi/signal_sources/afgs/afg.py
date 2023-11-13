@@ -9,13 +9,13 @@ from typing import Literal, Optional, Tuple, Type
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
     SourceDeviceConstants,
 )
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
-from tm_devices.helpers import DeviceTypes, SignalSourceFunctionsAFG
+from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAFG
 
 
 @dataclass(frozen=True)
@@ -223,26 +223,39 @@ class AFG(SignalSource, ABC):
             # Check for system errors
             self.expect_esr(0)
 
-    def get_waveform_constraints(
+    def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         function: Optional[SignalSourceFunctionsAFG] = None,
-        file_name: Optional[str] = None,
+        waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-    ) -> Optional[ExtendedSourceDeviceConstants]:
+        load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
+    ) -> ExtendedSourceDeviceConstants:
+        """Get the constraints that restrict the waveform to certain parameter ranges.
+
+        Args:
+            function: The function that needs to be generated.
+            waveform_length: The length of the waveform if no function or arbitrary is provided.
+            frequency: The frequency of the waveform that needs to be generated.
+            load_impedance: The suggested impedance on the source.
+        """
+        if not function:
+            msg = "AFGs must have a waveform defined."
+            raise ValueError(msg)
         (
             amplitude_range,
-            offset_range,
             frequency_range,
+            offset_range,
             sample_rate_range,
-        ) = self._get_limited_constraints(function, frequency)
+        ) = self._get_series_specific_constraints(
+            function, waveform_length, frequency, load_impedance
+        )
 
-        esdc = ExtendedSourceDeviceConstants(
+        return ExtendedSourceDeviceConstants(
             amplitude_range=amplitude_range,
             frequency_range=frequency_range,
             offset_range=offset_range,
             sample_rate_range=sample_rate_range,
         )
-        return esdc
 
     ################################################################################################
     # Private Methods
@@ -260,9 +273,19 @@ class AFG(SignalSource, ABC):
         # TODO: implement
 
     @abstractmethod
-    def _get_limited_constraints(
+    def _get_series_specific_constraints(
         self,
-        function,
-        frequency,
-    ) -> Tuple[Optional[ParameterRange], Optional[ParameterRange], Optional[ParameterRange]]:
+        function: SignalSourceFunctionsAFG,
+        waveform_length: Optional[int] = None,
+        frequency: Optional[float] = None,
+        load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
+    ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds, ParameterBounds]:
+        """Get constraints which are dependent on the model series.
+
+        Args:
+            function: The function that needs to be generated.
+            waveform_length: The length of the waveform if no function or arbitrary is provided.
+            frequency: The frequency of the waveform that needs to be generated.
+            load_impedance: The suggested impedance on the source.
+        """
         raise NotImplementedError

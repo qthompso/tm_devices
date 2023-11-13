@@ -258,3 +258,10 @@ class SignalSourceFunctionsIAFG(SignalSourceFunctionBase):
     CARDIAC = "CARDIAC"
     NOISE = "NOISE"
     ARBITRARY = "ARBITRARY"
+
+
+class LoadImpedanceAFG(Enum):
+    """AFG/IAFG Impedance Values."""
+
+    HIGHZ = "HIGHZ"
+    FIFTY = "FIFTY"

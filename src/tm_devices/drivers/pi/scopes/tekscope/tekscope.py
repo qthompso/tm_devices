@@ -34,7 +34,7 @@ from tm_devices.driver_mixins.analysis_object_mixins import (
 from tm_devices.driver_mixins.licensed_mixin import LicensedMixin
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
-    ParameterRange,
+    ParameterBounds,
     SignalGeneratorMixin,
     SourceDeviceConstants,
 )
@@ -42,7 +42,7 @@ from tm_devices.driver_mixins.usb_drives_mixin import USBDrivesMixin
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.scopes.scope import Scope
-from tm_devices.helpers import DeviceConfigEntry, SignalSourceFunctionsIAFG
+from tm_devices.helpers import DeviceConfigEntry, LoadImpedanceAFG, SignalSourceFunctionsIAFG
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
@@ -503,100 +503,108 @@ class TekScope(
             self.write("AFG:BURST:TRIGGER")
         # Don't check for errors as any measurement with low amplitude will generate an error
 
-    def get_waveform_constraints(
+    # pylint: disable=too-many-locals
+    def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         function: Optional[SignalSourceFunctionsIAFG] = None,
-        file_name: Optional[str] = None,
+        waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-    ) -> Optional[ExtendedSourceDeviceConstants]:
-        base_frequency_range = self._get_limited_constraints()
-        base_amplitude_range = ParameterRange(20.0e-3, 5.0)
-        offset_range = ParameterRange(-2.5, 2.5)
+        load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
+    ) -> ExtendedSourceDeviceConstants:
+        """Get the constraints that restrict the waveform to certain parameter ranges.
 
-        square_duty_cycle_range = ParameterRange(10.0, 90.0)
-        pulse_width_range = ParameterRange(0.0, 0.0)  # only defined if frequency is an input
-        # RAMP symmetry range never changes with frequency
-        ramp_symmetry_range = ParameterRange(0.0, 100.0)
+        Args:
+            function: The function that needs to be generated.
+            waveform_length: The length of the waveform if no function or arbitrary is provided.
+            frequency: The frequency of the waveform that needs to be generated.
+            load_impedance: The suggested impedance on the source.
+        """
+        if not function:
+            msg = "IAFGs must have a waveform defined."
+            raise ValueError(msg)
+
+        del waveform_length
+        base_frequency_low = 100.0e-3
+        base_frequency_high = 50.0e6 * self._get_driver_specific_multipliers()
+
+        load_impedance_multiplier = 1.0 if load_impedance == LoadImpedanceAFG.HIGHZ else 0.5
+
+        base_amplitude_low = 20.0e-3
+        base_amplitude_high = 5.0
+
+        square_duty_cycle_range = ParameterBounds(lower=10.0, upper=90.0)
+        pulse_width_range = None
         # handle logic to constrain limits of duty cycle and pulse width range due to frequency
         if frequency is not None:
             max_duty = 90.0
             min_duty = 10.0
-            max_square_pulse_freq = base_frequency_range.max / 2
+            max_square_pulse_freq = base_frequency_high / 2
             # limit to valid range for calcs, otherwise values are outside valid ranges
-            calc_freq = max((base_frequency_range.min, min((max_square_pulse_freq, frequency))))
+            calc_freq = max((base_amplitude_high, min((max_square_pulse_freq, frequency))))
             # above 10MHz (or 20MHz), then SQUARE duty cycle and PULSE width ranges get coerced
-            if frequency > (duty_cycle_coercion_start_freq := base_frequency_range.max / 5):
+            if frequency > (duty_cycle_coercion_start_freq := base_frequency_high / 5):
                 # 15 percent change over the difference between max frequency and start of coercion
                 coercion_slope = 15.0 / (max_square_pulse_freq - duty_cycle_coercion_start_freq)
                 max_duty = 90.0 - (coercion_slope * (calc_freq - duty_cycle_coercion_start_freq))
                 min_duty = 10.0 + (coercion_slope * (calc_freq - duty_cycle_coercion_start_freq))
                 # one decimal place of accuracy as percentage,
                 # and uses floor/ceil on the max/min to stay in valid zone
-                square_duty_cycle_range = ParameterRange(
-                    min=math.ceil(min_duty * 10) / 10, max=math.floor(max_duty * 10) / 10
+                square_duty_cycle_range = ParameterBounds(
+                    lower=math.ceil(min_duty * 10) / 10, upper=math.floor(max_duty * 10) / 10
                 )
-            # todo: There is an edge case where the IAFG period doesn't exactly equal 1/frequency
+            # TODO: There is an edge case where the IAFG period doesn't exactly equal 1/frequency
             #  this can cause the pulse width max and min to be outside valid range by tiny bit,
             #  workaround is to query actual period time and set frequency=1/<actual_period>
             # limited to 0.1ns resolution regardless of frequency
             # also uses floor/ceil to stay in valid zone
-            pulse_width_range = ParameterRange(
-                min=math.ceil(min_duty / 100 * 1e10 / calc_freq) / 1e10,
-                max=math.floor(max_duty / 100 * 1e10 / calc_freq) / 1e10,
+            pulse_width_range = ParameterBounds(
+                lower=math.ceil(min_duty / 100 * 1e10 / calc_freq) / 1e10,
+                upper=math.floor(max_duty / 100 * 1e10 / calc_freq) / 1e10,
             )
+        amplitude_multiplier = 1
 
-        if function.name in {SignalSourceFunctionsIAFG.SIN.name}:
-            frequency_range = base_frequency_range
-            amplitude_range = base_amplitude_range
-        elif function.name in {
-            SignalSourceFunctionsIAFG.SQUARE.name,
-            SignalSourceFunctionsIAFG.PULSE.name,
-            SignalSourceFunctionsIAFG.ARBITRARY.name,
+        if function in {SignalSourceFunctionsIAFG.SIN}:
+            frequency_multiplier = 1
+        elif function in {
+            SignalSourceFunctionsIAFG.SQUARE,
+            SignalSourceFunctionsIAFG.PULSE,
+            SignalSourceFunctionsIAFG.ARBITRARY,
         }:
-            frequency_range = ParameterRange(base_frequency_range.min, base_frequency_range.max / 2)
-            amplitude_range = base_amplitude_range
-        elif function.name in {
-            SignalSourceFunctionsIAFG.GAUSSIAN.name,
-            SignalSourceFunctionsIAFG.HAVERSINE.name,
-            SignalSourceFunctionsIAFG.ERISE.name,
-            SignalSourceFunctionsIAFG.EDECAY.name,
-            SignalSourceFunctionsIAFG.LORENTZ.name,
+            frequency_multiplier = 0.5
+        elif function in {SignalSourceFunctionsIAFG.SINC}:
+            frequency_multiplier = 0.04
+            amplitude_multiplier = 0.6
+        elif function in {
+            SignalSourceFunctionsIAFG.RAMP,
+            SignalSourceFunctionsIAFG.CARDIAC,
         }:
-            frequency_range = ParameterRange(
-                base_frequency_range.min, base_frequency_range.max / 10
-            )
-            amplitude_range = ParameterRange(
-                20.0e-3, 2.4 if function == SignalSourceFunctionsIAFG.LORENTZ else 2.5
-            )
-        elif function.name in {SignalSourceFunctionsIAFG.SINC.name}:
-            frequency_range = ParameterRange(
-                base_frequency_range.min, base_frequency_range.max / 25
-            )
-            amplitude_range = ParameterRange(20.0e-3, 3.0)
-        elif function.name in {
-            SignalSourceFunctionsIAFG.RAMP.name,
-            SignalSourceFunctionsIAFG.CARDIAC.name,
-        }:
-            frequency_range = ParameterRange(
-                base_frequency_range.min, base_frequency_range.max / 100
-            )
-            amplitude_range = base_amplitude_range
-        elif function.name in {SignalSourceFunctionsIAFG.NOISE.name}:
-            amplitude_range = ParameterRange(20.0e-3, 5.0)
-        elif function.name in {SignalSourceFunctionsIAFG.DC.name}:
-            frequency_range = base_frequency_range
-            amplitude_range = base_amplitude_range
+            frequency_multiplier = 0.01
         else:
-            raise NotImplementedError
-        esdc = ExtendedSourceDeviceConstants(
+            frequency_multiplier = 0.1
+            amplitude_multiplier = 0.5 if function != SignalSourceFunctionsIAFG.LORENTZ else 0.48
+
+        frequency_range = ParameterBounds(
+            lower=base_frequency_low, upper=base_frequency_high * frequency_multiplier
+        )
+        amplitude_range = ParameterBounds(
+            lower=base_amplitude_low * load_impedance_multiplier,
+            upper=base_amplitude_high * amplitude_multiplier * load_impedance_multiplier,
+        )
+        offset_range = ParameterBounds(
+            lower=-2.5 * load_impedance_multiplier, upper=2.5 * load_impedance_multiplier
+        )
+        # RAMP symmetry range never changes with frequency
+        ramp_symmetry_range = ParameterBounds(lower=0.0, upper=100.0)
+        sample_rate_range = ParameterBounds(lower=250.0e6, upper=250.0e6)
+        return ExtendedSourceDeviceConstants(
             amplitude_range=amplitude_range,
             frequency_range=frequency_range,
             offset_range=offset_range,
+            sample_rate_range=sample_rate_range,
             square_duty_cycle_range=square_duty_cycle_range,
             pulse_width_range=pulse_width_range,
             ramp_symmetry_range=ramp_symmetry_range,
         )
-        return esdc
 
     def recall_reference(self, reference_path: str, ref_number: Union[int, str]) -> None:
         """Recall a reference waveform file.
@@ -865,10 +873,10 @@ class TekScope(
         """Reboot the device."""
         self.write(":SCOPEAPP REBOOT")
 
-    def _get_limited_constraints(
-        self,
-    ) -> ParameterRange:
-        return ParameterRange(0.1, 50.0e6)
+    @staticmethod
+    def _get_driver_specific_multipliers() -> float:
+        """Get constraints for specific drivers."""
+        return 1.0
 
     def _set_channel_display_state(
         self, channel_str: str, state: bool, turn_on_group: bool = True

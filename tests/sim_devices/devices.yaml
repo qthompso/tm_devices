@@ -57,33 +57,52 @@ resources:
 
   # --- afg ---
   #   afg3k
-  TCPIP::AFG3K-HOSTNAME::INSTR:
-    device: afg3252
+  TCPIP::AFG3051-HOSTNAME::INSTR:
+    device: afg3051
     filename: afg/afg3k.yaml
-  TCPIP::AFG3KB-HOSTNAME::INSTR:
-    device: afg3kb
+  TCPIP::AFG3022B-HOSTNAME::INSTR:
+    device: afg3022b
     filename: afg/afg3kb.yaml
-  TCPIP::AFG3KC-HOSTNAME::INSTR:
-    device: afg3kc
-    filename: afg/afg3kc.yaml
-  TCPIP::AFG3KC-HOSTNAME::10001::SOCKET:
-    device: afg3kc
-    filename: afg/afg3kc.yaml
   TCPIP::AFG3KC-TIMEOUT::INSTR:
     device: afg3kc-timeout
     filename: afg/afg3kc.yaml
-  TCPIP::AFG3KC-1CH::INSTR:
-    device: afg3kc-1ch
+  TCPIP::AFG3011C-HOSTNAME::INSTR:
+    device: afg3011c
     filename: afg/afg3kc.yaml
-  TCPIP::AFG3051C::INSTR:
-    device: afg3051c
-    filename: afg/afg3kc.yaml
-  TCPIP::AFG3021C::INSTR:
+  TCPIP::AFG3021C-HOSTNAME::INSTR:
     device: afg3021c
     filename: afg/afg3kc.yaml
+  TCPIP::AFG3052C-HOSTNAME::INSTR:
+    device: afg3052c
+    filename: afg/afg3kc.yaml
+  TCPIP::AFG3101C-HOSTNAME::INSTR:
+    device: afg3101c
+    filename: afg/afg3kc.yaml
+  TCPIP::AFG3151C-HOSTNAME::INSTR:
+    device: afg3151c
+    filename: afg/afg3kc.yaml
+  TCPIP::AFG3252C-HOSTNAME::INSTR:
+    device: afg3252c
+    filename: afg/afg3kc.yaml
+  TCPIP::AFG3252C-HOSTNAME::10001::SOCKET:
+    device: afg3252c
+    filename: afg/afg3kc.yaml
+
   #   afg31k
-  TCPIP::AFG31K-HOSTNAME::INSTR:
+  TCPIP::AFG31021-HOSTNAME::INSTR:
     device: afg31021
+    filename: afg/afg31k.yaml
+  TCPIP::AFG31051-HOSTNAME::INSTR:
+    device: afg31051
+    filename: afg/afg31k.yaml
+  TCPIP::AFG31101-HOSTNAME::INSTR:
+    device: afg31101
+    filename: afg/afg31k.yaml
+  TCPIP::AFG31152-HOSTNAME::INSTR:
+    device: afg31152
+    filename: afg/afg31k.yaml
+  TCPIP::AFG31251-HOSTNAME::INSTR:
+    device: afg31251
     filename: afg/afg31k.yaml
 
   # --- awg ---
@@ -95,45 +114,45 @@ resources:
     device: awg520025
     filename: awg/awg5200.yaml
   #   awg5k
-  TCPIP::AWG5K-HOSTNAME::INSTR:
+  TCPIP::AWG5012-HOSTNAME::INSTR:
     device: awg5012
     filename: awg/awg5k.yaml
-  TCPIP::AWG5KB-HOSTNAME::INSTR:
-    device: awg5012b
+  TCPIP::AWG5002B-HOSTNAME::INSTR:
+    device: awg5002b
     filename: awg/awg5kb.yaml
-  TCPIP::AWG5KC-HOSTNAME::INSTR:
+  TCPIP::AWG5012C-HOSTNAME::INSTR:
     device: awg5012c
     filename: awg/awg5kc.yaml
   #   awg7k
-  TCPIP::AWG7K01-HOSTNAME::INSTR:
+  TCPIP::AWG705101-HOSTNAME::INSTR:
     device: awg705101
     filename: awg/awg7k.yaml
-  TCPIP::AWG7K06-HOSTNAME::INSTR:
+  TCPIP::AWG710206-HOSTNAME::INSTR:
     device: awg710206
     filename: awg/awg7k.yaml
-  TCPIP::AWG7KB02-HOSTNAME::INSTR:
+  TCPIP::AWG7062B02-HOSTNAME::INSTR:
     device: awg7062b02
     filename: awg/awg7kb.yaml
-  TCPIP::AWG7KB01-HOSTNAME::INSTR:
+  TCPIP::AWG7121B01-HOSTNAME::INSTR:
     device: awg7121b01
     filename: awg/awg7kb.yaml
-  TCPIP::AWG7KC01-HOSTNAME::INSTR:
+  TCPIP::AWG7082C01-HOSTNAME::INSTR:
     device: awg7082c01
     filename: awg/awg7kc.yaml
-  TCPIP::AWG7KC06-HOSTNAME::INSTR:
+  TCPIP::AWG7122C06-HOSTNAME::INSTR:
     device: awg7122c06
     filename: awg/awg7kc.yaml
   #   awg70k
-  TCPIP::AWG70KA150-HOSTNAME::INSTR:
+  TCPIP::AWG70001A150-HOSTNAME::INSTR:
     device: awg70001a150
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70KA225-HOSTNAME::INSTR:
+  TCPIP::AWG70002A225-HOSTNAME::INSTR:
     device: awg70002a225
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70KA216-HOSTNAME::INSTR:
+  TCPIP::AWG70002A216-HOSTNAME::INSTR:
     device: awg70002a216
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70KB208-HOSTNAME::INSTR:
+  TCPIP::AWG70002B208-HOSTNAME::INSTR:
     device: awg70002b208
     filename: awg/awg70kb.yaml
 
