@@ -8,14 +8,11 @@ from tm_devices import DeviceManager
 from tm_devices.drivers import MSO5
 
 
-def test_awg5200_gen_waveform(
-    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Test the AWG5200 driver.
+def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
+    """Test generate waveform for AWG5200.
 
     Args:
         device_manager: The DeviceManager object.
-        capsys: The captured stdout and stderr.
     """
     awg520050 = device_manager.add_awg("awg520050-hostname", alias="awg520050")
 
@@ -44,9 +41,12 @@ def test_awg5200_gen_waveform(
     assert awg520050.get_eventlog_status() == (True, '0,"No error"')
 
 
-def test_awg7k_gen_waveform(
-    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
+    """Test generate waveform for AWG7k.
+
+    Args:
+        device_manager: The DeviceManager object.
+    """
     awg7k01 = device_manager.add_awg("AWG705101-hostname", alias="awg7k01")
     awg7k06 = device_manager.add_awg("AWG710206-hostname", alias="awg7k06")
 
@@ -81,9 +81,12 @@ def test_awg7k_gen_waveform(
     assert awg7k01.get_eventlog_status() == (True, '0,"No error"')
 
 
-def test_awg5k_gen_waveform(
-    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
+    """Test generate waveform for AWG5k.
+
+    Args:
+        device_manager: The DeviceManager object.
+    """
     awg5k = device_manager.add_awg("AWG5012-hostname", alias="awg5k")
     # Sine
     awg5k.generate_waveform(
@@ -133,19 +136,20 @@ def test_awg5k_gen_waveform(
     assert awg5k.get_eventlog_status() == (True, '0,"No error"')
 
     # Invalid burst
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         awg5k.generate_waveform(
             10e3, awg5k.source_device_constants.functions.SIN, 1.0, 0.0, channel="SOURCE1", burst=-1
         )
 
 
-def test_afg3kc_gen_waveform(
+def test_afg3k_gen_waveform(
     device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Test the AFG3KC driver.
+    """Test generate waveform for AWG3k.
 
     Args:
         device_manager: The DeviceManager object.
+        capsys: The captured stdout and stderr.
     """
     afg3kc = device_manager.add_afg(
         "afg3252c-hostname", alias="afg3kc", connection_type="SOCKET", port=10001
@@ -179,7 +183,7 @@ def test_afg3kc_gen_waveform(
     source1_frequency = afg3kc.query("SOURCE1:FREQUENCY:FIXED?")
     assert float(source1_frequency) == 25e6
     source1_offset = afg3kc.query("SOURCE1:VOLTAGE:OFFSET?")
-    assert float(source1_offset) == 0.0
+    assert not float(source1_offset)
     assert "SOURCE1:PULSE:DCYCLE" not in capsys.readouterr().out
     assert "SOURCE1:FUNCTION:RAMP:SYMMETRY" not in capsys.readouterr().out
     source1_function = afg3kc.query("SOURCE1:FUNCTION?")
@@ -231,6 +235,12 @@ def test_afg3kc_gen_waveform(
 def test_internal_afg_gen_waveform(
     device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """Test generate waveform for IAFG in tekscopes.
+
+    Args:
+        device_manager: The DeviceManager object.
+        capsys: The captured stdout and stderr.
+    """
     scope: MSO5 = cast(
         MSO5, device_manager.add_scope("MSO56-SERIAL1", alias="mso56", connection_type="USB")
     )
@@ -241,7 +251,7 @@ def test_internal_afg_gen_waveform(
     frequency = scope.query("AFG:FREQUENCY?")
     assert float(frequency) == 10e3
     offset = scope.query("AFG:OFFSET?")
-    assert float(offset) == 0
+    assert not float(offset)
     square_duty = scope.query("AFG:SQUARE:DUTY?")
     assert float(square_duty) == 50
     assert "AFG:RAMP:SYMMETRY" not in capsys.readouterr().out

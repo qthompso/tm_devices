@@ -100,12 +100,12 @@ class AWG70KA(AWG70KAMixin, AWG):
     # Properties
     ################################################################################################
     @cached_property
-    def channel(self) -> "MappingProxyType[str, AWG70KAChannel]":
+    def channel(self) -> "MappingProxyType[str, AWGChannel]":
         """Mapping of channel names to AWGChannel objects."""
         channel_map = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWG70KAChannel(self, channel_name)
-        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
+        return MappingProxyType(channel_map)
 
     ################################################################################################
     # Public Methods
