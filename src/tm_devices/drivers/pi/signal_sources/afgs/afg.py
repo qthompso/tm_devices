@@ -116,7 +116,7 @@ class AFG(SignalSource, ABC):
         channel_map = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AFGChannel(self, channel_name)
-        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
+        return MappingProxyType(channel_map)
 
     @property
     def source_device_constants(self) -> AFGSourceDeviceConstants:

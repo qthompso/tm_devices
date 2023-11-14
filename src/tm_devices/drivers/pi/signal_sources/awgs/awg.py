@@ -118,7 +118,7 @@ class AWG(SignalSource, ABC):
         channel_map = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWGChannel(self, channel_name)
-        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
+        return MappingProxyType(channel_map)
 
     @property
     def source_device_constants(self) -> AWGSourceDeviceConstants:
@@ -148,7 +148,7 @@ class AWG(SignalSource, ABC):
         self.write(f'MMEMory:IMPort "{wfm_name}", {waveform_file_path}, {wfm_type}')
         self._ieee_cmds.opc()
 
-    def generate_waveform(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+    def generate_waveform(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]  # pylint: disable=too-many-locals
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
@@ -156,10 +156,10 @@ class AWG(SignalSource, ABC):
         offset: float,
         channel: str = "all",
         burst: int = 0,
-        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
-        duty_cycle: float = 50.0,
-        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
-        symmetry: float = 50.0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
+        duty_cycle: float = 50.0,  # noqa: ARG002
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
+        symmetry: float = 50.0,  # noqa: ARG002
     ) -> None:
         """Generate a signal given the following parameters.
 
@@ -176,17 +176,18 @@ class AWG(SignalSource, ABC):
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_filename(frequency, function)
-        for channel_name in self._validate_channels(channel):
-            source_channel = self.channel[channel_name]
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            first_source_channel = self.channel["SOURCE1"]
-            first_source_channel.set_frequency(round(needed_sample_rate, -1))
-            self._setup_burst_waveform(source_channel.num, predefined_name, burst)
-            source_channel.set_amplitude(amplitude)
-            source_channel.set_offset(offset)
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
-        self.write("AWGCONTROL:RUN")
-        self.expect_esr(0)
+        if predefined_name and needed_sample_rate:
+            for channel_name in self._validate_channels(channel):
+                source_channel = self.channel[channel_name]
+                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
+                first_source_channel = self.channel["SOURCE1"]
+                first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
+                self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+                source_channel.set_amplitude(amplitude)
+                source_channel.set_offset(offset)
+                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
+            self.write("AWGCONTROL:RUN")
+            self.expect_esr(0)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
@@ -269,7 +270,8 @@ class AWG(SignalSource, ABC):
                 needed_sample_rate = frequency * record_length
                 # try for the highest record length that can generate the frequency
                 if (
-                    device_constraints.sample_rate_range.lower
+                    device_constraints.sample_rate_range
+                    and device_constraints.sample_rate_range.lower
                     <= needed_sample_rate
                     <= device_constraints.sample_rate_range.upper
                 ):
@@ -291,7 +293,7 @@ class AWG(SignalSource, ABC):
         """Reboot the device."""
         # TODO: overwrite the reboot code here
 
-    def _setup_burst_waveform(self, channel_num: int, filename: str, burst: int):
+    def _setup_burst_waveform(self, channel_num: int, filename: str, burst: int) -> None:
         """Prepare device for burst waveform.
 
         Args:
@@ -299,7 +301,7 @@ class AWG(SignalSource, ABC):
             filename: The filename for the burst waveform to generate.
             burst: The number of wavelengths to be generated.
         """
-        if burst == 0:
+        if not burst:
             self.set_and_check(f"SOURCE{channel_num}:WAVEFORM", f'"{filename}"')
         elif burst > 0:
             self.set_and_check("AWGCONTROL:RMODE", "SEQ")
@@ -313,7 +315,8 @@ class AWG(SignalSource, ABC):
                 burst,
             )
         else:
-            raise ValueError(f"{burst} is an invalid burst value. Burst must be >= 0.")
+            error_message = f"{burst} is an invalid burst value. Burst must be >= 0."
+            raise ValueError(error_message)
 
     # TODO: add testing for this
     def _send_waveform(self, target_file: str) -> None:  # pragma: no cover

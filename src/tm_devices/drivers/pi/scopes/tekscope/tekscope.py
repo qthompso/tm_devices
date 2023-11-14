@@ -96,7 +96,7 @@ class InternalAFGChannel:
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
         self._pi_device.set_if_needed(
-            f"AFG:OFFSET",
+            "AFG:OFFSET",
             value,
             tolerance=tolerance,
             percentage=percentage,
@@ -113,7 +113,7 @@ class InternalAFGChannel:
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
         self._pi_device.set_if_needed(
-            f"AFG:AMPLITUDE",
+            "AFG:AMPLITUDE",
             value,
             tolerance=tolerance,
             percentage=percentage,
@@ -130,7 +130,7 @@ class InternalAFGChannel:
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
         self._pi_device.set_if_needed(
-            f"AFG:FREQUENCY",
+            "AFG:FREQUENCY",
             value,
             tolerance=tolerance,
             percentage=percentage,
@@ -235,10 +235,11 @@ class TekScope(
 
             # Set scope PI verbosity back to previous value
             self.set_and_check(":VERBose", old_pi_verbosity)
-        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
+        return MappingProxyType(channel_map)
 
     @cached_property
     def internal_afg(self) -> InternalAFGChannel:
+        """The scope's internal AFG."""
         return InternalAFGChannel(self)
 
     @property
