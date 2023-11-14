@@ -159,7 +159,7 @@ class AWG(SignalSource, ABC):
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
-        symmetry: float = 50.0,  # noqa: ARG002
+        symmetry: float = 50.0,
     ) -> None:
         """Generate a signal given the following parameters.
 
@@ -175,7 +175,9 @@ class AWG(SignalSource, ABC):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        predefined_name, needed_sample_rate = self._get_predefined_filename(frequency, function)
+        predefined_name, needed_sample_rate = self._get_predefined_filename(
+            frequency, function, symmetry
+        )
         for channel_name in self._validate_channels(channel):
             source_channel = self.channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
@@ -242,16 +244,19 @@ class AWG(SignalSource, ABC):
     # Private Methods
     ################################################################################################
     def _get_predefined_filename(
-        self, frequency: float, function: SignalSourceFunctionsAWG
+        self, frequency: float, function: SignalSourceFunctionsAWG, symmetry: Optional[float] = 50.0
     ) -> Tuple[str, float]:
         """Get the predefined file name for the provided function.
 
         Args:
             frequency: The frequency of the waveform to generate.
             function: The waveform shape to generate.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name = ""
         needed_sample_rate = 0
+        if function == function.RAMP and symmetry == 50:  # noqa: PLR2004
+            function = function.TRIANGLE
         if function != SignalSourceFunctionsAWG.DC and not function.value.startswith("*"):
             device_constraints = self.get_waveform_constraints(
                 function=function, frequency=frequency
@@ -279,8 +284,8 @@ class AWG(SignalSource, ABC):
                     break
             if not sample_rate_found:
                 error_message = (
-                    f"Unable to generate {function.value} waveform with provided frequency "
-                    f"({frequency} Hz)."
+                    f"Unable to generate {function.value} waveform with provided frequency of "
+                    f"{frequency} Hz."
                 )
                 raise ValueError(error_message)
         else:

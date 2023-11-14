@@ -33,7 +33,7 @@ class AWG7K(AWG7KMixin, AWG):
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
-        symmetry: float = 50.0,  # noqa: ARG002
+        symmetry: float = 50.0,
     ) -> None:
         """Generate a signal given the following parameters.
 
@@ -49,7 +49,9 @@ class AWG7K(AWG7KMixin, AWG):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        predefined_name, needed_sample_rate = self._get_predefined_filename(frequency, function)
+        predefined_name, needed_sample_rate = self._get_predefined_filename(
+            frequency, function, symmetry
+        )
         for channel_name in self._validate_channels(channel):
             source_channel = self.channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
