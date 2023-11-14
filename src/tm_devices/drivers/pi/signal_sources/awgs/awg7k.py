@@ -50,19 +50,18 @@ class AWG7K(AWG7KMixin, AWG):
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_filename(frequency, function)
-        if predefined_name and needed_sample_rate:
-            for channel_name in self._validate_channels(channel):
-                source_channel = self.channel[channel_name]
-                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-                first_source_channel = self.channel["SOURCE1"]
-                first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-                self._setup_burst_waveform(source_channel.num, predefined_name, burst)
-                source_channel.set_amplitude(amplitude)
-                if not ("02" in self.opt_string or "06" in self.opt_string):
-                    source_channel.set_offset(offset)
-                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
-            self.write("AWGCONTROL:RUN")
-            self.expect_esr(0)
+        for channel_name in self._validate_channels(channel):
+            source_channel = self.channel[channel_name]
+            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
+            first_source_channel = self.channel["SOURCE1"]
+            first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
+            self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+            source_channel.set_amplitude(amplitude)
+            if not ("02" in self.opt_string or "06" in self.opt_string):
+                source_channel.set_offset(offset)
+            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
+        self.write("AWGCONTROL:RUN")
+        self.expect_esr(0)
 
     ################################################################################################
     # Private Methods
