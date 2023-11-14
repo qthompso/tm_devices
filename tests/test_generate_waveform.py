@@ -43,7 +43,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     # Frequency is too high to produce CLOCK function on this AWG.
     with pytest.raises(
         ValueError,
-        match="Unable to generate Clock waveform with provided frequency (10000000000 Hz).",
+        match="Unable to generate Clock waveform with provided frequency of 10000000000 Hz.",
     ):
         awg520050.generate_waveform(
             10e9, awg520050.source_device_constants.functions.CLOCK, 1.0, 0.0, channel="SOURCE1"
@@ -123,12 +123,12 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
 
     # Iterate through pre-made signal record length
     awg5k.generate_waveform(
-        10e7, awg5k.source_device_constants.functions.SQUARE, 1.0, 0.0, channel="SOURCE1"
+        10e7, awg5k.source_device_constants.functions.RAMP, 1.0, 0.0, channel="SOURCE1"
     )
     source1_frequency = awg5k.query("SOURCE1:FREQUENCY?")
     assert float(source1_frequency) == 1000000000
     source1_waveform_file = awg5k.query("SOURCE1:WAVEFORM?")
-    assert source1_waveform_file == '"*Square10"'
+    assert source1_waveform_file == '"*Triangle10"'
 
     # Burst > 0
     awg5k.generate_waveform(
