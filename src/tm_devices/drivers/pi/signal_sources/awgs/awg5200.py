@@ -91,27 +91,26 @@ class AWG5200(AWG5200Mixin, AWG):
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_filename(frequency, function)
-        if predefined_name and needed_sample_rate:
+        self.ieee_cmds.opc()
+        self.ieee_cmds.cls()
+        for channel_name in self._validate_channels(channel):
+            source_channel = self.channel[channel_name]
+            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
+            source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
+            self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+            source_channel.set_amplitude(amplitude)
+            source_channel.set_offset(offset)
+            self.ieee_cmds.wai()
             self.ieee_cmds.opc()
             self.ieee_cmds.cls()
-            for channel_name in self._validate_channels(channel):
-                source_channel = self.channel[channel_name]
-                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-                source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-                self._setup_burst_waveform(source_channel.num, predefined_name, burst)
-                source_channel.set_amplitude(amplitude)
-                source_channel.set_offset(offset)
-                self.ieee_cmds.wai()
-                self.ieee_cmds.opc()
-                self.ieee_cmds.cls()
-                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
-            self.ieee_cmds.opc()
-            self.write("AWGCONTROL:RUN")
-            time.sleep(0.1)
-            self.ieee_cmds.opc()
-            self.ieee_cmds.cls()
-            self.poll_query(30, "AWGControl:RSTate?", 2.0)
-            self.expect_esr(0)
+            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
+        self.ieee_cmds.opc()
+        self.write("AWGCONTROL:RUN")
+        time.sleep(0.1)
+        self.ieee_cmds.opc()
+        self.ieee_cmds.cls()
+        self.poll_query(30, "AWGControl:RSTate?", 2.0)
+        self.expect_esr(0)
 
     ################################################################################################
     # Private Methods
