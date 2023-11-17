@@ -2,7 +2,7 @@
 """The actonevent commands module.
 
 These commands are used in the following models:
-LPD6, MSO2, MSO4, MSO5, MSO5B, MSO5LP, MSO6, MSO6B
+LPD6, MSO4, MSO5, MSO5B, MSO5LP, MSO6, MSO6B
 
 THIS FILE IS AUTO-GENERATED, IT SHOULD NOT BE MANUALLY MODIFIED.
 
@@ -60,7 +60,7 @@ Commands and Queries:
     - ACTONEVent:SEARCH:ACTION:STOPACQ:STATE?
     - ACTONEVent:TRIGger:ACTION:SAVEIMAGe:STATE {ON|OFF|<NR1>}
     - ACTONEVent:TRIGger:ACTION:SAVEIMAGe:STATE?
-    - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE {ON|OFF|<NR1>}
+    - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE {ON|OFF|1|0}
     - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE?
     - ACTONEVent:TRIGger:ACTION:SRQ:STATE {ON|OFF|<NR1>}
     - ACTONEVent:TRIGger:ACTION:SRQ:STATE?
@@ -239,10 +239,7 @@ class ActoneventTriggerActionSavewaveformState(SCPICmdWrite, SCPICmdRead):
     """The ``ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE`` command.
 
     **Description:**
-        - This command saves the user set source waveform(s) on a trigger event from a single
-          sequence or sequence of N acquisition. Each acquisition in the sequence of N will perform
-          a save operation. This command replaces ``SAVEON:WAVEFORM`` (still valid command, but only
-          an alias for this new command).
+        - This command saves the user set source waveform(s) on a trigger event.
 
     **Usage:**
         - Using the ``.query()`` method will send the
@@ -257,14 +254,16 @@ class ActoneventTriggerActionSavewaveformState(SCPICmdWrite, SCPICmdRead):
 
     ::
 
-        - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE {ON|OFF|<NR1>}
+        - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE {ON|OFF|1|0}
         - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE?
 
     **Info:**
         - ``ON`` enables the save source waveform(s) on a trigger event feature.
         - ``OFF`` disables the save source waveform(s) on a trigger event feature.
-        - ``<NR1>`` is a number that enables or disables the save source waveform(s) on a trigger
-          event feature. The number zero disables the feature, all other numbers enable the feature.
+        - ``1`` enables the save source waveform(s) on a trigger event feature. Any number value,
+          other than 0, will enable the feature.
+        - ``0`` disables the save source waveform(s) on a trigger event feature, all other number
+          values enable the feature.
     """
 
 
@@ -291,10 +290,7 @@ class ActoneventTriggerActionSavewaveform(SCPICmdRead):
         """Return the ``ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE`` command.
 
         **Description:**
-            - This command saves the user set source waveform(s) on a trigger event from a single
-              sequence or sequence of N acquisition. Each acquisition in the sequence of N will
-              perform a save operation. This command replaces ``SAVEON:WAVEFORM`` (still valid
-              command, but only an alias for this new command).
+            - This command saves the user set source waveform(s) on a trigger event.
 
         **Usage:**
             - Using the ``.query()`` method will send the
@@ -309,15 +305,16 @@ class ActoneventTriggerActionSavewaveform(SCPICmdRead):
 
         ::
 
-            - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE {ON|OFF|<NR1>}
+            - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE {ON|OFF|1|0}
             - ACTONEVent:TRIGger:ACTION:SAVEWAVEform:STATE?
 
         **Info:**
             - ``ON`` enables the save source waveform(s) on a trigger event feature.
             - ``OFF`` disables the save source waveform(s) on a trigger event feature.
-            - ``<NR1>`` is a number that enables or disables the save source waveform(s) on a
-              trigger event feature. The number zero disables the feature, all other numbers enable
-              the feature.
+            - ``1`` enables the save source waveform(s) on a trigger event feature. Any number
+              value, other than 0, will enable the feature.
+            - ``0`` disables the save source waveform(s) on a trigger event feature, all other
+              number values enable the feature.
         """
         return self._state
 

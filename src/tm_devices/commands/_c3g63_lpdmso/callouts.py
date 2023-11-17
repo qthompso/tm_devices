@@ -1,7 +1,7 @@
 """The callouts commands module.
 
 These commands are used in the following models:
-LPD6, MSO2, MSO4, MSO5, MSO5B, MSO5LP, MSO6, MSO6B
+LPD6, MSO4, MSO5, MSO5B, MSO5LP, MSO6, MSO6B
 
 THIS FILE IS AUTO-GENERATED, IT SHOULD NOT BE MANUALLY MODIFIED.
 
@@ -11,7 +11,7 @@ Commands and Queries:
 
 ::
 
-    - CALLOUTS:CALLOUT<x>
+    - CALLOUTS:ADDNew <QString>
     - CALLOUTS:CALLOUT<x>:BOOKMark:SOURCE {CH<x>}
     - CALLOUTS:CALLOUT<x>:BOOKMark:SOURCE?
     - CALLOUTS:CALLOUT<x>:BOOKMark:XPOS <NR1>
@@ -43,7 +43,6 @@ from .._helpers import (
     DefaultDictPassKeyToFactory,
     SCPICmdRead,
     SCPICmdWrite,
-    SCPICmdWriteNoArguments,
     ValidatedDynamicNumberCmd,
 )
 
@@ -691,21 +690,13 @@ class CalloutsCalloutItemBookmark(SCPICmdRead):
         return self._xpos
 
 
-class CalloutsCalloutItem(ValidatedDynamicNumberCmd, SCPICmdWriteNoArguments, SCPICmdRead):
-    """The ``CALLOUTS:CALLOUT<x>`` command.
-
-    **Description:**
-        - This command creates a new note. A Note is the default callout value. The callout number
-          is specified by x.
+class CalloutsCalloutItem(ValidatedDynamicNumberCmd, SCPICmdRead):
+    """The ``CALLOUTS:CALLOUT<x>`` command tree.
 
     **Usage:**
-        - Using the ``.write()`` method will send the ``CALLOUTS:CALLOUT<x>`` command.
-
-    **SCPI Syntax:**
-
-    ::
-
-        - CALLOUTS:CALLOUT<x>
+        - Using the ``.query()`` method will send the ``CALLOUTS:CALLOUT<x>?`` query.
+        - Using the ``.verify(value)`` method will send the ``CALLOUTS:CALLOUT<x>?`` query and raise
+          an AssertionError if the returned value does not match ``value``.
 
     Properties:
         - ``.bookmark``: The ``CALLOUTS:CALLOUT<x>:BOOKMark`` command tree.
@@ -859,6 +850,29 @@ class CalloutsCalloutItem(ValidatedDynamicNumberCmd, SCPICmdWriteNoArguments, SC
         return self._type
 
 
+class CalloutsAddnew(SCPICmdWrite):
+    """The ``CALLOUTS:ADDNew`` command.
+
+    **Description:**
+        - This command adds the specified callout. A Note is the default callout type.
+
+    **Usage:**
+        - Using the ``.write(value)`` method will send the ``CALLOUTS:ADDNew value`` command.
+
+    **SCPI Syntax:**
+
+    ::
+
+        - CALLOUTS:ADDNew <QString>
+
+    **Info:**
+        - ``<QString>`` specifies the callout. The argument is of the form 'CALLOUT<NR1>', where
+          <NR1> is a number value ≥ 1.
+    """
+
+    _WRAP_ARG_WITH_QUOTES = True
+
+
 class Callouts(SCPICmdRead):
     """The ``CALLOUTS`` command tree.
 
@@ -868,31 +882,47 @@ class Callouts(SCPICmdRead):
           AssertionError if the returned value does not match ``value``.
 
     Properties:
-        - ``.callout``: The ``CALLOUTS:CALLOUT<x>`` command.
+        - ``.addnew``: The ``CALLOUTS:ADDNew`` command.
+        - ``.callout``: The ``CALLOUTS:CALLOUT<x>`` command tree.
     """
 
     def __init__(self, device: Optional["PIDevice"] = None, cmd_syntax: str = "CALLOUTS") -> None:
         super().__init__(device, cmd_syntax)
+        self._addnew = CalloutsAddnew(device, f"{self._cmd_syntax}:ADDNew")
         self._callout: Dict[int, CalloutsCalloutItem] = DefaultDictPassKeyToFactory(
             lambda x: CalloutsCalloutItem(device, f"{self._cmd_syntax}:CALLOUT{x}")
         )
 
     @property
-    def callout(self) -> Dict[int, CalloutsCalloutItem]:
-        """Return the ``CALLOUTS:CALLOUT<x>`` command.
+    def addnew(self) -> CalloutsAddnew:
+        """Return the ``CALLOUTS:ADDNew`` command.
 
         **Description:**
-            - This command creates a new note. A Note is the default callout value. The callout
-              number is specified by x.
+            - This command adds the specified callout. A Note is the default callout type.
 
         **Usage:**
-            - Using the ``.write()`` method will send the ``CALLOUTS:CALLOUT<x>`` command.
+            - Using the ``.write(value)`` method will send the ``CALLOUTS:ADDNew value`` command.
 
         **SCPI Syntax:**
 
         ::
 
-            - CALLOUTS:CALLOUT<x>
+            - CALLOUTS:ADDNew <QString>
+
+        **Info:**
+            - ``<QString>`` specifies the callout. The argument is of the form 'CALLOUT<NR1>', where
+              <NR1> is a number value ≥ 1.
+        """
+        return self._addnew
+
+    @property
+    def callout(self) -> Dict[int, CalloutsCalloutItem]:
+        """Return the ``CALLOUTS:CALLOUT<x>`` command tree.
+
+        **Usage:**
+            - Using the ``.query()`` method will send the ``CALLOUTS:CALLOUT<x>?`` query.
+            - Using the ``.verify(value)`` method will send the ``CALLOUTS:CALLOUT<x>?`` query and
+              raise an AssertionError if the returned value does not match ``value``.
 
         Sub-properties:
             - ``.bookmark``: The ``CALLOUTS:CALLOUT<x>:BOOKMark`` command tree.

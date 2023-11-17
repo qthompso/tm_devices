@@ -6,7 +6,6 @@ documentation: https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 import os
 import shutil
-import sys
 
 from importlib.metadata import metadata
 from typing import Any, List, Sequence
@@ -52,8 +51,6 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_tippy",
 ]
-if not any(x in " ".join(sys.argv) for x in ("linkcheck", "coverage", "doctest")):
-    extensions.append("sphinxcontrib.relative-link-corrector")
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -138,6 +135,7 @@ html_theme_options = {
     "navigation_depth": 4,
     "collapse_navigation": True,
 }
+html_favicon = "_static/favicon_readthedocs.png"
 intersphinx_mapping = {  # pylint: disable=consider-using-namedtuple-or-dataclass
     "python": ("https://docs.python.org/3/", None),
     "pyvisa": ("https://pyvisa.readthedocs.io/en/latest/", None),

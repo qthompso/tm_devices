@@ -171,7 +171,7 @@ class TekScope(
 
             # Set scope PI verbosity back to previous value
             self.set_and_check(":VERBose", old_pi_verbosity)
-        return MappingProxyType(channel_map)  # pyright: ignore[reportUnknownVariableType]
+        return MappingProxyType(channel_map)
 
     @property
     def commands(
@@ -229,7 +229,6 @@ class TekScope(
         # These drive letter hosts are hard coded to the front and back usb ports.
         available_hosts = ["E:", "F:", "G:", "H:", "I:", "J:", "K:"]
         with self.temporary_verbose(False):
-            # Only going up to I to compensate for network mounts in CI
             original_dir = self.query(":FILESystem:CWD?")
             for working_dir in available_hosts:
                 self.write(f':FILESystem:CWD "{working_dir}"')
