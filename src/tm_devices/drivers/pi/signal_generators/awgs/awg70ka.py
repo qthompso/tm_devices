@@ -4,7 +4,7 @@ from types import MappingProxyType
 from typing import Tuple
 
 from tm_devices.commands import AWG70KAMixin
-from tm_devices.drivers.pi.signal_sources.awgs.awg import (
+from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
     AWGChannel,
     AWGSourceDeviceConstants,

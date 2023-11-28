@@ -6,7 +6,7 @@ from types import MappingProxyType
 from typing import Literal, Tuple
 
 from tm_devices.commands import AWG5200Mixin
-from tm_devices.drivers.pi.signal_sources.awgs.awg import (
+from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
     AWGChannel,
     AWGSourceDeviceConstants,

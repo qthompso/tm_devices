@@ -8,7 +8,7 @@ import pyvisa as visa
 from packaging.version import Version
 
 from tm_devices import DeviceManager
-from tm_devices.drivers.pi.signal_sources.afgs.afg import (
+from tm_devices.drivers.pi.signal_generators.afgs.afg import (
     AFGSourceDeviceConstants,
     ExtendedSourceDeviceConstants,
     ParameterBounds,

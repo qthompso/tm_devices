@@ -3,7 +3,7 @@
 import pytest
 
 from tm_devices import DeviceManager
-from tm_devices.drivers.pi.signal_sources.awgs.awg import (
+from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ExtendedSourceDeviceConstants,
     ParameterBounds,

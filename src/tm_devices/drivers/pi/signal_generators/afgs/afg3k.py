@@ -2,7 +2,7 @@
 from typing import Optional, Tuple
 
 from tm_devices.commands import AFG3KMixin
-from tm_devices.drivers.pi.signal_sources.afgs.afg import (
+from tm_devices.drivers.pi.signal_generators.afgs.afg import (
     AFG,
     AFGSourceDeviceConstants,
     LoadImpedanceAFG,

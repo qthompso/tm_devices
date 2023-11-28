@@ -8,7 +8,7 @@ from typing import Optional, Tuple, TYPE_CHECKING, Union
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi._ieee488_2_commands import IEEE4882Commands
 from tm_devices.drivers.pi.pi_device import PIDevice
-from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
+from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.drivers.pi.source_measure_units.source_measure_unit import SourceMeasureUnit
 
 if TYPE_CHECKING:
@@ -59,7 +59,7 @@ class SMU2400Standard(SourceMeasureUnit, ABC):
         Returns:
             Boolean indicating if the check passed or failed and a string with the results.
         """
-        return SignalSource.expect_esr(self, esr, error_string)  # type: ignore
+        return SignalGenerator.expect_esr(self, esr, error_string)  # type: ignore
 
     def get_eventlog_status(self) -> Tuple[bool, str]:
         """Help function for getting the eventlog status.
@@ -67,7 +67,7 @@ class SMU2400Standard(SourceMeasureUnit, ABC):
         Returns:
             Boolean indicating no error, String containing concatenated contents of event log.
         """
-        return SignalSource.get_eventlog_status(self)  # type: ignore
+        return SignalGenerator.get_eventlog_status(self)  # type: ignore
 
     def run_script(self, script_name: str) -> None:  # noqa: ARG002
         """Not Implemented."""
