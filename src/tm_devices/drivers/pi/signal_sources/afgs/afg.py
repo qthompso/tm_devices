@@ -111,7 +111,7 @@ class AFG(SignalSource, ABC):
     # Properties
     ################################################################################################
     @cached_property
-    def channel(self) -> "MappingProxyType[str, AFGChannel]":
+    def source_channel(self) -> "MappingProxyType[str, AFGChannel]":
         """Mapping of channel names to AFGChannel objects."""
         channel_map = {}
         for channel_name in self.all_channel_names_list:
@@ -169,7 +169,7 @@ class AFG(SignalSource, ABC):
 
         # Generate the waveform on the given channel
         for channel_name in self._validate_channels(channel):
-            source_channel = self.channel[channel_name]
+            source_channel = self.source_channel[channel_name]
             # grab the number(s) in the channel name
             # Temporarily turn off this channel
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", 0)

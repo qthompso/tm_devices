@@ -53,7 +53,7 @@ class AWG5200(AWG5200Mixin, AWG):
     # Properties
     ################################################################################################
     @cached_property
-    def channel(self) -> "MappingProxyType[str, AWGChannel]":
+    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
         """Mapping of channel names to AWGChannel objects."""
         channel_map = {}
         for channel_name in self.all_channel_names_list:
@@ -96,7 +96,7 @@ class AWG5200(AWG5200Mixin, AWG):
         self.ieee_cmds.opc()
         self.ieee_cmds.cls()
         for channel_name in self._validate_channels(channel):
-            source_channel = self.channel[channel_name]
+            source_channel = self.source_channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
             self._setup_burst_waveform(source_channel.num, predefined_name, burst)

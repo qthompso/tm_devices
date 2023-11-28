@@ -43,7 +43,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     # Frequency is too high to produce CLOCK function on this AWG.
     with pytest.raises(
         ValueError,
-        match="Unable to generate Clock waveform with provided frequency of 10000000000 Hz.",
+        match="Unable to generate Clock waveform with provided frequency of 10000000000.0 Hz.",
     ):
         awg520050.generate_waveform(
             10e9, awg520050.source_device_constants.functions.CLOCK, 1.0, 0.0, channel="SOURCE1"
@@ -60,7 +60,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
     awg7k06 = device_manager.add_awg("AWG710206-hostname", alias="awg7k06")
 
     default_offset = 0
-    awg7k06.channel["SOURCE1"].set_offset(default_offset)
+    awg7k06.source_channel["SOURCE1"].set_offset(default_offset)
     awg7k06.generate_waveform(
         10e4, awg7k06.source_device_constants.functions.CLOCK, 1.0, 0.2, channel="SOURCE1"
     )

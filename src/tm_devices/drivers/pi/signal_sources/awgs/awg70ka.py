@@ -100,7 +100,7 @@ class AWG70KA(AWG70KAMixin, AWG):
     # Properties
     ################################################################################################
     @cached_property
-    def channel(self) -> "MappingProxyType[str, AWGChannel]":
+    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
         """Mapping of channel names to AWGChannel objects."""
         channel_map = {}
         for channel_name in self.all_channel_names_list:
