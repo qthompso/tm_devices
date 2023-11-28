@@ -2,7 +2,7 @@
 from typing import Tuple
 
 from tm_devices.commands import AWG5KMixin
-from tm_devices.drivers.pi.signal_sources.awgs.awg import (
+from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
     AWGSourceDeviceConstants,
     ParameterBounds,

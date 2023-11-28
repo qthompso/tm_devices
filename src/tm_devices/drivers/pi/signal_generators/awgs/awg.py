@@ -15,7 +15,7 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
 )
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.pi_device import PIDevice
-from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
+from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAWG
 
 
@@ -100,7 +100,7 @@ class AWGChannel:
 
 
 @family_base_class
-class AWG(SignalSource, ABC):
+class AWG(SignalGenerator, ABC):
     """Base AWG device driver."""
 
     _DEVICE_TYPE = DeviceTypes.AWG.value

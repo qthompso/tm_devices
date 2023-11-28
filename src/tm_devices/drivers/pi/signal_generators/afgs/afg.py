@@ -14,7 +14,7 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
 )
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.pi_device import PIDevice
-from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
+from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAFG
 
 
@@ -102,7 +102,7 @@ class AFGChannel:
 
 
 @family_base_class
-class AFG(SignalSource, ABC):
+class AFG(SignalGenerator, ABC):
     """Base AFG device driver."""
 
     _DEVICE_TYPE = DeviceTypes.AFG.value

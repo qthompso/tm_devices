@@ -17,8 +17,8 @@ from tm_devices import DeviceManager
 from tm_devices.drivers import AFG3K, AFG3KC
 from tm_devices.drivers.device import Device
 from tm_devices.drivers.pi.scopes.scope import Scope
-from tm_devices.drivers.pi.signal_sources.afgs.afg import AFG
-from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
+from tm_devices.drivers.pi.signal_generators.afgs.afg import AFG
+from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.helpers import ConnectionTypes, DeviceTypes, PYVISA_PY_BACKEND, SerialConfig
 
 
@@ -36,7 +36,7 @@ def _remove_added_methods() -> Iterator[None]:
         (Device, "already_exists"),
         (Scope, "custom_model_getter_scope"),
         (Scope, "custom_return"),
-        (SignalSource, "custom_model_getter_ss"),
+        (SignalGenerator, "custom_model_getter_ss"),
         (AFG, "custom_model_getter_afg"),
         (AFG3K, "custom_model_getter_afg3k"),
         (AFG3KC, "custom_model_getter_afg3kc"),
@@ -325,10 +325,10 @@ class Device(ABC, metaclass=abc.ABCMeta):
             """Return the model."""
             return f"Scope {device.model} {value}"
 
-        @SignalSource.add_method
-        def custom_model_getter_ss(device: SignalSource, value: str) -> str:
+        @SignalGenerator.add_method
+        def custom_model_getter_ss(device: SignalGenerator, value: str) -> str:
             """Return the model."""
-            return f"SignalSource {device.model} {value}"
+            return f"SignalGenerator {device.model} {value}"
 
         @AFG.add_method
         def custom_model_getter_afg(device: AFG, value: str) -> str:
@@ -397,7 +397,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
             "Device AFG3252C a b c 0.1"
         )
         # noinspection PyUnresolvedReferences
-        assert afg.custom_model_getter_ss("hello") == "SignalSource AFG3252C hello"  # type: ignore
+        assert afg.custom_model_getter_ss("hello") == "SignalGenerator AFG3252C hello"  # type: ignore
         # noinspection PyUnresolvedReferences
         assert afg.custom_model_getter_afg("hello") == "AFG AFG3252C hello"  # type: ignore
         # noinspection PyUnresolvedReferences

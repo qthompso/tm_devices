@@ -11,8 +11,8 @@ from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.helpers import print_with_timestamp
 
 
-class SignalSource(PIDevice, SignalGeneratorMixin, ABC):
-    """Base Source device driver."""
+class SignalGenerator(PIDevice, SignalGeneratorMixin, ABC):
+    """Base Signal Generator device driver."""
 
     ################################################################################################
     # Properties
