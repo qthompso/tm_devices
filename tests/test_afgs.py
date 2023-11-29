@@ -219,6 +219,9 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
         ramp_symmetry_range=None,
     )
 
+    with pytest.raises(ValueError, match="AFGs must have a waveform defined."):
+        afg3252c.get_waveform_constraints()
+
 
 def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
     """Test the AFG31K driver.
@@ -240,6 +243,7 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
 
     afg31021_constraints = afg31021.get_waveform_constraints(
         SignalSourceFunctionsAFG.SIN,
+        waveform_length=16383,
         frequency=20.0e6,
     )
 

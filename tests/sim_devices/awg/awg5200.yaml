@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg520050:
+  awg5200opt50:
     eom:
       USB INSTR:
         q: "\n"
@@ -46,7 +46,7 @@ devices:
           min: 0
           max: 255
           type: int
-  awg520025:
+  awg5200opt25:
     eom:
       USB INSTR:
         q: "\n"

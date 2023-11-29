@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg7082c01:
+  awg7082copt01:
     eom:
       USB INSTR:
         q: "\n"
@@ -46,7 +46,7 @@ devices:
           min: 0
           max: 255
           type: int
-  awg7122c06:
+  awg7122copt06:
     eom:
       USB INSTR:
         q: "\n"

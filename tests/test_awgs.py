@@ -48,7 +48,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         device_manager: The DeviceManager object.
         capsys: The captured stdout and stderr.
     """
-    awg520050 = device_manager.add_awg("awg520050-hostname", alias="awg520050")
+    awg520050 = device_manager.add_awg("awg5200opt50-hostname", alias="awg520050")
     assert id(device_manager.get_awg(number_or_alias="awg520050")) == id(awg520050)
     assert id(device_manager.get_awg(number_or_alias=awg520050.device_number)) == id(awg520050)
     assert awg520050.total_channels == 4
@@ -79,20 +79,23 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         pulse_width_range=None,
         ramp_symmetry_range=None,
     )
-    awg520025 = device_manager.add_awg("awg520025-hostname", alias="awg520025")
+    awg520025 = device_manager.add_awg("awg5200opt25-hostname", alias="awg520025")
     assert awg520025.opt_string == "25"
-    awg520025_constraints = awg520025.get_waveform_constraints(SignalSourceFunctionsAWG.DC)
+    awg520025_constraints = awg520025.get_waveform_constraints(waveform_length=500)
     min_smaple_25 = 300.0
     max_sample_25 = 2.5e9
     assert awg520025_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=0.1, upper=2.0),
         offset_range=ParameterBounds(lower=-0.5, upper=0.5),
-        frequency_range=ParameterBounds(lower=min_smaple_25 / 1000.0, upper=max_sample_25 / 1000.0),
+        frequency_range=ParameterBounds(lower=min_smaple_25 / 500.0, upper=max_sample_25 / 500.0),
         sample_rate_range=ParameterBounds(lower=min_smaple_25, upper=max_sample_25),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
     )
+    error = "AWG Constraints require exclusively function or waveform_length."
+    with pytest.raises(ValueError, match=error):
+        awg520025.get_waveform_constraints()
 
 
 def test_awg70k(device_manager: DeviceManager) -> None:
@@ -103,10 +106,10 @@ def test_awg70k(device_manager: DeviceManager) -> None:
     """
     ampl_range = ParameterBounds(lower=0.5, upper=1.0)
     offset_range = ParameterBounds(lower=-0.5, upper=0.5)
-    awg70ka150 = device_manager.add_awg("awg70ka150-hostname", alias="awg70ka150")
-    awg70ka225 = device_manager.add_awg("awg70ka225-hostname", alias="awg70ka225")
-    awg70ka216 = device_manager.add_awg("awg70ka216-hostname", alias="awg70ka216")
-    awg70kb208 = device_manager.add_awg("awg70kb208-hostname", alias="awg70kb208")
+    awg70ka150 = device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
+    awg70ka225 = device_manager.add_awg("awg70002aopt225-hostname", alias="awg70ka225")
+    awg70ka216 = device_manager.add_awg("awg70002aopt216-hostname", alias="awg70ka216")
+    awg70kb208 = device_manager.add_awg("awg70002bopt208-hostname", alias="awg70kb208")
     length_range = ParameterBounds(lower=10, upper=1000)
     min_smaple = 1.5e3
     awg_list = [awg70ka150, awg70ka225, awg70ka216, awg70kb208]
@@ -132,12 +135,12 @@ def test_awg7k(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg7k01 = device_manager.add_awg("awg7k01-hostname", alias="awg7k01")
-    awg7k06 = device_manager.add_awg("awg7k06-hostname", alias="awg7k06")
-    awg7kb02 = device_manager.add_awg("awg7kb02-hostname", alias="awg7kb02")
-    awg7kb01 = device_manager.add_awg("awg7kb01-hostname", alias="awg7kb01")
-    awg7kc06 = device_manager.add_awg("awg7kc06-hostname", alias="awg7kc06")
-    awg7kc01 = device_manager.add_awg("awg7kc01-hostname", alias="awg7kc01")
+    awg7k01 = device_manager.add_awg("awg7051opt01-hostname", alias="awg7k01")
+    awg7k06 = device_manager.add_awg("awg7102opt06-hostname", alias="awg7k06")
+    awg7kb02 = device_manager.add_awg("awg7062bopt02-hostname", alias="awg7kb02")
+    awg7kb01 = device_manager.add_awg("awg7121bopt01-hostname", alias="awg7kb01")
+    awg7kc06 = device_manager.add_awg("awg7082copt01-hostname", alias="awg7kc01")
+    awg7kc01 = device_manager.add_awg("awg7122copt06-hostname", alias="awg7kc06")
     length_range = ParameterBounds(lower=10, upper=1000)
     awg_list = [awg7k01, awg7k06, awg7kb02, awg7kb01, awg7kc06, awg7kc01]
     for awg in awg_list:
@@ -170,9 +173,9 @@ def test_awg5k(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg5k = device_manager.add_awg("awg5k-hostname", alias="awg5k")
-    awg5kb = device_manager.add_awg("awg5kb-hostname", alias="awg5kb")
-    awg5kc = device_manager.add_awg("awg5kc-hostname", alias="awg5kc")
+    awg5k = device_manager.add_awg("awg5012-hostname", alias="awg5k")
+    awg5kb = device_manager.add_awg("awg5002b-hostname", alias="awg5kb")
+    awg5kc = device_manager.add_awg("awg5012c-hostname", alias="awg5kc")
     length_range = ParameterBounds(lower=960, upper=960)
     awg_list = [awg5k, awg5kb, awg5kc]
     offset_range = ParameterBounds(lower=-2.25, upper=2.25)

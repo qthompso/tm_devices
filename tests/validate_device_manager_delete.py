@@ -76,7 +76,7 @@ def verify_deleting_device_manager() -> None:
     dev_manager.visa_library = SIMULATED_VISA_LIB
     # Set up the device manager with a single device
     assert not dev_manager.devices
-    dev_manager.add_afg("afg3kc-hostname")
+    dev_manager.add_afg("afg3252c-hostname")
 
 
 if __name__ == "__main__":

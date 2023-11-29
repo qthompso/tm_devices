@@ -24,10 +24,6 @@ class AFG3KC(AFG3K):
     ################################################################################################
     # Private Methods
     ################################################################################################
-    def _reboot(self) -> None:
-        """Reboot the device."""
-        self.write("SYSTem:RESTart")
-
     @staticmethod
     def _get_driver_specific_multipliers(model_number: str) -> Tuple[float, float]:
         """Get multipliers for frequency dependant for different functions."""
