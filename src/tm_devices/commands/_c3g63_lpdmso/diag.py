@@ -1,7 +1,7 @@
 """The diag commands module.
 
 These commands are used in the following models:
-LPD6, MSO2, MSO4, MSO5, MSO5B, MSO5LP, MSO6, MSO6B
+LPD6, MSO4, MSO5, MSO5B, MSO5LP, MSO6, MSO6B
 
 THIS FILE IS AUTO-GENERATED, IT SHOULD NOT BE MANUALLY MODIFIED.
 
@@ -22,7 +22,6 @@ Commands and Queries:
     - DIAg:RESUlt:LOG?
     - DIAg:RESUlt?
     - DIAg:SELect {ALL|IO|ANALOG|SYSTEM|ASIC|ACQ|SIGNAL|MEMORY}
-    - DIAg:SELect?
     - DIAg:STATE {EXECute|ABOrt}
 """
 from typing import Optional, TYPE_CHECKING
@@ -55,16 +54,13 @@ class DiagState(SCPICmdWrite):
     """
 
 
-class DiagSelect(SCPICmdWrite, SCPICmdRead):
+class DiagSelect(SCPICmdWrite):
     """The ``DIAg:SELect`` command.
 
     **Description:**
-        - This command selects or queries an available diagnostic area.
+        - This command selects an available diagnostic area.
 
     **Usage:**
-        - Using the ``.query()`` method will send the ``DIAg:SELect?`` query.
-        - Using the ``.verify(value)`` method will send the ``DIAg:SELect?`` query and raise an
-          AssertionError if the returned value does not match ``value``.
         - Using the ``.write(value)`` method will send the ``DIAg:SELect value`` command.
 
     **SCPI Syntax:**
@@ -72,7 +68,6 @@ class DiagSelect(SCPICmdWrite, SCPICmdRead):
     ::
 
         - DIAg:SELect {ALL|IO|ANALOG|SYSTEM|ASIC|ACQ|SIGNAL|MEMORY}
-        - DIAg:SELect?
 
     **Info:**
         - ``ALL`` selects all diagnostic areas.
@@ -489,12 +484,9 @@ class Diag(SCPICmdRead):
         """Return the ``DIAg:SELect`` command.
 
         **Description:**
-            - This command selects or queries an available diagnostic area.
+            - This command selects an available diagnostic area.
 
         **Usage:**
-            - Using the ``.query()`` method will send the ``DIAg:SELect?`` query.
-            - Using the ``.verify(value)`` method will send the ``DIAg:SELect?`` query and raise an
-              AssertionError if the returned value does not match ``value``.
             - Using the ``.write(value)`` method will send the ``DIAg:SELect value`` command.
 
         **SCPI Syntax:**
@@ -502,7 +494,6 @@ class Diag(SCPICmdRead):
         ::
 
             - DIAg:SELect {ALL|IO|ANALOG|SYSTEM|ASIC|ACQ|SIGNAL|MEMORY}
-            - DIAg:SELect?
 
         **Info:**
             - ``ALL`` selects all diagnostic areas.

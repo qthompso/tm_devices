@@ -1,7 +1,7 @@
 """The ref commands module.
 
 These commands are used in the following models:
-LPD6, MSO2, MSO4, MSO5, MSO5B, MSO5LP, MSO6, MSO6B
+MSO2
 
 THIS FILE IS AUTO-GENERATED, IT SHOULD NOT BE MANUALLY MODIFIED.
 
