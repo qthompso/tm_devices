@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg70001a150:
+  awg70001aopt150:
     eom:
       USB INSTR:
         q: "\n"
@@ -24,6 +24,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '1'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -45,32 +46,7 @@ devices:
           min: 0
           max: 255
           type: int
-      source1_high_voltage:
-        default: 0.0
-        getter:
-          q: SOURCE1:VOLTAGE:HIGH?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:VOLTAGE:HIGH {:f}
-        specs:
-          type: float
-      source1_low_voltage:
-        default: 0.0
-        getter:
-          q: SOURCE1:VOLTAGE:LOW?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:VOLTAGE:LOW {:f}
-        specs:
-          type: float
-      memory_import:
-        default: ''
-        getter:
-          q: 'MMEMory:IMPort?'
-          r: '{:s}'
-        setter:
-          q: 'MMEMory:IMPort {:s}'
-  awg70002a225:
+  awg70002aopt225:
     eom:
       USB INSTR:
         q: "\n"
@@ -93,6 +69,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '1'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -114,14 +91,7 @@ devices:
           min: 0
           max: 255
           type: int
-      memory_import:
-        default: ''
-        getter:
-          q: 'MMEMory:IMPort?'
-          r: '{:s}'
-        setter:
-          q: 'MMEMory:IMPort {:s}'
-  awg70002a216:
+  awg70002aopt216:
     eom:
       USB INSTR:
         q: "\n"
@@ -144,6 +114,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '1'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -165,10 +136,3 @@ devices:
           min: 0
           max: 255
           type: int
-      memory_import:
-        default: ''
-        getter:
-          q: 'MMEMory:IMPort?'
-          r: '{:s}'
-        setter:
-          q: 'MMEMory:IMPort {:s}'

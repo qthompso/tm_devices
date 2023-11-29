@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg705101:
+  awg7051opt01:
     eom:
       USB INSTR:
         q: "\n"
@@ -24,7 +24,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '2'
-      - q: 'AWGCONTROL:RUN'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -46,64 +46,7 @@ devices:
           min: 0
           max: 255
           type: int
-      output_1_state:
-        default: 0
-        getter:
-          q: OUTPUT1:STATE?
-          r: '{:d}'
-        setter:
-          q: OUTPUT1:STATE {:d}
-        specs:
-          valid: [ 0, 1 ]
-          type: int
-      source1_frequency:
-        default: 10000000.0
-        getter:
-          q: SOURCE1:FREQUENCY?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:FREQUENCY {:f}
-        specs:
-          min: 10000000.0
-          max: 51000000000.0
-          type: float
-      source1_waveform:
-        default: ""
-        getter:
-          q: SOURCE1:WAVEFORM?
-          r: '{:s}'
-        setter:
-          q: SOURCE1:WAVEFORM {:s}
-      source1_amplitude:
-        default: 0.5
-        getter:
-          q: SOURCE1:VOLTAGE:AMPLITUDE?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:VOLTAGE:AMPLITUDE {:f}
-        specs:
-          min: .05
-          max: 2.0
-          type: float
-      source1_offset:
-        default: 0.0
-        getter:
-          q: SOURCE1:VOLTAGE:OFFSET?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:VOLTAGE:OFFSET {:f}
-        specs:
-          min: -0.5
-          max: 0.5
-          type: float
-      memory_import:
-        default: ''
-        getter:
-          q: 'MMEMory:IMPort?'
-          r: '{:s}'
-        setter:
-          q: 'MMEMory:IMPort {:s}'
-  awg710206:
+  awg7102opt06:
     eom:
       USB INSTR:
         q: "\n"
@@ -126,7 +69,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '2'
-      - q: 'AWGCONTROL:RUN'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -148,60 +91,3 @@ devices:
           min: 0
           max: 255
           type: int
-      output_1_state:
-        default: 0
-        getter:
-          q: OUTPUT1:STATE?
-          r: '{:d}'
-        setter:
-          q: OUTPUT1:STATE {:d}
-        specs:
-          valid: [ 0, 1 ]
-          type: int
-      source1_frequency:
-        default: 10000000.0
-        getter:
-          q: SOURCE1:FREQUENCY?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:FREQUENCY {:f}
-        specs:
-          min: 10000000.0
-          max: 102000000000.0
-          type: float
-      source1_waveform:
-        default: ""
-        getter:
-          q: SOURCE1:WAVEFORM?
-          r: '{:s}'
-        setter:
-          q: SOURCE1:WAVEFORM {:s}
-      source1_amplitude:
-        default: 0.5
-        getter:
-          q: SOURCE1:VOLTAGE:AMPLITUDE?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:VOLTAGE:AMPLITUDE {:f}
-        specs:
-          min: 0.5
-          max: 1
-          type: float
-      source1_offset:
-        default: 0.0
-        getter:
-          q: SOURCE1:VOLTAGE:OFFSET?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:VOLTAGE:OFFSET {:f}
-        specs:
-          min: -0.5
-          max: 0.5
-          type: float
-      memory_import:
-        default: ''
-        getter:
-          q: 'MMEMory:IMPort?'
-          r: '{:s}'
-        setter:
-          q: 'MMEMory:IMPort {:s}'

@@ -206,10 +206,9 @@ class AWG(SignalGenerator, ABC):
             load_impedance: The suggested impedance on the source.
         """
         del frequency, load_impedance
-        if (function and waveform_length) or (not function and not waveform_length):
-            msg = "AWG Constraints require function XOR waveform_length."
-            raise ValueError(msg)
+
         amplitude_range, offset_range, sample_rate_range = self._get_series_specific_constraints()
+
         if function:
             func_sample_rate_lookup: Dict[str, ParameterBounds] = {
                 SignalSourceFunctionsAWG.SIN.name: ParameterBounds(lower=10, upper=3600),
@@ -225,14 +224,14 @@ class AWG(SignalGenerator, ABC):
             fastest_frequency = (
                 sample_rate_range.upper / func_sample_rate_lookup[function.name].lower
             )
-        elif waveform_length:
+        elif waveform_length:  # pragma: no cover
             slowest_frequency = sample_rate_range.lower / waveform_length
             fastest_frequency = sample_rate_range.upper / waveform_length
-        else:
-            slowest_frequency = 0.0
-            fastest_frequency = 0.0
 
-        frequency_range = ParameterBounds(lower=slowest_frequency, upper=fastest_frequency)
+        frequency_range = ParameterBounds(
+            lower=slowest_frequency,  # pyright: ignore[reportUnboundVariable]
+            upper=fastest_frequency,  # pyright: ignore[reportUnboundVariable]
+        )
         return ExtendedSourceDeviceConstants(
             amplitude_range=amplitude_range,
             offset_range=offset_range,

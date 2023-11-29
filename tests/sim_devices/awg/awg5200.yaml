@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg520050:
+  awg5200opt50:
     eom:
       USB INSTR:
         q: "\n"
@@ -22,10 +22,9 @@ devices:
         r: '50'
       - q: '*RST'
       - q: '*CLS'
-      - q: '*WAI'
       - q: AWGControl:CONFigure:CNUMber?
         r: '4'
-      - q: 'AWGCONTROL:RUN'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -47,73 +46,7 @@ devices:
           min: 0
           max: 255
           type: int
-      output_1_state:
-        default: 0
-        getter:
-          q: OUTPUT1:STATE?
-          r: '{:d}'
-        setter:
-          q: OUTPUT1:STATE {:d}
-        specs:
-          valid: [ 0, 1 ]
-          type: int
-      clock_srate:
-        default: 5000000000.0
-        getter:
-          q: CLOCK:SRATE?
-          r: '{:f}'
-        setter:
-          q: CLOCK:SRATE {:f}
-        specs:
-          min: 300.0
-          max: 5000000000.0
-          type: float
-      source1_waveform:
-        default: ""
-        getter:
-          q: SOURCE1:WAVEFORM?
-          r: '{:s}'
-        setter:
-          q: SOURCE1:WAVEFORM {:s}
-      source1_amplitude:
-        default: 0.5
-        getter:
-          q: SOURCE1:VOLTAGE:AMPLITUDE?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:VOLTAGE:AMPLITUDE {:f}
-        specs:
-          min: 0.1
-          max: 2.0
-          type: float
-      source1_offset:
-        default: 0.0
-        getter:
-          q: SOURCE1:VOLTAGE:OFFSET?
-          r: '{:f}'
-        setter:
-          q: SOURCE1:VOLTAGE:OFFSET {:f}
-        specs:
-          min: -0.5
-          max: 0.5
-          type: float
-      rstate:
-        default: 2
-        getter:
-          q: AWGControl:RSTate?
-          r: '{:d}'
-        setter:
-          q: AWGControl:RSTate {:d}
-        specs:
-          type: int
-      memory_import:
-        default: ''
-        getter:
-          q: 'MMEMory:IMPort?'
-          r: '{:s}'
-        setter:
-          q: 'MMEMory:IMPort {:s}'
-  awg520025:
+  awg5200opt25:
     eom:
       USB INSTR:
         q: "\n"
@@ -136,6 +69,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '4'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
