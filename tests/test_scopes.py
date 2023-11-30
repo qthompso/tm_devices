@@ -13,7 +13,7 @@ import pyvisa as visa
 from packaging.version import Version
 
 from tm_devices import DeviceManager
-from tm_devices.drivers import MSO2, MSO5, MSO5B, MSO70KDX, TekScopeSW
+from tm_devices.drivers import MSO2, MSO5, MSO5B, MSO6, MSO70KDX, TekScopeSW
 from tm_devices.drivers.pi.scopes.tekscope.tekscope import (
     ExtendedSourceDeviceConstants,
     ParameterBounds,
@@ -126,6 +126,24 @@ def test_tekscope(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     with pytest.raises(SystemError):
         scope.query("EMPTY:STRING?")
 
+    # Test generating waveform functionality
+    scope.generate_waveform(10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0)
+    scope.generate_waveform(
+        10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0, termination="HIGHZ"
+    )
+    scope.generate_waveform(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst=1)
+    with pytest.raises(
+        TypeError,
+        match="Generate Waveform does not accept functions as non Enums. "
+        "Please use 'source_device_constants.functions'.",
+    ):
+        scope.generate_waveform(
+            25e6,
+            scope.source_device_constants.functions.PULSE.value,  # type: ignore
+            1.0,
+            0.0,
+            "all",
+        )
     # Test saving waveform functionality
     scope.save_waveform_to_reference("temp.wfm", "REF1")
     # Assert there are no errors after testing waveform generations and saving
@@ -236,13 +254,13 @@ def test_iafg(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    mso56: MSO5 = cast(MSO5, device_manager.get_scope("mso56"))
-    mso56_constraints = mso56.get_waveform_constraints(
+    mso64: MSO6 = cast(MSO6, device_manager.add_scope("MSO64-HOSTNAME", alias="mso64"))
+    mso64_constraints = mso64.get_waveform_constraints(
         SignalSourceFunctionsIAFG.SIN,
         frequency=25.0e6,
     )
 
-    assert mso56_constraints == ExtendedSourceDeviceConstants(
+    assert mso64_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=20.0e-3, upper=5.0),
         offset_range=ParameterBounds(lower=-2.5, upper=2.5),
         frequency_range=ParameterBounds(lower=100.0e-3, upper=50.0e6),
@@ -252,25 +270,26 @@ def test_iafg(device_manager: DeviceManager) -> None:
         ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
-    mso56_constraints = mso56.get_waveform_constraints(
+    mso64_constraints = mso64.get_waveform_constraints(
         SignalSourceFunctionsIAFG.SQUARE,
+        frequency=5.0e6,
     )
 
-    assert mso56_constraints == ExtendedSourceDeviceConstants(
+    assert mso64_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=20.0e-3, upper=5.0),
         offset_range=ParameterBounds(lower=-2.5, upper=2.5),
         frequency_range=ParameterBounds(lower=100.0e-3, upper=25.0e6),
         sample_rate_range=ParameterBounds(lower=250.0e6, upper=250.0e6),
         square_duty_cycle_range=ParameterBounds(lower=10.0, upper=90.0),
-        pulse_width_range=None,
+        pulse_width_range=ParameterBounds(lower=2.0e-08, upper=1.8e-07),
         ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
-    mso56_constraints = mso56.get_waveform_constraints(
+    mso64_constraints = mso64.get_waveform_constraints(
         SignalSourceFunctionsIAFG.RAMP,
     )
 
-    assert mso56_constraints == ExtendedSourceDeviceConstants(
+    assert mso64_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=20.0e-3, upper=5.0),
         offset_range=ParameterBounds(lower=-2.5, upper=2.5),
         frequency_range=ParameterBounds(lower=100.0e-3, upper=500.0e3),
@@ -280,11 +299,11 @@ def test_iafg(device_manager: DeviceManager) -> None:
         ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
-    mso56_constraints = mso56.get_waveform_constraints(
+    mso64_constraints = mso64.get_waveform_constraints(
         SignalSourceFunctionsIAFG.SINC,
     )
 
-    assert mso56_constraints == ExtendedSourceDeviceConstants(
+    assert mso64_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=20.0e-3, upper=3.0),
         offset_range=ParameterBounds(lower=-2.5, upper=2.5),
         frequency_range=ParameterBounds(lower=100.0e-3, upper=2.0e6),
@@ -294,11 +313,11 @@ def test_iafg(device_manager: DeviceManager) -> None:
         ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
 
-    mso56_constraints = mso56.get_waveform_constraints(
+    mso64_constraints = mso64.get_waveform_constraints(
         SignalSourceFunctionsIAFG.HAVERSINE,
     )
 
-    assert mso56_constraints == ExtendedSourceDeviceConstants(
+    assert mso64_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=20.0e-3, upper=2.5),
         offset_range=ParameterBounds(lower=-2.5, upper=2.5),
         frequency_range=ParameterBounds(lower=100.0e-3, upper=5.0e6),
@@ -322,6 +341,9 @@ def test_iafg(device_manager: DeviceManager) -> None:
         pulse_width_range=None,
         ramp_symmetry_range=ParameterBounds(lower=0.0, upper=100.0),
     )
+
+    with pytest.raises(ValueError, match="IAFGs must have a waveform defined."):
+        mso64.get_waveform_constraints()
 
 
 def test_exceptions(device_manager: DeviceManager) -> None:

@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg70002b208:
+  awg70002bopt208:
     eom:
       USB INSTR:
         q: "\n"
@@ -48,7 +48,7 @@ devices:
       memory_import:
         default: ''
         getter:
-          q: 'MMEMory:IMPort?'
+          q: MMEMory:IMPort?
           r: '{:s}'
         setter:
-          q: 'MMEMory:IMPort {:s}'
+          q: MMEMory:IMPort {:s}

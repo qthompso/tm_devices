@@ -1,7 +1,7 @@
 ---
 spec: '1.1'
 devices:
-  awg70001a150:
+  awg70001aopt150:
     eom:
       USB INSTR:
         q: "\n"
@@ -24,6 +24,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '1'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -66,11 +67,11 @@ devices:
       memory_import:
         default: ''
         getter:
-          q: 'MMEMory:IMPort?'
+          q: MMEMory:IMPort?
           r: '{:s}'
         setter:
-          q: 'MMEMory:IMPort {:s}'
-  awg70002a225:
+          q: MMEMory:IMPort {:s}
+  awg70002aopt225:
     eom:
       USB INSTR:
         q: "\n"
@@ -93,6 +94,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '1'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -117,11 +119,11 @@ devices:
       memory_import:
         default: ''
         getter:
-          q: 'MMEMory:IMPort?'
+          q: MMEMory:IMPort?
           r: '{:s}'
         setter:
-          q: 'MMEMory:IMPort {:s}'
-  awg70002a216:
+          q: MMEMory:IMPort {:s}
+  awg70002aopt216:
     eom:
       USB INSTR:
         q: "\n"
@@ -144,6 +146,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '1'
+      - q: 'MMEMory:IMPort '
     error:
       status_register:
         - q: '*ESR?'
@@ -168,7 +171,7 @@ devices:
       memory_import:
         default: ''
         getter:
-          q: 'MMEMory:IMPort?'
+          q: MMEMory:IMPort?
           r: '{:s}'
         setter:
-          q: 'MMEMory:IMPort {:s}'
+          q: MMEMory:IMPort {:s}

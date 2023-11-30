@@ -107,11 +107,11 @@ resources:
 
   # --- awg ---
   #   awg5200
-  TCPIP::AWG520050-HOSTNAME::INSTR:
-    device: awg520050
+  TCPIP::AWG5200OPT50-HOSTNAME::INSTR:
+    device: awg5200opt50
     filename: awg/awg5200.yaml
-  TCPIP::AWG520025-HOSTNAME::INSTR:
-    device: awg520025
+  TCPIP::AWG5200OPT25-HOSTNAME::INSTR:
+    device: awg5200opt25
     filename: awg/awg5200.yaml
   #   awg5k
   TCPIP::AWG5012-HOSTNAME::INSTR:
@@ -124,36 +124,36 @@ resources:
     device: awg5012c
     filename: awg/awg5kc.yaml
   #   awg7k
-  TCPIP::AWG705101-HOSTNAME::INSTR:
-    device: awg705101
+  TCPIP::AWG7051OPT01-HOSTNAME::INSTR:
+    device: awg7051opt01
     filename: awg/awg7k.yaml
-  TCPIP::AWG710206-HOSTNAME::INSTR:
-    device: awg710206
+  TCPIP::AWG7102OPT06-HOSTNAME::INSTR:
+    device: awg7102opt06
     filename: awg/awg7k.yaml
-  TCPIP::AWG7062B02-HOSTNAME::INSTR:
-    device: awg7062b02
+  TCPIP::AWG7062BOPT02-HOSTNAME::INSTR:
+    device: awg7062bopt02
     filename: awg/awg7kb.yaml
-  TCPIP::AWG7121B01-HOSTNAME::INSTR:
-    device: awg7121b01
+  TCPIP::AWG7121BOPT01-HOSTNAME::INSTR:
+    device: awg7121bopt01
     filename: awg/awg7kb.yaml
-  TCPIP::AWG7082C01-HOSTNAME::INSTR:
-    device: awg7082c01
+  TCPIP::AWG7082COPT01-HOSTNAME::INSTR:
+    device: awg7082copt01
     filename: awg/awg7kc.yaml
-  TCPIP::AWG7122C06-HOSTNAME::INSTR:
-    device: awg7122c06
+  TCPIP::AWG7122COPT06-HOSTNAME::INSTR:
+    device: awg7122copt06
     filename: awg/awg7kc.yaml
   #   awg70k
-  TCPIP::AWG70001A150-HOSTNAME::INSTR:
-    device: awg70001a150
+  TCPIP::AWG70001AOPT150-HOSTNAME::INSTR:
+    device: awg70001aopt150
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70002A225-HOSTNAME::INSTR:
-    device: awg70002a225
+  TCPIP::AWG70002AOPT225-HOSTNAME::INSTR:
+    device: awg70002aopt225
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70002A216-HOSTNAME::INSTR:
-    device: awg70002a216
+  TCPIP::AWG70002AOPT216-HOSTNAME::INSTR:
+    device: awg70002aopt216
     filename: awg/awg70ka.yaml
-  TCPIP::AWG70002B208-HOSTNAME::INSTR:
-    device: awg70002b208
+  TCPIP::AWG70002BOPT208-HOSTNAME::INSTR:
+    device: awg70002bopt208
     filename: awg/awg70kb.yaml
 
   # --- TekScope ---

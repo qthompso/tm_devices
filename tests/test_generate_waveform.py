@@ -14,7 +14,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg520050 = device_manager.add_awg("awg520050-hostname", alias="awg520050")
+    awg520050 = device_manager.add_awg("awg5200opt50-hostname", alias="awg520050")
 
     awg520050.generate_waveform(
         10e3, awg520050.source_device_constants.functions.SIN, 1.0, 0.2, channel="SOURCE1"
@@ -56,8 +56,8 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg7k01 = device_manager.add_awg("AWG705101-hostname", alias="awg7k01")
-    awg7k06 = device_manager.add_awg("AWG710206-hostname", alias="awg7k06")
+    awg7k01 = device_manager.add_awg("awg7051opt01-hostname", alias="awg7k01")
+    awg7k06 = device_manager.add_awg("awg7102opt06-hostname", alias="awg7k06")
 
     default_offset = 0
     awg7k06.source_channel["SOURCE1"].set_offset(default_offset)
