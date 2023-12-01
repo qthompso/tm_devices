@@ -209,7 +209,7 @@ class AWG(SignalGenerator, ABC):
 
         amplitude_range, offset_range, sample_rate_range = self._get_series_specific_constraints()
 
-        if function:
+        if function and not waveform_length:
             func_sample_rate_lookup: Dict[str, ParameterBounds] = {
                 SignalSourceFunctionsAWG.SIN.name: ParameterBounds(lower=10, upper=3600),
                 SignalSourceFunctionsAWG.CLOCK.name: ParameterBounds(lower=960, upper=960),
@@ -224,13 +224,16 @@ class AWG(SignalGenerator, ABC):
             fastest_frequency = (
                 sample_rate_range.upper / func_sample_rate_lookup[function.name].lower
             )
-        elif waveform_length:  # pragma: no cover
+        elif waveform_length and not function:
             slowest_frequency = sample_rate_range.lower / waveform_length
             fastest_frequency = sample_rate_range.upper / waveform_length
+        else:
+            msg = "AWG Constraints require exclusively function or waveform_length."
+            raise ValueError(msg)
 
         frequency_range = ParameterBounds(
-            lower=slowest_frequency,  # pyright: ignore[reportUnboundVariable]
-            upper=fastest_frequency,  # pyright: ignore[reportUnboundVariable]
+            lower=slowest_frequency,
+            upper=fastest_frequency,
         )
         return ExtendedSourceDeviceConstants(
             amplitude_range=amplitude_range,
