@@ -133,7 +133,7 @@ class AFG(SignalGenerator, ABC):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    def generate_waveform(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
         function: SignalSourceFunctionsAFG,

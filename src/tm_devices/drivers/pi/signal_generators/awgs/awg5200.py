@@ -63,7 +63,7 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    def generate_waveform(  # noqa: PLR0913
+    def generate_function(  # noqa: PLR0913
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
