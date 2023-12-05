@@ -479,6 +479,40 @@ class TekScope(
         self._validate_generated_function(function)
         # Turn off the Internal AFG
         self.set_and_check("AFG:OUTPUT:STATE", 0)
+
+        self.set_waveform_properties(
+            frequency, function, amplitude, offset, burst, termination, duty_cycle, symmetry
+        )
+
+        # Turn on the Internal AFG
+        self.set_and_check("AFG:OUTPUT:STATE", 1)
+        if burst > 0:
+            self.write("AFG:BURST:TRIGGER")
+        # Don't check for errors as any measurement with low amplitude will generate an error
+
+    def set_waveform_properties(  # noqa: PLR0913
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsIAFG,
+        amplitude: float,
+        offset: float,
+        burst: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        symmetry: float = 50.0,
+    ) -> None:
+        """Set the properties of the waveform.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The waveform shape to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            burst: The number of wavelengths to be generated.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
         if burst > 0:
             self.set_and_check("AFG:OUTPUT:MODE", "BURST")
             self.set_and_check("AFG:BURST:CCOUNT", f"{burst}")
@@ -497,11 +531,6 @@ class TekScope(
         self.set_and_check("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
         self.internal_afg.set_amplitude(amplitude)
-        # Turn on the Internal AFG
-        self.set_and_check("AFG:OUTPUT:STATE", 1)
-        if burst > 0:
-            self.write("AFG:BURST:TRIGGER")
-        # Don't check for errors as any measurement with low amplitude will generate an error
 
     # pylint: disable=too-many-locals
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]

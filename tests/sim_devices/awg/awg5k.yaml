@@ -22,7 +22,7 @@ devices:
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
         r: '2'
-      - q: 'AWGCONTROL:RUN'
+      - q: AWGCONTROL:RUN
     error:
       status_register:
         - q: '*ESR?'
@@ -52,7 +52,7 @@ devices:
         setter:
           q: OUTPUT1:STATE {:d}
         specs:
-          valid: [ 0, 1 ]
+          valid: [0, 1]
           type: int
       source1_frequency:
         default: 10000000.0
@@ -66,7 +66,7 @@ devices:
           max: 1200000000.0
           type: float
       source1_waveform:
-        default: ""
+        default: ''
         getter:
           q: SOURCE1:WAVEFORM?
           r: '{:s}'
@@ -95,7 +95,7 @@ devices:
           max: 2.25
           type: float
       rmode:
-        default: ""
+        default: ''
         getter:
           q: AWGCONTROL:RMODE?
           r: '{:s}'
@@ -111,7 +111,7 @@ devices:
         specs:
           type: int
       element1_waveform1:
-        default: ""
+        default: ''
         getter:
           q: SEQUENCE:ELEMENT1:WAVEFORM1?
           r: '{:s}'
@@ -129,7 +129,7 @@ devices:
       memory_import:
         default: ''
         getter:
-          q: 'MMEMory:IMPort?'
+          q: MMEMory:IMPort?
           r: '{:s}'
         setter:
-          q: 'MMEMory:IMPort {:s}'
+          q: MMEMory:IMPort {:s}
