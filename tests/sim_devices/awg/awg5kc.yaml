@@ -46,7 +46,7 @@ devices:
       memory_import:
         default: ''
         getter:
-          q: 'MMEMory:IMPort?'
+          q: MMEMory:IMPort?
           r: '{:s}'
         setter:
-          q: 'MMEMory:IMPort {:s}'
+          q: MMEMory:IMPort {:s}

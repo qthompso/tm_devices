@@ -133,8 +133,7 @@ class AFG(SignalGenerator, ABC):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    # pylint: disable=too-many-locals,line-too-long
-    def generate_waveform(  # noqa: C901, PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+    def generate_waveform(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
         function: SignalSourceFunctionsAFG,
@@ -161,10 +160,6 @@ class AFG(SignalGenerator, ABC):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        polarity_mapping = {
-            "NORMAL": "NORM",
-            "INVERTED": "INV",
-        }
         self._validate_generated_function(function)
 
         # Generate the waveform on the given channel
@@ -173,35 +168,18 @@ class AFG(SignalGenerator, ABC):
             # grab the number(s) in the channel name
             # Temporarily turn off this channel
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", 0)
-            # Termination
-            if termination == "FIFTY":
-                self.set_and_check(f"OUTPUT{source_channel.num}:IMPEDANCE", 50)
-            elif termination == "HIGHZ":
-                self.write(f"OUTPUT{source_channel.num}:IMPEDANCE INFINITY")
-            else:  # pragma: no cover
-                # if termination is MAXIMUM or MINIMUM or INFINITY
-                self.set_and_check(f"OUTPUT{source_channel.num}:IMPEDANCE", termination)
-            # Frequency
-            source_channel.set_frequency(frequency)
-            # Offset
-            source_channel.set_offset(offset, tolerance=0.01)
-            if function == SignalSourceFunctionsAFG.PULSE:
-                # Duty cycle is only valid for pulse
-                self.set_and_check(f"{source_channel.name}:PULSE:DCYCLE", duty_cycle)
-            # Polarity
-            self.set_and_check(f"OUTPUT{source_channel.num}:POLARITY", polarity_mapping[polarity])
-            # Function
-            if function == SignalSourceFunctionsAFG.RAMP:
-                self.set_and_check(f"{source_channel.name}:FUNCTION:RAMP:SYMMETRY", symmetry)
-            self.set_and_check(f"{source_channel.name}:FUNCTION", function.value)
-            # Amplitude, needs to be after termination so that the amplitude is properly adjusted
-            source_channel.set_amplitude(amplitude, tolerance=0.01)
-            if burst > 0:
-                # set to external as to not burst every millisecond
-                self.set_and_check("TRIGGER:SEQUENCE:SOURCE", "EXT")
-                self.set_and_check(f"{source_channel.name}:BURST:STATE", 1)
-                self.set_and_check(f"{source_channel.name}:BURST:MODE", "TRIG")
-                self.set_and_check(f"{source_channel.name}:BURST:NCYCLES", burst)
+            self.set_waveform_propeties(
+                frequency,
+                function,
+                amplitude,
+                offset,
+                source_channel,
+                burst,
+                termination,
+                duty_cycle,
+                polarity,
+                symmetry,
+            )
             # Turn on the channel
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", 1)
 
@@ -222,6 +200,67 @@ class AFG(SignalGenerator, ABC):
                 self.write("SOURCE1:PHASE:INITIATE")
             # Check for system errors
             self.expect_esr(0)
+
+    def set_waveform_propeties(  # noqa: PLR0913
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsAFG,
+        amplitude: float,
+        offset: float,
+        source_channel: AFGChannel,
+        burst: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 100.0,
+    ) -> None:
+        """Set the properties of the waveform.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The waveform shape to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            source_channel: The source channel class for the requested channel.
+            burst: The number of wavelengths to be generated.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        polarity_mapping = {
+            "NORMAL": "NORM",
+            "INVERTED": "INV",
+        }
+        # Termination
+        if termination == "FIFTY":
+            self.set_and_check(f"OUTPUT{source_channel.num}:IMPEDANCE", 50)
+        elif termination == "HIGHZ":
+            self.write(f"OUTPUT{source_channel.num}:IMPEDANCE INFINITY")
+        else:  # pragma: no cover
+            # if termination is MAXIMUM or MINIMUM or INFINITY
+            self.set_and_check(f"OUTPUT{source_channel.num}:IMPEDANCE", termination)
+        # Frequency
+        source_channel.set_frequency(frequency)
+        # Offset
+        source_channel.set_offset(offset, tolerance=0.01)
+        if function == SignalSourceFunctionsAFG.PULSE:
+            # Duty cycle is only valid for pulse
+            self.set_and_check(f"{source_channel.name}:PULSE:DCYCLE", duty_cycle)
+        # Polarity
+        self.set_and_check(f"OUTPUT{source_channel.num}:POLARITY", polarity_mapping[polarity])
+        # Function
+        if function == SignalSourceFunctionsAFG.RAMP:
+            self.set_and_check(f"{source_channel.name}:FUNCTION:RAMP:SYMMETRY", symmetry)
+        self.set_and_check(f"{source_channel.name}:FUNCTION", function.value)
+        # Amplitude, needs to be after termination so that the amplitude is properly adjusted
+        source_channel.set_amplitude(amplitude, tolerance=0.01)
+        if burst > 0:
+            # set to external as to not burst every millisecond
+            self.set_and_check("TRIGGER:SEQUENCE:SOURCE", "EXT")
+            self.set_and_check(f"{source_channel.name}:BURST:STATE", 1)
+            self.set_and_check(f"{source_channel.name}:BURST:MODE", "TRIG")
+            self.set_and_check(f"{source_channel.name}:BURST:NCYCLES", burst)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
