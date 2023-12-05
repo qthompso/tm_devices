@@ -1,5 +1,5 @@
 # pyright: reportPrivateUsage=none
-"""Test generate_waveform."""
+"""Test generate_function."""
 from typing import cast
 
 import pytest
@@ -16,7 +16,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     """
     awg520050 = device_manager.add_awg("awg5200opt50-hostname", alias="awg520050")
 
-    awg520050.generate_waveform(
+    awg520050.generate_function(
         10e3, awg520050.source_device_constants.functions.SIN, 1.0, 0.2, channel="SOURCE1"
     )
     source1_srate = awg520050.query("CLOCK:SRATE?")
@@ -31,7 +31,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     assert int(output1_state) == 1
 
     # AWG5200 doesn't handle burst greater than 0.
-    awg520050.generate_waveform(
+    awg520050.generate_function(
         10e3, awg520050.source_device_constants.functions.DC, 1.0, 0.0, channel="SOURCE1", burst=1
     )
     source1_waveform_file = awg520050.query("SOURCE1:WAVEFORM?")
@@ -45,7 +45,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
         ValueError,
         match="Unable to generate Clock waveform with provided frequency of 10000000000.0 Hz.",
     ):
-        awg520050.generate_waveform(
+        awg520050.generate_function(
             10e9, awg520050.source_device_constants.functions.CLOCK, 1.0, 0.0, channel="SOURCE1"
         )
 
@@ -61,7 +61,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
 
     default_offset = 0
     awg7k06.source_channel["SOURCE1"].set_offset(default_offset)
-    awg7k06.generate_waveform(
+    awg7k06.generate_function(
         10e4, awg7k06.source_device_constants.functions.CLOCK, 1.0, 0.2, channel="SOURCE1"
     )
     source1_frequency = awg7k06.query("SOURCE1:FREQUENCY?")
@@ -80,7 +80,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
     assert awg7k06.get_eventlog_status() == (True, '0,"No error"')
 
     # AWG option 1 should set offset.
-    awg7k01.generate_waveform(
+    awg7k01.generate_function(
         10e3, awg7k01.source_device_constants.functions.SIN, 1.2, 0.2, channel="SOURCE1"
     )
     source1_offset = awg7k01.query("SOURCE1:VOLTAGE:OFFSET?")
@@ -98,7 +98,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     """
     awg5k = device_manager.add_awg("AWG5012-hostname", alias="awg5k")
     # Sine
-    awg5k.generate_waveform(
+    awg5k.generate_function(
         10e3, awg5k.source_device_constants.functions.SIN, 2.0, 2.0, channel="SOURCE1"
     )
     source1_frequency = awg5k.query("SOURCE1:FREQUENCY?")
@@ -113,7 +113,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     assert int(output1_state) == 1
 
     # Clock
-    awg5k.generate_waveform(
+    awg5k.generate_function(
         10e4, awg5k.source_device_constants.functions.CLOCK, 1.0, 0.0, channel="SOURCE1"
     )
     source1_frequency = awg5k.query("SOURCE1:FREQUENCY?")
@@ -122,7 +122,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     assert source1_waveform_file == '"*Clock960"'
 
     # Iterate through pre-made signal record length
-    awg5k.generate_waveform(
+    awg5k.generate_function(
         10e7, awg5k.source_device_constants.functions.RAMP, 1.0, 0.0, channel="SOURCE1"
     )
     source1_frequency = awg5k.query("SOURCE1:FREQUENCY?")
@@ -131,7 +131,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     assert source1_waveform_file == '"*Triangle10"'
 
     # Burst > 0
-    awg5k.generate_waveform(
+    awg5k.generate_function(
         10e3, awg5k.source_device_constants.functions.SIN, 1.0, 0.0, channel="SOURCE1", burst=100
     )
     source1_frequency = awg5k.query("SOURCE1:FREQUENCY?")
@@ -146,7 +146,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
 
     # Invalid burst
     with pytest.raises(ValueError, match="-1 is an invalid burst value. Burst must be >= 0."):
-        awg5k.generate_waveform(
+        awg5k.generate_function(
             10e3, awg5k.source_device_constants.functions.SIN, 1.0, 0.0, channel="SOURCE1", burst=-1
         )
 
@@ -163,10 +163,10 @@ def test_afg3k_gen_waveform(
     afg3kc = device_manager.add_afg(
         "afg3252c-hostname", alias="afg3kc", connection_type="SOCKET", port=10001
     )
-    afg3kc.generate_waveform(25e6, afg3kc.source_device_constants.functions.PULSE, 1.0, 0.0, "all")
+    afg3kc.generate_function(25e6, afg3kc.source_device_constants.functions.PULSE, 1.0, 0.0, "all")
     assert "SOURCE1:PHASE:INITIATE" in capsys.readouterr().out
 
-    afg3kc.generate_waveform(
+    afg3kc.generate_function(
         25e6,
         afg3kc.source_device_constants.functions.DC,
         1.0,
@@ -179,7 +179,7 @@ def test_afg3k_gen_waveform(
     assert "SOURCE1:BURST:MODE" not in capsys.readouterr().out
     assert "SOURCE1:BURST:NCYCLES" not in capsys.readouterr().out
 
-    afg3kc.generate_waveform(
+    afg3kc.generate_function(
         25e6,
         afg3kc.source_device_constants.functions.SIN,
         1.0,
@@ -210,7 +210,7 @@ def test_afg3k_gen_waveform(
     output1_state = afg3kc.query("OUTPUT1:STATE?")
     assert int(output1_state) == 1
 
-    afg3kc.generate_waveform(
+    afg3kc.generate_function(
         25e6,
         afg3kc.source_device_constants.functions.RAMP,
         1.0,
@@ -226,7 +226,7 @@ def test_afg3k_gen_waveform(
     source1_function = afg3kc.query("SOURCE1:FUNCTION?")
     assert source1_function == "RAMP"
 
-    afg3kc.generate_waveform(
+    afg3kc.generate_function(
         25e6,
         afg3kc.source_device_constants.functions.PULSE,
         1.0,
@@ -254,7 +254,7 @@ def test_internal_afg_gen_waveform(
         MSO5, device_manager.add_scope("MSO56-SERIAL1", alias="mso56", connection_type="USB")
     )
 
-    scope.generate_waveform(10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0)
+    scope.generate_function(10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0)
     assert "AFG:OUTPUT:MODE" not in capsys.readouterr().out
     assert "AFG:BURST:CCOUNT" not in capsys.readouterr().out
     frequency = scope.query("AFG:FREQUENCY?")
@@ -274,13 +274,13 @@ def test_internal_afg_gen_waveform(
     assert int(output_state) == 1
     assert "AFG:BURST:TRIGGER" not in capsys.readouterr().out
 
-    scope.generate_waveform(
+    scope.generate_function(
         10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0, termination="HIGHZ"
     )
     impedance = scope.query("AFG:OUTPUT:LOAD:IMPEDANCE?")
     assert impedance == "HIGHZ"
 
-    scope.generate_waveform(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst=1)
+    scope.generate_function(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst=1)
     output_mode = scope.query("AFG:OUTPUT:MODE?")
     assert output_mode == "BURST"
     burst_ccount = scope.query("AFG:BURST:CCOUNT?")
@@ -296,7 +296,7 @@ def test_internal_afg_gen_waveform(
         match="Generate Waveform does not accept functions as non Enums. "
         "Please use 'source_device_constants.functions'.",
     ):
-        scope.generate_waveform(
+        scope.generate_function(
             25e6,
             scope.source_device_constants.functions.PULSE.value,  # type: ignore
             1.0,

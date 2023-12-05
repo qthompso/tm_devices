@@ -448,7 +448,7 @@ class TekScope(
 
         return wfm_data  # return list of frames
 
-    def generate_waveform(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
         function: SignalSourceFunctionsIAFG,

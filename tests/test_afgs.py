@@ -73,7 +73,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
         match="Generate Waveform does not accept functions as non Enums. "
         "Please use 'source_device_constants.functions'.",
     ):
-        afg3252c.generate_waveform(
+        afg3252c.generate_function(
             25e6,
             afg3252c.source_device_constants.functions.PULSE.value,  # type: ignore
             1.0,

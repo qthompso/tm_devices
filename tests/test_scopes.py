@@ -127,17 +127,17 @@ def test_tekscope(device_manager: DeviceManager) -> None:  # noqa: PLR0915
         scope.query("EMPTY:STRING?")
 
     # Test generating waveform functionality
-    scope.generate_waveform(10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0)
-    scope.generate_waveform(
+    scope.generate_function(10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0)
+    scope.generate_function(
         10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0, termination="HIGHZ"
     )
-    scope.generate_waveform(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst=1)
+    scope.generate_function(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst=1)
     with pytest.raises(
         TypeError,
         match="Generate Waveform does not accept functions as non Enums. "
         "Please use 'source_device_constants.functions'.",
     ):
-        scope.generate_waveform(
+        scope.generate_function(
             25e6,
             scope.source_device_constants.functions.PULSE.value,  # type: ignore
             1.0,

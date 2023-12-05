@@ -148,7 +148,7 @@ class AWG(SignalGenerator, ABC):
         self.write(f'MMEMory:IMPort "{wfm_name}", {waveform_file_path}, {wfm_type}')
         self._ieee_cmds.opc()
 
-    def generate_waveform(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,

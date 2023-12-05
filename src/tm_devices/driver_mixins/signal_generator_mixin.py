@@ -73,7 +73,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         """Return the device constants."""
 
     @abstractmethod
-    def generate_waveform(  # noqa: PLR0913
+    def generate_function(  # noqa: PLR0913
         self,
         frequency: float,
         function: _SignalSourceTypeVar,  # pyright: ignore[reportInvalidTypeVarUse]
