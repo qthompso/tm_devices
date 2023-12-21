@@ -46,6 +46,42 @@ devices:
           min: 0
           max: 255
           type: int
+      source1_frequency:
+        default: 25000000000
+        getter:
+          q: SOURCE1:FREQUENCY?
+          r: '{:f}'
+        setter:
+          q: SOURCE1:FREQUENCY {:f}
+        specs:
+          min: 1490
+          max: 50000000000
+          type: float
+      source1_high_voltage:
+        default: 0.0
+        getter:
+          q: SOURCE1:VOLTAGE:HIGH?
+          r: '{:f}'
+        setter:
+          q: SOURCE1:VOLTAGE:HIGH {:f}
+        specs:
+          type: float
+      source1_low_voltage:
+        default: 0.0
+        getter:
+          q: SOURCE1:VOLTAGE:LOW?
+          r: '{:f}'
+        setter:
+          q: SOURCE1:VOLTAGE:LOW {:f}
+        specs:
+          type: float
+      memory_import:
+        default: ''
+        getter:
+          q: MMEMory:IMPort?
+          r: '{:s}'
+        setter:
+          q: MMEMory:IMPort {:s}
   awg70002aopt225:
     eom:
       USB INSTR:
@@ -91,6 +127,13 @@ devices:
           min: 0
           max: 255
           type: int
+      memory_import:
+        default: ''
+        getter:
+          q: MMEMory:IMPort?
+          r: '{:s}'
+        setter:
+          q: MMEMory:IMPort {:s}
   awg70002aopt216:
     eom:
       USB INSTR:
@@ -136,3 +179,10 @@ devices:
           min: 0
           max: 255
           type: int
+      memory_import:
+        default: ''
+        getter:
+          q: MMEMory:IMPort?
+          r: '{:s}'
+        setter:
+          q: MMEMory:IMPort {:s}

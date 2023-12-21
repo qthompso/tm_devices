@@ -3,7 +3,7 @@
 import pytest
 
 from tm_devices import DeviceManager
-from tm_devices.drivers.pi.signal_sources.awgs.awg import (
+from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ExtendedSourceDeviceConstants,
     ParameterBounds,
@@ -98,7 +98,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         awg520025.get_waveform_constraints()
 
 
-def test_awg70k(device_manager: DeviceManager) -> None:
+def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-many-locals
     """Test the AWG70K driver.
 
     Args:
@@ -127,6 +127,23 @@ def test_awg70k(device_manager: DeviceManager) -> None:
             offset_range,
             length_range,
         )
+
+    awg70ka150.source_channel["SOURCE1"].set_offset(2.0)
+    current_high = float(awg70ka150.query("SOURCE1:VOLTAGE:HIGH?"))
+    current_low = float(awg70ka150.query("SOURCE1:VOLTAGE:LOW?"))
+    current_amplitude = current_high - current_low
+    offset = current_high - (current_amplitude / 2)
+    assert offset == 2.0
+
+    awg70ka150.source_channel["SOURCE1"].set_amplitude(4.0)
+    current_high = float(awg70ka150.query("SOURCE1:VOLTAGE:HIGH?"))
+    current_low = float(awg70ka150.query("SOURCE1:VOLTAGE:LOW?"))
+    current_amplitude = current_high - current_low
+    assert current_amplitude == 4.0
+
+    awg70ka150.source_channel["SOURCE1"].set_frequency(500000000)
+    current_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
+    assert float(current_frequency) == 500000000
 
 
 def test_awg7k(device_manager: DeviceManager) -> None:
