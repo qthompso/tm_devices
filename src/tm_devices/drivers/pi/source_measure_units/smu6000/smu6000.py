@@ -86,6 +86,7 @@ class SMU6000(SourceMeasureUnit, ABC):
         custom_message_prefix: str = "",
         *,
         expected_value: Optional[Union[str, float]] = None,
+        opc: Optional[bool] = None,
     ) -> str:
         """Send the given command with the given value and then verify the results.
 
@@ -101,6 +102,7 @@ class SMU6000(SourceMeasureUnit, ABC):
             remove_quotes: Set this to True to remove all double quotes from the returned value.
             custom_message_prefix: A custom message to be prepended to the failure message.
             expected_value: An optional, alternative value expected to be returned.
+            opc: Boolean indicating if ``*OPC?`` should be queried after sending the command.
 
         Returns:
             The output of the query portion of the method.
@@ -114,6 +116,7 @@ class SMU6000(SourceMeasureUnit, ABC):
             remove_quotes,
             custom_message_prefix,
             expected_value=expected_value,
+            opc=opc,
         )
 
     def load_script(
