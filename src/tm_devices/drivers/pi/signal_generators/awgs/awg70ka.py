@@ -56,6 +56,20 @@ class AWG70KAChannel(AWGChannel):
             high_voltage, low_voltage, tolerance=tolerance, percentage=percentage
         )
 
+    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the frequency on the source.
+
+        Args:
+            value: The frequency value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage, opc=True
+        )
+
     def _set_high_and_low_voltage(
         self,
         high_voltage: float,
