@@ -22,7 +22,7 @@ class AWG7K(AWG7KMixin, AWG):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    def generate_waveform(  # noqa: PLR0913  # pylint: disable=too-many-locals
+    def generate_function(  # noqa: PLR0913  # pylint: disable=too-many-locals
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,

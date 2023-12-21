@@ -148,7 +148,7 @@ class AWG(SignalGenerator, ABC):
         self.write(f'MMEMory:IMPort "{wfm_name}", {waveform_file_path}, {wfm_type}')
         self._ieee_cmds.opc()
 
-    def generate_waveform(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]  # pylint: disable=too-many-locals
+    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
@@ -181,14 +181,38 @@ class AWG(SignalGenerator, ABC):
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            first_source_channel = self.source_channel["SOURCE1"]
-            first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-            self._setup_burst_waveform(source_channel.num, predefined_name, burst)
-            source_channel.set_amplitude(amplitude)
-            source_channel.set_offset(offset)
+            self.set_waveform_properties(
+                source_channel, predefined_name, needed_sample_rate, amplitude, offset, burst
+            )
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
         self.write("AWGCONTROL:RUN")
         self.expect_esr(0)
+
+    def set_waveform_properties(
+        self,
+        source_channel: AWGChannel,
+        predefined_name: str,
+        needed_sample_rate: float,
+        amplitude: float,
+        offset: float,
+        burst: int,
+    ) -> None:
+        """Set the properties of the waveform.
+
+        Args:
+            source_channel: The source channel class for the requested channel.
+            predefined_name: The name of the function to generate.
+            needed_sample_rate: The required sample
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+
+            burst: The number of wavelengths to be generated.
+        """
+        first_source_channel = self.source_channel["SOURCE1"]
+        first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
+        self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+        source_channel.set_amplitude(amplitude)
+        source_channel.set_offset(offset)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
@@ -256,7 +280,7 @@ class AWG(SignalGenerator, ABC):
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name = ""
-        needed_sample_rate = 0
+        needed_sample_rate = 0.0
         if function == function.RAMP and symmetry == 50:  # noqa: PLR2004
             function = function.TRIANGLE
         if function != SignalSourceFunctionsAWG.DC and not function.value.startswith("*"):
