@@ -88,6 +88,30 @@ class AWGChannel:
             f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage
         )
 
+    def setup_burst_waveform(self, filename: str, burst: int) -> None:
+        """Prepare device for burst waveform.
+
+        Args:
+            filename: The filename for the burst waveform to generate.
+            burst: The number of wavelengths to be generated.
+        """
+        if not burst:
+            self._pi_device.set_and_check(f"{self.name}:WAVEFORM", f'"{filename}"')
+        elif burst > 0:
+            self._pi_device.set_and_check("AWGCONTROL:RMODE", "SEQ")
+            self._pi_device.set_and_check("SEQUENCE:LENGTH", "1")
+            self._pi_device.set_and_check(
+                f"SEQUENCE:ELEMENT1:WAVEFORM{self.num}",
+                f'"{filename}"',
+            )
+            self._pi_device.set_and_check(
+                "SEQUENCE:ELEMENT1:LOOP:COUNT",
+                burst,
+            )
+        else:
+            error_message = f"{burst} is an invalid burst value. Burst must be >= 0."
+            raise ValueError(error_message)
+
     @property
     def name(self) -> str:
         """Return the channel's name."""
@@ -210,7 +234,7 @@ class AWG(SignalGenerator, ABC):
         """
         first_source_channel = self.source_channel["SOURCE1"]
         first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-        self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+        source_channel.setup_burst_waveform(predefined_name, burst)
         source_channel.set_amplitude(amplitude)
         source_channel.set_offset(offset)
 
@@ -326,31 +350,6 @@ class AWG(SignalGenerator, ABC):
     def _reboot(self) -> None:
         """Reboot the device."""
         # TODO: overwrite the reboot code here
-
-    def _setup_burst_waveform(self, channel_num: int, filename: str, burst: int) -> None:
-        """Prepare device for burst waveform.
-
-        Args:
-            channel_num: The channel number to output the signal from.
-            filename: The filename for the burst waveform to generate.
-            burst: The number of wavelengths to be generated.
-        """
-        if not burst:
-            self.set_and_check(f"SOURCE{channel_num}:WAVEFORM", f'"{filename}"')
-        elif burst > 0:
-            self.set_and_check("AWGCONTROL:RMODE", "SEQ")
-            self.set_and_check("SEQUENCE:LENGTH", "1")
-            self.set_and_check(
-                f"SEQUENCE:ELEMENT1:WAVEFORM{channel_num}",
-                f'"{filename}"',
-            )
-            self.set_and_check(
-                "SEQUENCE:ELEMENT1:LOOP:COUNT",
-                burst,
-            )
-        else:
-            error_message = f"{burst} is an invalid burst value. Burst must be >= 0."
-            raise ValueError(error_message)
 
     # TODO: add testing for this
     def _send_waveform(self, target_file: str) -> None:  # pragma: no cover
