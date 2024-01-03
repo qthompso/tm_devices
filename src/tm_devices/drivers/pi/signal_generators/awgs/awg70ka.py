@@ -15,26 +15,6 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
 class AWG70KAChannel(AWGChannel):
     """AWG70KA channel driver."""
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
-
-        Args:
-            value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        current_high = float(self._pi_device.query(f"{self.name}:VOLTAGE:HIGH?"))
-        current_low = float(self._pi_device.query(f"{self.name}:VOLTAGE:LOW?"))
-
-        current_amplitude = current_high - current_low
-        high_voltage = round(current_amplitude / 2 + value, 3)
-        low_voltage = round(-current_amplitude / 2 + value, 3)
-        self._set_high_and_low_voltage(
-            high_voltage, low_voltage, tolerance=tolerance, percentage=percentage
-        )
-
     def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the amplitude on the source.
 
@@ -68,6 +48,26 @@ class AWG70KAChannel(AWGChannel):
         """
         self._pi_device.set_if_needed(
             f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage, opc=True
+        )
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        current_high = float(self._pi_device.query(f"{self.name}:VOLTAGE:HIGH?"))
+        current_low = float(self._pi_device.query(f"{self.name}:VOLTAGE:LOW?"))
+
+        current_amplitude = current_high - current_low
+        high_voltage = round(current_amplitude / 2 + value, 3)
+        low_voltage = round(-current_amplitude / 2 + value, 3)
+        self._set_high_and_low_voltage(
+            high_voltage, low_voltage, tolerance=tolerance, percentage=percentage
         )
 
     def _set_high_and_low_voltage(

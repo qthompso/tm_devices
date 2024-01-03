@@ -85,23 +85,6 @@ class InternalAFGChannel:
         """
         self._pi_device = pi_device
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
-
-        Args:
-            value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            "AFG:OFFSET",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
-
     def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the amplitude on the source.
 
@@ -131,6 +114,23 @@ class InternalAFGChannel:
         """
         self._pi_device.set_if_needed(
             "AFG:FREQUENCY",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            "AFG:OFFSET",
             value,
             tolerance=tolerance,
             percentage=percentage,

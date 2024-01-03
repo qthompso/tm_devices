@@ -40,22 +40,15 @@ class AWGChannel:
         self._num = int("".join(filter(str.isdigit, channel_name)))
         self._pi_device = pi_device
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
+    @property
+    def name(self) -> str:
+        """Return the channel's name."""
+        return self._name
 
-        Args:
-            value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            f"{self.name}:VOLTAGE:OFFSET",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
+    @property
+    def num(self) -> int:
+        """Return the channel number."""
+        return self._num
 
     def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the amplitude on the source.
@@ -88,6 +81,23 @@ class AWGChannel:
             f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage
         )
 
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._pi_device.set_if_needed(
+            f"{self.name}:VOLTAGE:OFFSET",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
     def setup_burst_waveform(self, filename: str, burst: int) -> None:
         """Prepare device for burst waveform.
 
@@ -111,16 +121,6 @@ class AWGChannel:
         else:
             error_message = f"{burst} is an invalid burst value. Burst must be >= 0."
             raise ValueError(error_message)
-
-    @property
-    def name(self) -> str:
-        """Return the channel's name."""
-        return self._name
-
-    @property
-    def num(self) -> int:
-        """Return the channel number."""
-        return self._num
 
 
 @family_base_class
