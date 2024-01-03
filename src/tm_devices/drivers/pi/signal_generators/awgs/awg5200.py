@@ -39,6 +39,16 @@ class AWG5200Channel(AWGChannel):
         self._pi_device.ieee_cmds.cls()
         self._pi_device.poll_query(30, "CLOCK:SRATE?", value, tolerance=10, percentage=percentage)
 
+    def setup_burst_waveform(self, filename: str, burst: int) -> None:
+        """Prepare device for burst waveform.
+
+        Args:
+            filename: The filename for the burst waveform to generate.
+            burst: The number of wavelengths to be generated.
+        """
+        if not burst:
+            self._pi_device.set_and_check(f"{self.name}:WAVEFORM", f'"{filename}"')
+
 
 class AWG5200(AWG5200Mixin, AWG):
     """AWG5200 device driver."""
@@ -99,7 +109,7 @@ class AWG5200(AWG5200Mixin, AWG):
             source_channel = self.source_channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-            self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+            source_channel.setup_burst_waveform(predefined_name, burst)
             source_channel.set_amplitude(amplitude)
             source_channel.set_offset(offset)
             self.ieee_cmds.wai()
@@ -127,16 +137,3 @@ class AWG5200(AWG5200Mixin, AWG):
         sample_rate_range = ParameterBounds(lower=300.0, upper=int(self.opt_string) * 100.0e6)
 
         return amplitude_range, offset_range, sample_rate_range
-
-    def _setup_burst_waveform(self, channel_num: int, filename: str, burst: int) -> None:
-        """Prepare device for burst waveform.
-
-        Args:
-            channel_num: The channel number to output the signal from.
-            filename: The filename for the burst waveform to generate.
-            burst: The number of wavelengths to be generated.
-        """
-        if not burst:
-            # handle the wave info
-            # this is a sequential command
-            self.set_and_check(f"SOURCE{channel_num}:WAVEFORM", f'"{filename}"')

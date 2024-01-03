@@ -57,7 +57,7 @@ class AWG7K(AWG7KMixin, AWG):
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             first_source_channel = self.source_channel["SOURCE1"]
             first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-            self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+            source_channel.setup_burst_waveform(predefined_name, burst)
             source_channel.set_amplitude(amplitude)
             if not ("02" in self.opt_string or "06" in self.opt_string):
                 source_channel.set_offset(offset)
