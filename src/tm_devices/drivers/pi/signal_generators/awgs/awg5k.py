@@ -1,5 +1,5 @@
 """AWG5K device driver module."""
-from typing import Tuple
+from typing import Optional, Tuple
 
 from tm_devices.commands import AWG5KMixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -27,10 +27,17 @@ class AWG5K(AWG5KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
+        output_path: Optional[str],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
+        if not output_path:
+            output_path = "0"
+
         amplitude_range = ParameterBounds(lower=20.0e-3, upper=4.5)
-        offset_range = ParameterBounds(lower=-2.25, upper=2.25)
+        if output_path == "0":
+            offset_range = ParameterBounds(lower=-2.25, upper=2.25)
+        else:
+            offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         # AWG(Arbitrary Waveform Generator)5(Series)0x(.6 + .6GS/s)x(Channels)z(Model)
         sample_rate_range = ParameterBounds(
             lower=10.0e6, upper=600.0e6 + (600.0e6 * int(self.model[5]))

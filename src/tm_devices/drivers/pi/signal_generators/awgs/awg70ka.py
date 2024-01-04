@@ -1,7 +1,7 @@
 """AWG70KA device driver module."""
 from functools import cached_property
 from types import MappingProxyType
-from typing import Tuple
+from typing import Optional, Tuple
 
 from tm_devices.commands import AWG70KAMixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -112,10 +112,21 @@ class AWG70KA(AWG70KAMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
+        output_path: Optional[str],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
-        amplitude_range = ParameterBounds(lower=0.5, upper=1.0)
-        offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+        if not output_path:
+            output_path = "DIR"
+
+        amplitude_range = ParameterBounds(lower=0.125, upper=0.5)
+
+        if output_path == "DCA":
+            offset_range = ParameterBounds(lower=-400.0e-3, upper=800.0e-3)
+        else:
+            offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+
+        rates = ["50", "25", "16", "08"]
+        max_sample_rate = [rate for rate in rates if rate in self.opt_string][0]
         # first digit indicates the number of channels, second and third indicate sample rate (GHz)
-        sample_rate_range = ParameterBounds(lower=1.5e3, upper=int(self.opt_string[1:3]) * 1.0e9)
+        sample_rate_range = ParameterBounds(lower=1.5e3, upper=int(max_sample_rate) * 1.0e9)
         return amplitude_range, offset_range, sample_rate_range

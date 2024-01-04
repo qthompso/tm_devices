@@ -66,27 +66,47 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         memory_max_record_length=16200000,
         memory_min_record_length=1,
     )
-    assert awg520050.opt_string == "50"
+    assert awg520050.opt_string == "50,HV"
     awg520050_constraints = awg520050.get_waveform_constraints(SignalSourceFunctionsAWG.SIN)
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
     assert awg520050_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterBounds(lower=0.1, upper=2.0),
-        offset_range=ParameterBounds(lower=-0.5, upper=0.5),
+        amplitude_range=ParameterBounds(lower=25.0e-3, upper=750.0e-3),
+        offset_range=ParameterBounds(lower=-2.0, upper=2.0),
         frequency_range=ParameterBounds(lower=min_smaple_50 / 3600.0, upper=max_sample_50 / 10.0),
         sample_rate_range=ParameterBounds(lower=min_smaple_50, upper=max_sample_50),
         square_duty_cycle_range=None,
         pulse_width_range=None,
         ramp_symmetry_range=None,
     )
+
+
+    awg520050_constraints = awg520050.get_waveform_constraints(
+        SignalSourceFunctionsAWG.SIN,
+        output_path="DCHV",
+    )
+    min_smaple_50 = 300.0
+    max_sample_50 = 5.0e9
+    assert awg520050_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=10.0e-3, upper=5.0),
+        offset_range=ParameterBounds(lower=-2.0, upper=2.0),
+        frequency_range=ParameterBounds(lower=min_smaple_50 / 3600.0, upper=max_sample_50 / 10.0),
+        sample_rate_range=ParameterBounds(lower=min_smaple_50, upper=max_sample_50),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
     awg520025 = device_manager.add_awg("awg5200opt25-hostname", alias="awg520025")
-    assert awg520025.opt_string == "25"
-    awg520025_constraints = awg520025.get_waveform_constraints(waveform_length=500)
+    assert awg520025.opt_string == "25,DC"
+    awg520025_constraints = awg520025.get_waveform_constraints(
+        waveform_length=500,
+    )
     min_smaple_25 = 300.0
     max_sample_25 = 2.5e9
     assert awg520025_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterBounds(lower=0.1, upper=2.0),
-        offset_range=ParameterBounds(lower=-0.5, upper=0.5),
+        amplitude_range=ParameterBounds(lower=25.0e-3, upper=1.5),
+        offset_range=ParameterBounds(lower=-2.0, upper=2.0),
         frequency_range=ParameterBounds(lower=min_smaple_25 / 500.0, upper=max_sample_25 / 500.0),
         sample_rate_range=ParameterBounds(lower=min_smaple_25, upper=max_sample_25),
         square_duty_cycle_range=None,
@@ -104,8 +124,7 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
     Args:
         device_manager: The DeviceManager object.
     """
-    ampl_range = ParameterBounds(lower=0.5, upper=1.0)
-    offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+    ampl_range = ParameterBounds(lower=0.125, upper=0.5)
     awg70ka150 = device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
     awg70ka225 = device_manager.add_awg("awg70002aopt225-hostname", alias="awg70ka225")
     awg70ka216 = device_manager.add_awg("awg70002aopt216-hostname", alias="awg70ka216")
@@ -113,11 +132,22 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
     length_range = ParameterBounds(lower=10, upper=1000)
     min_smaple = 1.5e3
     awg_list = [awg70ka150, awg70ka225, awg70ka216, awg70kb208]
+    output_path = None
     for awg in awg_list:
         option = awg.alias[-3:]
         assert awg.opt_string == option
 
-        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.RAMP)
+        if not output_path:
+            offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+        else:
+            offset_range = ParameterBounds(lower=-0.4, upper=0.8)
+
+        constraints = awg.get_waveform_constraints(
+            SignalSourceFunctionsAWG.RAMP,
+            output_path=output_path,
+        )
+
+        output_path = "DCA"
 
         sample_range = ParameterBounds(lower=min_smaple, upper=int(option[1:3]) * 1.0e9)
         check_constraints(
@@ -156,6 +186,8 @@ def test_awg7k(device_manager: DeviceManager) -> None:
     awg7kc01 = device_manager.add_awg("awg7122copt06-hostname", alias="awg7kc06")
     length_range = ParameterBounds(lower=10, upper=1000)
     awg_list = [awg7k01, awg7k06, awg7kb02, awg7kb01, awg7kc06, awg7kc01]
+
+    output_path = None
     for awg in awg_list:
         option = awg.alias[-2:]
         assert awg.opt_string == option
@@ -166,11 +198,18 @@ def test_awg7k(device_manager: DeviceManager) -> None:
             ampl_range = ParameterBounds(lower=0.5, upper=1.0)
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         else:
-            offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+            if not output_path:
+                offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+            else:
+                offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+
             ampl_range = ParameterBounds(lower=50.0e-3, upper=2.0)
 
-        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.TRIANGLE)
-
+        constraints = awg.get_waveform_constraints(
+            SignalSourceFunctionsAWG.TRIANGLE,
+            output_path=output_path,
+        )
+        output_path = "1"
         check_constraints(
             constraints,
             sample_range,
@@ -191,14 +230,23 @@ def test_awg5k(device_manager: DeviceManager) -> None:
     awg5kc = device_manager.add_awg("awg5012c-hostname", alias="awg5kc")
     length_range = ParameterBounds(lower=960, upper=960)
     awg_list = [awg5k, awg5kb, awg5kc]
-    offset_range = ParameterBounds(lower=-2.25, upper=2.25)
+
     ampl_range = ParameterBounds(lower=20.0e-3, upper=4.5)
+    output_path = None
 
     for awg in awg_list:
         sample_range = ParameterBounds(lower=10.0e6, upper=int(awg.model[5]) * 600.0e6 + 600.0e6)
 
-        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.CLOCK)
+        constraints = awg.get_waveform_constraints(
+            SignalSourceFunctionsAWG.CLOCK,
+            output_path=output_path
+        )
+        if not output_path:
+            offset_range = ParameterBounds(lower=-2.25, upper=2.25)
+        else:
+            offset_range = ParameterBounds(lower=-0.0, upper=0.0)
 
+        output_path = "1"
         check_constraints(
             constraints,
             sample_range,

@@ -3,7 +3,7 @@ import time
 
 from functools import cached_property
 from types import MappingProxyType
-from typing import Literal, Tuple
+from typing import Literal, Optional, Tuple
 
 from tm_devices.commands import AWG5200Mixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -119,12 +119,24 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
+        output_path: Optional[str],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
-        amplitude_range = ParameterBounds(lower=100e-3, upper=2.0)
-        offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+        if not output_path:
+            output_path = "DCHB"
+
+        if "DC" in self.opt_string and output_path == "DCHB":
+            amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
+        elif output_path == "DCHV":
+            amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
+        else:
+            amplitude_range = ParameterBounds(lower=25.0e-3, upper=750.0e-3)
+
+        offset_range = ParameterBounds(lower=-2.0, upper=2.0)
+
+        max_sample_rate = 25.0 if "25" in self.opt_string else 50.0
         # option is the sample rate in hundreds of Mega Hertz
-        sample_rate_range = ParameterBounds(lower=300.0, upper=int(self.opt_string) * 100.0e6)
+        sample_rate_range = ParameterBounds(lower=300.0, upper=max_sample_rate * 100.0e6)
 
         return amplitude_range, offset_range, sample_rate_range
 
