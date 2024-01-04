@@ -128,18 +128,19 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
             length_range,
         )
 
-    awg70ka150.source_channel["SOURCE1"].set_offset(2.0)
-    current_high = float(awg70ka150.query("SOURCE1:VOLTAGE:HIGH?"))
-    current_low = float(awg70ka150.query("SOURCE1:VOLTAGE:LOW?"))
-    current_amplitude = current_high - current_low
-    offset = current_high - (current_amplitude / 2)
-    assert offset == 2.0
+    awg70ka150.write("OUTPUT1:PATH DIR")
+    offset_error = (
+        "The offset can only be set if the output signal path is "
+        'set to "DCAmplified". It is currently set to "DIR"'
+    )
+    with pytest.raises(ValueError, match=offset_error):
+        awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
+    awg70ka150.source_channel["SOURCE1"].set_offset(0)
 
-    awg70ka150.source_channel["SOURCE1"].set_amplitude(4.0)
-    current_high = float(awg70ka150.query("SOURCE1:VOLTAGE:HIGH?"))
-    current_low = float(awg70ka150.query("SOURCE1:VOLTAGE:LOW?"))
-    current_amplitude = current_high - current_low
-    assert current_amplitude == 4.0
+    awg70ka150.write("OUTPUT1:PATH DCA")
+    awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
+    offset = float(awg70ka150.query("SOURCE1:VOLTAGE:OFFSET?"))
+    assert offset == 0.1
 
     awg70ka150.source_channel["SOURCE1"].set_frequency(500000000)
     current_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
