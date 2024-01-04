@@ -260,6 +260,19 @@ class SignalSourceFunctionsIAFG(SignalSourceFunctionBase):
     ARBITRARY = "ARBITRARY"
 
 
+class SignalSourceOutputPaths(CustomStrEnum):
+    """Class holding the valid output signal paths for signal sources."""
+
+    DCA = "DCA"
+    """An enum member representing a DC amplified output signal path."""
+    DIR = "DIR"
+    """An enum member representing a direct output signal path."""
+    DCHB = "DCHB"
+    """An enum member representing a DC high bandwidth output signal path."""
+    DCHV = "DCHV"
+    """An enum member representing a DC high voltage output signal path."""
+
+
 class LoadImpedanceAFG(Enum):
     """AFG/IAFG Impedance Values."""
 
