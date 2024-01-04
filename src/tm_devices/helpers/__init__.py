@@ -21,6 +21,7 @@ from tm_devices.helpers.enums import (
     SignalSourceFunctionsAFG,
     SignalSourceFunctionsAWG,
     SignalSourceFunctionsIAFG,
+    SignalSourceOutputPaths,
     SupportedModels,
     SupportedRequestTypes,
 )
@@ -78,5 +79,6 @@ __all__ = [
     "SignalSourceFunctionsAWG",
     "SignalSourceFunctionsAFG",
     "SignalSourceFunctionsIAFG",
+    "SignalSourceOutputPaths",
     "LoadImpedanceAFG",
 ]
