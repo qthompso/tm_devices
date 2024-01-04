@@ -275,6 +275,7 @@ class AWG(SignalGenerator, ABC):
         function: Optional[SignalSourceFunctionsAWG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
+        output_path: Optional[str] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -283,11 +284,14 @@ class AWG(SignalGenerator, ABC):
             function: The function that needs to be generated.
             waveform_length: The length of the waveform if no function or arbitrary is provided.
             frequency: The frequency of the waveform that needs to be generated.
+            output_path: The output path that was set on the channel.
             load_impedance: The suggested impedance on the source.
         """
         del frequency, load_impedance
 
-        amplitude_range, offset_range, sample_rate_range = self._get_series_specific_constraints()
+        amplitude_range, offset_range, sample_rate_range = self._get_series_specific_constraints(
+            output_path,
+        )
 
         if function:
             func_sample_rate_lookup: Dict[str, ParameterBounds] = {
@@ -376,6 +380,7 @@ class AWG(SignalGenerator, ABC):
     @abstractmethod
     def _get_series_specific_constraints(
         self,
+        output_path: Optional[str],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         raise NotImplementedError
 

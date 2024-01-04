@@ -19,7 +19,7 @@ devices:
       - q: '*OPC?'
         r: '1'
       - q: '*OPT?'
-        r: 50,SEQ
+        r: '50,HV'
       - q: '*RST'
       - q: '*CLS'
       - q: '*WAI'
@@ -114,24 +114,6 @@ devices:
           r: '{:s}'
         setter:
           q: MMEMory:IMPort {:s}
-      output1_path:
-        default: DCHB
-        getter:
-          q: OUTPUT1:PATH?
-          r: '{:s}'
-        setter:
-          q: OUTPUT1:PATH {:s}
-        specs:
-          type: str
-          valid: [DCHB, DCHV, ACD]
-      mmemory_open_sasset:
-        default: ''
-        setter:
-          q: MMEMORY:OPEN:SASSET "{:s}"
-      mmemory_open_sasset_waveform:
-        default: ''
-        setter:
-          q: MMEMORY:OPEN:SASSET:WAVEFORM "{:s}", "{:s}"
   awg5200opt25:
     eom:
       USB INSTR:
@@ -150,7 +132,7 @@ devices:
       - q: '*OPC?'
         r: '1'
       - q: '*OPT?'
-        r: '25'
+        r: '25,DC'
       - q: '*RST'
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
@@ -177,7 +159,3 @@ devices:
           min: 0
           max: 255
           type: int
-      mmemory_open_sasset:
-        default: ''
-        setter:
-          q: MMEMORY:OPEN:SASSET {:s}
