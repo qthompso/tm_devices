@@ -57,24 +57,35 @@ devices:
           min: 1490
           max: 50000000000
           type: float
-      source1_high_voltage:
-        default: 0.0
+      source1_amplitude:
+        default: 0.5
         getter:
-          q: SOURCE1:VOLTAGE:HIGH?
+          q: SOURCE1:VOLTAGE:AMPLITUDE?
           r: '{:f}'
         setter:
-          q: SOURCE1:VOLTAGE:HIGH {:f}
+          q: SOURCE1:VOLTAGE:AMPLITUDE {:f}
         specs:
+          min: 0.5
+          max: 1.0
           type: float
-      source1_low_voltage:
+      source1_offset:
         default: 0.0
         getter:
-          q: SOURCE1:VOLTAGE:LOW?
+          q: SOURCE1:VOLTAGE:OFFSET?
           r: '{:f}'
         setter:
-          q: SOURCE1:VOLTAGE:LOW {:f}
+          q: SOURCE1:VOLTAGE:OFFSET {:f}
         specs:
+          min: -0.5
+          max: 0.5
           type: float
+      output1_path:
+        default: DIR
+        getter:
+          q: OUTPUT1:PATH?
+          r: '{:s}'
+        setter:
+          q: OUTPUT1:PATH {:s}
       memory_import:
         default: ''
         getter:
