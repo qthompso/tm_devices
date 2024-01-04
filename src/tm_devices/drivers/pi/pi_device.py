@@ -661,6 +661,7 @@ class PIDevice(Device, ABC):
         custom_message_prefix: str = "",
         *,
         expected_value: Optional[Union[str, float]] = None,
+        opc: Optional[bool] = None,
     ) -> str:
         """Send the given command with the given value and then verify the results.
 
@@ -676,11 +677,12 @@ class PIDevice(Device, ABC):
             remove_quotes: Set this to True to remove all double quotes from the returned value.
             custom_message_prefix: A custom message to be prepended to the failure message.
             expected_value: An optional, alternative value expected to be returned.
+            opc: Boolean indicating if ``*OPC?`` should be queried after sending the command.
 
         Returns:
             The output of the query portion of the method.
         """
-        self.write(f"{command} {value}")
+        self.write(f"{command} {value}", opc=bool(opc))
         if self._enable_verification:
             check = self.query(command + "?", remove_quotes=remove_quotes)
             message_prefix = f"Failed to set {command} to {value}"
@@ -708,6 +710,7 @@ class PIDevice(Device, ABC):
         custom_message_prefix: str = "",
         *,
         expected_value: Optional[Union[str, float]] = None,
+        opc: Optional[bool] = None,
     ) -> Tuple[bool, str]:
         """Set the given command if the given value is different from the current value.
 
@@ -723,6 +726,7 @@ class PIDevice(Device, ABC):
             remove_quotes: Set this to True to remove all double quotes from the returned value.
             custom_message_prefix: A custom message to be prepended to the failure message.
             expected_value: An optional, alternative value expected to be returned.
+            opc: Boolean indicating if ``*OPC?`` should be queried after sending the command.
 
         Returns:
             Tuple containing the boolean value indicating if the command needed to be set and
@@ -742,6 +746,7 @@ class PIDevice(Device, ABC):
                 remove_quotes,
                 custom_message_prefix,
                 expected_value=expected_value,
+                opc=opc,
             )
         return not query_passed, actual_value
 

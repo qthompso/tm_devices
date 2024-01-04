@@ -171,6 +171,10 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
     current_amplitude = current_high - current_low
     assert current_amplitude == 4.0
 
+    awg70ka150.source_channel["SOURCE1"].set_frequency(500000000)
+    current_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
+    assert float(current_frequency) == 500000000
+
 
 def test_awg7k(device_manager: DeviceManager) -> None:
     """Test the AWG7K driver.
