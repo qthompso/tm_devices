@@ -14,7 +14,6 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
     SourceDeviceConstants,
 )
 from tm_devices.drivers.device import family_base_class
-from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAWG
 
@@ -29,16 +28,16 @@ class AWGSourceDeviceConstants(SourceDeviceConstants):
 class AWGChannel:
     """AWG channel driver."""
 
-    def __init__(self, pi_device: PIDevice, channel_name: str) -> None:
+    def __init__(self, awg: "AWG", channel_name: str) -> None:
         """Create an AWG channel object.
 
         Args:
-            pi_device: A PI device object.
+            awg: An AWG object.
             channel_name: The channel name for the AWG channel.
         """
         self._name = channel_name
         self._num = int("".join(filter(str.isdigit, channel_name)))
-        self._pi_device = pi_device
+        self._awg = awg
 
     @property
     def name(self) -> str:
@@ -60,7 +59,7 @@ class AWGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._awg.set_if_needed(
             f"{self.name}:VOLTAGE:AMPLITUDE",
             value,
             tolerance=tolerance,
@@ -77,7 +76,7 @@ class AWGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._awg.set_if_needed(
             f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage
         )
 
@@ -91,7 +90,7 @@ class AWGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._awg.set_if_needed(
             f"{self.name}:VOLTAGE:OFFSET",
             value,
             tolerance=tolerance,
@@ -106,15 +105,15 @@ class AWGChannel:
             burst: The number of wavelengths to be generated.
         """
         if not burst:
-            self._pi_device.set_and_check(f"{self.name}:WAVEFORM", f'"{filename}"')
+            self._awg.set_and_check(f"{self.name}:WAVEFORM", f'"{filename}"')
         elif burst > 0:
-            self._pi_device.set_and_check("AWGCONTROL:RMODE", "SEQ")
-            self._pi_device.set_and_check("SEQUENCE:LENGTH", "1")
-            self._pi_device.set_and_check(
+            self._awg.set_and_check("AWGCONTROL:RMODE", "SEQ")
+            self._awg.set_and_check("SEQUENCE:LENGTH", "1")
+            self._awg.set_and_check(
                 f"SEQUENCE:ELEMENT1:WAVEFORM{self.num}",
                 f'"{filename}"',
             )
-            self._pi_device.set_and_check(
+            self._awg.set_and_check(
                 "SEQUENCE:ELEMENT1:LOOP:COUNT",
                 burst,
             )

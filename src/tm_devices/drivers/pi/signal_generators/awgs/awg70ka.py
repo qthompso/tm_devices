@@ -25,7 +25,7 @@ class AWG70KAChannel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._awg.set_if_needed(
             f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage, opc=True
         )
 
@@ -39,7 +39,7 @@ class AWG70KAChannel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        output_signal_path = self._pi_device.query(f"OUTPUT{self.num}:PATH?")
+        output_signal_path = self._awg.query(f"OUTPUT{self.num}:PATH?")
         if output_signal_path.lower().startswith("dca"):
             super().set_offset(value, tolerance, percentage)
         elif value:

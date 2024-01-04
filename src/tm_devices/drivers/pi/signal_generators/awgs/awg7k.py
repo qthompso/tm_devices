@@ -1,13 +1,36 @@
 """AWG7K device driver module."""
+from functools import cached_property
+from types import MappingProxyType
 from typing import Literal, Tuple
 
 from tm_devices.commands import AWG7KMixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
+    AWGChannel,
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
 from tm_devices.helpers import SignalSourceFunctionsAWG
+
+
+class AWG7KChannel(AWGChannel):
+    """AWG7K channel driver."""
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string):
+            super().set_offset(value, tolerance, percentage)
+        elif value:
+            offset_error = "The offset cannot be set on AWG7k's with 02 and 06 option."
+            raise ValueError(offset_error)
 
 
 class AWG7K(AWG7KMixin, AWG):
@@ -18,6 +41,17 @@ class AWG7K(AWG7KMixin, AWG):
         memory_max_record_length=32400000,
         memory_min_record_length=2,
     )
+
+    ################################################################################################
+    # Properties
+    ################################################################################################
+    @cached_property
+    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
+        """Mapping of channel names to AWGChannel objects."""
+        channel_map = {}
+        for channel_name in self.all_channel_names_list:
+            channel_map[channel_name] = AWG7KChannel(self, channel_name)
+        return MappingProxyType(channel_map)
 
     ################################################################################################
     # Public Methods
@@ -59,8 +93,7 @@ class AWG7K(AWG7KMixin, AWG):
             first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
             source_channel.setup_burst_waveform(predefined_name, burst)
             source_channel.set_amplitude(amplitude)
-            if not ("02" in self.opt_string or "06" in self.opt_string):
-                source_channel.set_offset(offset)
+            source_channel.set_offset(offset)
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
         self.write("AWGCONTROL:RUN")
         self.expect_esr(0)
