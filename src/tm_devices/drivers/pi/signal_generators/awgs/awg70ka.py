@@ -15,27 +15,6 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
 class AWG70KAChannel(AWGChannel):
     """AWG70KA channel driver."""
 
-    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the amplitude on the source.
-
-        Args:
-            value: The amplitude value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        current_high = float(self._pi_device.query(f"{self.name}:VOLTAGE:HIGH?"))
-        current_low = float(self._pi_device.query(f"{self.name}:VOLTAGE:LOW?"))
-
-        current_amplitude = current_high - current_low
-        offset = current_high - (current_amplitude / 2)
-        high_voltage = round(value / 2 + offset, 3)
-        low_voltage = round(-value / 2 + offset, 3)
-        self._set_high_and_low_voltage(
-            high_voltage, low_voltage, tolerance=tolerance, percentage=percentage
-        )
-
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the frequency on the source.
 
@@ -60,45 +39,15 @@ class AWG70KAChannel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        current_high = float(self._pi_device.query(f"{self.name}:VOLTAGE:HIGH?"))
-        current_low = float(self._pi_device.query(f"{self.name}:VOLTAGE:LOW?"))
-
-        current_amplitude = current_high - current_low
-        high_voltage = round(current_amplitude / 2 + value, 3)
-        low_voltage = round(-current_amplitude / 2 + value, 3)
-        self._set_high_and_low_voltage(
-            high_voltage, low_voltage, tolerance=tolerance, percentage=percentage
-        )
-
-    def _set_high_and_low_voltage(
-        self,
-        high_voltage: float,
-        low_voltage: float,
-        tolerance: float = 0,
-        percentage: bool = False,
-    ) -> None:
-        """Set the HIGH and LOW voltage to the specified values.
-
-        Args:
-            high_voltage: The HIGH voltage value to set.
-            low_voltage: The LOW voltage value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            f"{self.name}:VOLTAGE:HIGH",
-            high_voltage,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
-        self._pi_device.set_if_needed(
-            f"{self.name}:VOLTAGE:LOW",
-            low_voltage,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
+        output_signal_path = self._pi_device.query(f"OUTPUT{self.num}:PATH?")
+        if output_signal_path.lower().startswith("dca"):
+            super().set_offset(value, tolerance, percentage)
+        elif value:
+            offset_error = (
+                f"The offset can only be set if the output signal path is "
+                f'set to "DCAmplified". It is currently set to "{output_signal_path}"'
+            )
+            raise ValueError(offset_error)
 
 
 class AWG70KA(AWG70KAMixin, AWG):
@@ -122,7 +71,7 @@ class AWG70KA(AWG70KAMixin, AWG):
         return MappingProxyType(channel_map)
 
     ################################################################################################
-    # Public Methods
+    # Private Methods
     ################################################################################################
     def _get_series_specific_constraints(
         self,
