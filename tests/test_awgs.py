@@ -9,6 +9,7 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     ParameterBounds,
     SignalSourceFunctionsAWG,
 )
+from tm_devices.helpers import SignalSourceOutputPaths
 
 
 def check_constraints(
@@ -79,6 +80,21 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         pulse_width_range=None,
         ramp_symmetry_range=None,
     )
+    # Set output path as default.
+    default_path = SignalSourceOutputPaths.DCHB
+    awg520050.source_channel["SOURCE1"].set_output_path()
+    output_path = awg520050.query("OUTPUT1:PATH?")
+    assert output_path == default_path.value
+
+    # Can't set offset when output path is ACD.
+    awg520050.write("OUTPUT1:PATH ACD")
+    with pytest.raises(
+        ValueError, match="The offset can only be set with an output signal path of DCHB or DCHV."
+    ):
+        awg520050.source_channel["SOURCE1"].set_offset(0.1)
+    # Even with output path set to ACD, no errors raised because offset is being set to 0.
+    awg520050.source_channel["SOURCE1"].set_offset(0)
+
     awg520025 = device_manager.add_awg("awg5200opt25-hostname", alias="awg520025")
     assert awg520025.opt_string == "25"
     awg520025_constraints = awg520025.get_waveform_constraints(waveform_length=500)
@@ -128,16 +144,28 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
             length_range,
         )
 
-    awg70ka150.write("OUTPUT1:PATH DIR")
-    offset_error = (
-        "The offset can only be set if the output signal path is "
-        'set to "DCAmplified". It is currently set to "DIR"'
-    )
-    with pytest.raises(ValueError, match=offset_error):
+    # Invalid output path.
+    with pytest.raises(ValueError, match="DCHB is an invalid output signal path for AWG70001."):
+        awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DCHB)
+
+    # DIR as output path.
+    default_path = SignalSourceOutputPaths.DIR
+    awg70ka150.source_channel["SOURCE1"].set_output_path()
+    output_path = awg70ka150.query("OUTPUT1:PATH?")
+    assert output_path == default_path.value
+    # Cannot set offset with output path set to DIR.
+    with pytest.raises(
+        ValueError,
+        match="The offset can only be set with an output signal path of DCA.",
+    ):
         awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
+    # Even with output path set to DIR, no errors raised because offset is being set to 0.
     awg70ka150.source_channel["SOURCE1"].set_offset(0)
 
-    awg70ka150.write("OUTPUT1:PATH DCA")
+    # DCA as output path.
+    awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DCA)
+    output_path = awg70ka150.query("OUTPUT1:PATH?")
+    assert output_path == SignalSourceOutputPaths.DCA.value
     awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
     offset = float(awg70ka150.query("SOURCE1:VOLTAGE:OFFSET?"))
     assert offset == 0.1

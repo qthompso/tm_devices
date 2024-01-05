@@ -86,6 +86,9 @@ devices:
           r: '{:s}'
         setter:
           q: OUTPUT1:PATH {:s}
+        specs:
+          type: str
+          valid: [DIR, DCA]
       memory_import:
         default: ''
         getter:
