@@ -15,7 +15,12 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
-from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAFG
+from tm_devices.helpers import (
+    DeviceTypes,
+    LoadImpedanceAFG,
+    SignalSourceFunctionsAFG,
+    SignalSourceOutputPaths,
+)
 
 
 @dataclass(frozen=True)
@@ -133,13 +138,14 @@ class AFG(SignalGenerator, ABC):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]  # pylint: disable=too-many-locals
         self,
         frequency: float,
         function: SignalSourceFunctionsAFG,
         amplitude: float,
         offset: float,
         channel: str = "all",
+        output_path: Optional[SignalSourceOutputPaths] = None,
         burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -154,12 +160,14 @@ class AFG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
             burst: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
+        del output_path  # Not used in AFGs.
         self._validate_generated_function(function)
 
         # Generate the waveform on the given channel

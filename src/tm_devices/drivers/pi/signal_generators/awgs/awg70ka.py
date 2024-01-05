@@ -1,7 +1,7 @@
 """AWG70KA device driver module."""
 from functools import cached_property
 from types import MappingProxyType
-from typing import Tuple
+from typing import Optional, Tuple
 
 from tm_devices.commands import AWG70KAMixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -10,6 +10,7 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
+from tm_devices.helpers import SignalSourceOutputPaths
 
 
 class AWG70KAChannel(AWGChannel):
@@ -29,25 +30,20 @@ class AWG70KAChannel(AWGChannel):
             f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage, opc=True
         )
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
+    def set_output_path(self, value: Optional[SignalSourceOutputPaths] = None) -> None:
+        """Set the output signal path on the source.
 
         Args:
-            value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            value: The output signal path.
         """
-        output_signal_path = self._awg.query(f"OUTPUT{self.num}:PATH?")
-        if output_signal_path.lower().startswith("dca"):
-            super().set_offset(value, tolerance, percentage)
-        elif value:
-            offset_error = (
-                f"The offset can only be set if the output signal path is "
-                f'set to "DCAmplified". It is currently set to "{output_signal_path}"'
+        if not value:
+            value = SignalSourceOutputPaths.DIR
+        if value not in [SignalSourceOutputPaths.DIR, SignalSourceOutputPaths.DCA]:
+            output_signal_path_error = (
+                f"{value.value} is an invalid output signal path for {self._awg.model}."
             )
-            raise ValueError(offset_error)
+            raise ValueError(output_signal_path_error)
+        self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
 
 
 class AWG70KA(AWG70KAMixin, AWG):

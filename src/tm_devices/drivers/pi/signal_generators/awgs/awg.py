@@ -15,7 +15,12 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
 )
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
-from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAWG
+from tm_devices.helpers import (
+    DeviceTypes,
+    LoadImpedanceAFG,
+    SignalSourceFunctionsAWG,
+    SignalSourceOutputPaths,
+)
 
 
 @dataclass(frozen=True)
@@ -90,12 +95,28 @@ class AWGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._awg.set_if_needed(
-            f"{self.name}:VOLTAGE:OFFSET",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
+        output_path = self._awg.query(f"OUTPUT{self.num}:PATH?")
+        if output_path == SignalSourceOutputPaths.DCA.value:
+            self._awg.set_if_needed(
+                f"{self.name}:VOLTAGE:OFFSET",
+                value,
+                tolerance=tolerance,
+                percentage=percentage,
+            )
+        elif value:
+            offset_error = (
+                f"The offset can only be set with an output signal path of "
+                f"{SignalSourceOutputPaths.DCA.value}"
+            )
+            raise ValueError(offset_error)
+
+    def set_output_path(self, value: Optional[SignalSourceOutputPaths] = None) -> None:
+        """Set the output signal path on the source.
+
+        Args:
+            value: The output signal path.
+        """
+        raise NotImplementedError
 
     def setup_burst_waveform(self, filename: str, burst: int) -> None:
         """Prepare device for burst waveform.
@@ -171,13 +192,14 @@ class AWG(SignalGenerator, ABC):
         self.write(f'MMEMory:IMPort "{wfm_name}", {waveform_file_path}, {wfm_type}')
         self._ieee_cmds.opc()
 
-    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]  # pylint: disable=too-many-locals
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
         amplitude: float,
         offset: float,
         channel: str = "all",
+        output_path: Optional[SignalSourceOutputPaths] = None,
         burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
@@ -192,6 +214,7 @@ class AWG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
             burst: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
@@ -205,15 +228,22 @@ class AWG(SignalGenerator, ABC):
             source_channel = self.source_channel[channel_name]
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
-                source_channel, predefined_name, needed_sample_rate, amplitude, offset, burst
+                source_channel=source_channel,
+                output_path=output_path,
+                predefined_name=predefined_name,
+                needed_sample_rate=needed_sample_rate,
+                amplitude=amplitude,
+                offset=offset,
+                burst=burst,
             )
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
         self.write("AWGCONTROL:RUN")
         self.expect_esr(0)
 
-    def set_waveform_properties(
+    def set_waveform_properties(  # noqa: PLR0913
         self,
         source_channel: AWGChannel,
+        output_path: Optional[SignalSourceOutputPaths],
         predefined_name: str,
         needed_sample_rate: float,
         amplitude: float,
@@ -224,6 +254,7 @@ class AWG(SignalGenerator, ABC):
 
         Args:
             source_channel: The source channel class for the requested channel.
+            output_path: The output signal path of the specified channel.
             predefined_name: The name of the function to generate.
             needed_sample_rate: The required sample
             amplitude: The amplitude of the signal to generate.
@@ -235,6 +266,7 @@ class AWG(SignalGenerator, ABC):
         first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
         source_channel.setup_burst_waveform(predefined_name, burst)
         source_channel.set_amplitude(amplitude)
+        source_channel.set_output_path(output_path)
         source_channel.set_offset(offset)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
