@@ -114,6 +114,16 @@ devices:
           r: '{:s}'
         setter:
           q: MMEMory:IMPort {:s}
+      output1_path:
+        default: DCHB
+        getter:
+          q: OUTPUT1:PATH?
+          r: '{:s}'
+        setter:
+          q: OUTPUT1:PATH {:s}
+        specs:
+          type: str
+          valid: [DCHB, DCHV, ACD]
   awg5200opt25:
     eom:
       USB INSTR:

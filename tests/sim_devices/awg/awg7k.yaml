@@ -47,6 +47,38 @@ devices:
           min: 0
           max: 255
           type: int
+      rmode:
+        default: ''
+        getter:
+          q: AWGCONTROL:RMODE?
+          r: '{:s}'
+        setter:
+          q: AWGCONTROL:RMODE {:s}
+      sequence_length:
+        default: 0
+        getter:
+          q: SEQUENCE:LENGTH?
+          r: '{:d}'
+        setter:
+          q: SEQUENCE:LENGTH {:d}
+        specs:
+          type: int
+      element1_waveform1:
+        default: ''
+        getter:
+          q: SEQUENCE:ELEMENT1:WAVEFORM1?
+          r: '{:s}'
+        setter:
+          q: SEQUENCE:ELEMENT1:WAVEFORM1 {:s}
+      element1_loop_count:
+        default: 0
+        getter:
+          q: SEQUENCE:ELEMENT1:LOOP:COUNT?
+          r: '{:d}'
+        setter:
+          q: SEQUENCE:ELEMENT1:LOOP:COUNT {:d}
+        spec:
+          type: int
       output_1_state:
         default: 0
         getter:
@@ -104,6 +136,16 @@ devices:
           r: '{:s}'
         setter:
           q: MMEMory:IMPort {:s}
+      awgcontrol_doutput_state:
+        default: 0
+        getter:
+          q: AWGCONTROL:DOUTPUT1:STATE?
+          r: '{:d}'
+        setter:
+          q: AWGCONTROL:DOUTPUT1:STATE {:d}
+        specs:
+          valid: [0, 1]
+          type: int
   awg7102opt06:
     eom:
       USB INSTR:
@@ -207,3 +249,13 @@ devices:
           r: '{:s}'
         setter:
           q: MMEMory:IMPort {:s}
+      awgcontrol_doutput_state:
+        default: 0
+        getter:
+          q: AWGCONTROL:DOUTPUT1:STATE?
+          r: '{:d}'
+        setter:
+          q: AWGCONTROL:DOUTPUT1:STATE {:d}
+        specs:
+          valid: [0, 1]
+          type: int

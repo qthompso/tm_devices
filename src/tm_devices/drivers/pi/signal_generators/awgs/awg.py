@@ -106,7 +106,7 @@ class AWGChannel:
         elif value:
             offset_error = (
                 f"The offset can only be set with an output signal path of "
-                f"{SignalSourceOutputPaths.DCA.value}"
+                f"{SignalSourceOutputPaths.DCA.value}."
             )
             raise ValueError(offset_error)
 
@@ -157,7 +157,7 @@ class AWG(SignalGenerator, ABC):
     # Properties
     ################################################################################################
     @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
+    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":  # pragma: no cover
         """Mapping of channel names to AWGChannel objects."""
         channel_map = {}
         for channel_name in self.all_channel_names_list:

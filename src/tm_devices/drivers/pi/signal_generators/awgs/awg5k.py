@@ -39,7 +39,7 @@ class AWG5KChannel(AWGChannel):
                 f"The offset can only be set on {self._awg.model} without an 02 or 06 "
                 "option and with an output signal path of "
                 f"{SignalSourceOutputPaths.DCA.value} "
-                f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)"
+                f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)."
             )
             raise ValueError(offset_error)
 
