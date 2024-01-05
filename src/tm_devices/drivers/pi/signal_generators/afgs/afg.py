@@ -174,8 +174,9 @@ class AFG(SignalGenerator, ABC):
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
             # grab the number(s) in the channel name
-            # Temporarily turn off this channel
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", 0)
+            if not burst:
+                # Temporarily turn off this channel
+                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", 0)
             self.set_waveform_propeties(
                 frequency,
                 function,
@@ -189,7 +190,7 @@ class AFG(SignalGenerator, ABC):
                 symmetry,
             )
             # Turn on the channel
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", 1)
+            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 1)
 
             # Check if burst is enabled on any channel of the AFG
             burst_state = False
