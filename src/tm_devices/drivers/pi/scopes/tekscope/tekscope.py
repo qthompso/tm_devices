@@ -42,7 +42,12 @@ from tm_devices.driver_mixins.usb_drives_mixin import USBDrivesMixin
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.scopes.scope import Scope
-from tm_devices.helpers import DeviceConfigEntry, LoadImpedanceAFG, SignalSourceFunctionsIAFG
+from tm_devices.helpers import (
+    DeviceConfigEntry,
+    LoadImpedanceAFG,
+    SignalSourceFunctionsIAFG,
+    SignalSourceOutputPaths,
+)
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
@@ -455,6 +460,7 @@ class TekScope(
         amplitude: float,
         offset: float,
         channel: str = "all",
+        output_path: Optional[SignalSourceOutputPaths] = None,
         burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -469,13 +475,14 @@ class TekScope(
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel number to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
             burst: The number of waveforms to be generated.
             termination: The impedance to set the channel to.
             duty_cycle: The duty cycle to set the signal to.
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        del polarity, channel  # these aren't used
+        del polarity, channel, output_path  # these aren't used
         self._validate_generated_function(function)
         # Turn off the Internal AFG
         self.set_and_check("AFG:OUTPUT:STATE", 0)

@@ -8,6 +8,7 @@ from tm_devices.driver_mixins.class_extension_mixin import ExtendableMixin
 from tm_devices.helpers.enums import (
     LoadImpedanceAFG,
     SignalSourceFunctionBase,
+    SignalSourceOutputPaths,
 )
 
 _SourceDeviceTypeVar = TypeVar("_SourceDeviceTypeVar", bound="SourceDeviceConstants")
@@ -80,6 +81,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
+        output_path: Optional[SignalSourceOutputPaths] = None,
         burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -94,12 +96,14 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
             burst: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def get_waveform_constraints(
