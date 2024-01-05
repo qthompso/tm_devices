@@ -484,15 +484,16 @@ class TekScope(
         """
         del polarity, channel, output_path  # these aren't used
         self._validate_generated_function(function)
-        # Turn off the Internal AFG
-        self.set_and_check("AFG:OUTPUT:STATE", 0)
+        if not burst:
+            # Turn off the Internal AFG
+            self.set_and_check("AFG:OUTPUT:STATE", 0)
 
         self.set_waveform_properties(
             frequency, function, amplitude, offset, burst, termination, duty_cycle, symmetry
         )
 
         # Turn on the Internal AFG
-        self.set_and_check("AFG:OUTPUT:STATE", 1)
+        self.set_if_needed("AFG:OUTPUT:STATE", 1)
         if burst > 0:
             self.write("AFG:BURST:TRIGGER")
         # Don't check for errors as any measurement with low amplitude will generate an error

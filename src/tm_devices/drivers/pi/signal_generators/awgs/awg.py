@@ -226,7 +226,8 @@ class AWG(SignalGenerator, ABC):
         )
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
+            if not burst:
+                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
                 source_channel=source_channel,
                 output_path=output_path,
@@ -236,7 +237,7 @@ class AWG(SignalGenerator, ABC):
                 offset=offset,
                 burst=burst,
             )
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
+            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "1")
         self.write("AWGCONTROL:RUN")
         self.expect_esr(0)
 
