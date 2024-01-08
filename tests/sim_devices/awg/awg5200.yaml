@@ -124,6 +124,14 @@ devices:
         specs:
           type: str
           valid: [DCHB, DCHV, ACD]
+      mmemory_open_sasset:
+        default: ''
+        setter:
+          q: MMEMORY:OPEN:SASSET "{:s}"
+      mmemory_open_sasset_waveform:
+        default: ''
+        setter:
+          q: MMEMORY:OPEN:SASSET:WAVEFORM "{:s}", "{:s}"
   awg5200opt25:
     eom:
       USB INSTR:
@@ -169,3 +177,7 @@ devices:
           min: 0
           max: 255
           type: int
+      mmemory_open_sasset:
+        default: ''
+        setter:
+          q: MMEMORY:OPEN:SASSET {:s}
