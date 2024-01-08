@@ -62,6 +62,36 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
         )
 
 
+def test_awg70k_gen_waveform(device_manager: DeviceManager) -> None:
+    """Test generate waveform for AWG70k.
+
+    Args:
+        device_manager: The DeviceManager object.
+    """
+    awg70ka150 = device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
+    awg70ka150.generate_function(
+        frequency=10e4,
+        function=awg70ka150.source_device_constants.functions.CLOCK,
+        amplitude=1.0,
+        offset=0.1,
+        channel="SOURCE1",
+        output_path=SignalSourceOutputPaths.DCA,
+    )
+    source1_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
+    assert float(source1_frequency) == 96000000
+    source1_waveform_file = awg70ka150.query("SOURCE1:WAVEFORM?")
+    assert source1_waveform_file == '"*Clock960"'
+    source1_amplitude = awg70ka150.query("SOURCE1:VOLTAGE:AMPLITUDE?")
+    assert float(source1_amplitude) == 1.0
+    source1_offset = awg70ka150.query("SOURCE1:VOLTAGE:OFFSET?")
+    assert float(source1_offset) == 0.1
+    output1_state = awg70ka150.query("OUTPUT1:STATE?")
+    assert int(output1_state) == 1
+
+    assert awg70ka150.expect_esr(0)[0]
+    assert awg70ka150.get_eventlog_status() == (True, '0,"No error"')
+
+
 def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
     """Test generate waveform for AWG7k.
 

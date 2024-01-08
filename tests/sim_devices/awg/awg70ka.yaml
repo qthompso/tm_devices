@@ -25,6 +25,7 @@ devices:
       - q: AWGControl:CONFigure:CNUMber?
         r: '1'
       - q: 'MMEMory:IMPort '
+      - q: AWGCONTROL:RUN
     error:
       status_register:
         - q: '*ESR?'
@@ -46,6 +47,23 @@ devices:
           min: 0
           max: 255
           type: int
+      output_1_state:
+        default: 0
+        getter:
+          q: OUTPUT1:STATE?
+          r: '{:d}'
+        setter:
+          q: OUTPUT1:STATE {:d}
+        specs:
+          valid: [0, 1]
+          type: int
+      source1_waveform:
+        default: ''
+        getter:
+          q: SOURCE1:WAVEFORM?
+          r: '{:s}'
+        setter:
+          q: SOURCE1:WAVEFORM {:s}
       source1_frequency:
         default: 25000000000
         getter:
@@ -96,6 +114,14 @@ devices:
           r: '{:s}'
         setter:
           q: MMEMory:IMPort {:s}
+      mmemory_open_sasset:
+        default: ''
+        setter:
+          q: MMEMORY:OPEN:SASSET "{:s}"
+      mmemory_open_sasset_waveform:
+        default: ''
+        setter:
+          q: MMEMORY:OPEN:SASSET:WAVEFORM "{:s}", "{:s}"
   awg70002aopt225:
     eom:
       USB INSTR:
