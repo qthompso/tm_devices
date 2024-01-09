@@ -243,6 +243,31 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     output1_state = awg5k.query("OUTPUT1:STATE?")
     assert int(output1_state) == 1
 
+    # Cannot set offset with DIR output path.
+    offset_error = (
+        "The offset can only be set on AWG5012 with an output signal path of DCA "
+        "\(AWGCONTROL:DOUTPUT1:STATE set to 0\)."  # noqa: W605  # pylint: disable=anomalous-backslash-in-string  # pyright: ignore [reportInvalidStringEscapeSequence]
+    )
+    with pytest.raises(ValueError, match=offset_error):
+        awg5k.generate_function(
+            10e3,
+            awg5k.source_device_constants.functions.SIN,
+            2.0,
+            2.0,
+            channel="SOURCE1",
+            output_path=SignalSourceOutputPaths.DIR,
+        )
+
+    # Even with an output path of DIR, no error is raised because no offset is requested (0).
+    awg5k.generate_function(
+        10e3,
+        awg5k.source_device_constants.functions.SIN,
+        2.0,
+        0,
+        channel="SOURCE1",
+        output_path=SignalSourceOutputPaths.DIR,
+    )
+
 
 def test_afg3k_gen_waveform(
     device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
