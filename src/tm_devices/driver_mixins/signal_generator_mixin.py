@@ -111,6 +111,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         function: Optional[SignalSourceFunctionBase] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
+        output_path: str = "DIR",
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -119,6 +120,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
             function: The function that needs to be generated.
             waveform_length: The length of the waveform if no function or arbitrary is provided.
             frequency: The frequency of the waveform that needs to be generated.
+            output_path: The output path that was set on the channel.
             load_impedance: The suggested impedance on the source.
         """
         raise NotImplementedError

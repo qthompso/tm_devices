@@ -15,7 +15,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg520050 = device_manager.add_awg("awg5200opt50-hostname", alias="awg520050")
+    awg520050 = device_manager.add_awg("awg5200opt50-hostname", alias="awg520050a")
 
     awg520050.generate_function(
         10e3, awg520050.source_device_constants.functions.SIN, 1.0, 0.2, channel="SOURCE1"

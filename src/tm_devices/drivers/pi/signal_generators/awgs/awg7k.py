@@ -1,7 +1,7 @@
 """AWG7K device driver module."""
 from functools import cached_property
 from types import MappingProxyType
-from typing import Tuple
+from typing import Optional, Tuple
 
 from tm_devices.commands import AWG7KMixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -42,15 +42,22 @@ class AWG7K(AWG7KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
+        output_path: Optional[str],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
+        if not output_path:
+            output_path = "0"
+
         # if we are using the high bandwidth options
         if "02" in self.opt_string or "06" in self.opt_string:
             amplitude_range = ParameterBounds(lower=500.0e-3, upper=1.0)
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         else:
             amplitude_range = ParameterBounds(lower=50e-3, upper=2.0)
-            offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+            if output_path == "0":
+                offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+            else:
+                offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         # AWG(Arbitrary Waveform Generator)7(Series)xx(GS/s)x(Channels)z(Model)
         sample_rate_range = ParameterBounds(lower=10.0e6, upper=int(self.model[4:6]) * 1.0e9)
 

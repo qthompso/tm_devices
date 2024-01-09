@@ -86,6 +86,23 @@ def test_awg5200(  # pylint: disable=too-many-locals
         pulse_width_range=None,
         ramp_symmetry_range=None,
     )
+
+    awg520050_constraints = awg520050.get_waveform_constraints(
+        SignalSourceFunctionsAWG.SIN,
+        output_path="DCHV",
+    )
+    min_smaple_50 = 300.0
+    max_sample_50 = 5.0e9
+    assert awg520050_constraints == ExtendedSourceDeviceConstants(
+        amplitude_range=ParameterBounds(lower=10.0e-3, upper=5.0),
+        offset_range=ParameterBounds(lower=-2.0, upper=2.0),
+        frequency_range=ParameterBounds(lower=min_smaple_50 / 3600.0, upper=max_sample_50 / 10.0),
+        sample_rate_range=ParameterBounds(lower=min_smaple_50, upper=max_sample_50),
+        square_duty_cycle_range=None,
+        pulse_width_range=None,
+        ramp_symmetry_range=None,
+    )
+
     # Set output path as default.
     default_path = SignalSourceOutputPaths.DCHB
     awg520050.source_channel["SOURCE1"].set_output_path()
@@ -121,13 +138,13 @@ def test_awg5200(  # pylint: disable=too-many-locals
         )
 
     awg520025 = device_manager.add_awg("awg5200opt25-hostname", alias="awg520025")
-    assert awg520025.opt_string == "25"
+    assert awg520025.opt_string == "25,DC"
     awg520025_constraints = awg520025.get_waveform_constraints(waveform_length=500)
     min_smaple_25 = 300.0
     max_sample_25 = 2.5e9
     assert awg520025_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterBounds(lower=0.1, upper=2.0),
-        offset_range=ParameterBounds(lower=-0.5, upper=0.5),
+        amplitude_range=ParameterBounds(lower=25.0e-3, upper=1.5),
+        offset_range=ParameterBounds(lower=-2.0, upper=2.0),
         frequency_range=ParameterBounds(lower=min_smaple_25 / 500.0, upper=max_sample_25 / 500.0),
         sample_rate_range=ParameterBounds(lower=min_smaple_25, upper=max_sample_25),
         square_duty_cycle_range=None,
@@ -148,8 +165,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
         device_manager: The DeviceManager object.
         capsys: The captured stdout and stderr.
     """
-    ampl_range = ParameterBounds(lower=0.5, upper=1.0)
-    offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+    ampl_range = ParameterBounds(lower=0.125, upper=0.5)
     awg70ka150 = device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
     awg70ka225 = device_manager.add_awg("awg70002aopt225-hostname", alias="awg70ka225")
     awg70ka216 = device_manager.add_awg("awg70002aopt216-hostname", alias="awg70ka216")
@@ -157,11 +173,22 @@ def test_awg70k(  # pylint: disable=too-many-locals
     length_range = ParameterBounds(lower=10, upper=1000)
     min_smaple = 1.5e3
     awg_list = [awg70ka150, awg70ka225, awg70ka216, awg70kb208]
+    output_path = None
     for awg in awg_list:
         option = awg.alias[-3:]
         assert awg.opt_string == option
 
-        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.RAMP)
+        if not output_path:
+            offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+        else:
+            offset_range = ParameterBounds(lower=-0.4, upper=0.8)
+
+        constraints = awg.get_waveform_constraints(
+            SignalSourceFunctionsAWG.RAMP,
+            output_path=output_path,
+        )
+
+        output_path = "DCA"
 
         sample_range = ParameterBounds(lower=min_smaple, upper=int(option[1:3]) * 1.0e9)
         check_constraints(
@@ -205,6 +232,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
     current_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
     assert float(current_frequency) == 500000000
 
+    # Load specific waveform.
     _ = capsys.readouterr().out  # throw away stdout
     awg70ka150_source_channel = cast(AWG70KAChannel, awg70ka150.source_channel["SOURCE1"])
     awg70ka150_source_channel.load_waveform(
@@ -219,6 +247,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
     stdout = capsys.readouterr().out
     assert sasset_waveform_cmd in stdout
 
+    # Invalid file type for waveform file.
     with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
         awg70ka150_source_channel.load_waveform(
             "unittest.txt",
@@ -226,7 +255,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
         )
 
 
-def test_awg7k(device_manager: DeviceManager) -> None:
+def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-many-locals
     """Test the AWG7K driver.
 
     Args:
@@ -240,6 +269,8 @@ def test_awg7k(device_manager: DeviceManager) -> None:
     awg7kc01 = device_manager.add_awg("awg7122copt06-hostname", alias="awg7kc06")
     length_range = ParameterBounds(lower=10, upper=1000)
     awg_list = [awg7k01, awg7k06, awg7kb02, awg7kb01, awg7kc06, awg7kc01]
+
+    output_path = None
     for awg in awg_list:
         option = awg.alias[-2:]
         assert awg.opt_string == option
@@ -250,11 +281,18 @@ def test_awg7k(device_manager: DeviceManager) -> None:
             ampl_range = ParameterBounds(lower=0.5, upper=1.0)
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         else:
-            offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+            if not output_path:
+                offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+            else:
+                offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+
             ampl_range = ParameterBounds(lower=50.0e-3, upper=2.0)
 
-        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.TRIANGLE)
-
+        constraints = awg.get_waveform_constraints(
+            SignalSourceFunctionsAWG.TRIANGLE,
+            output_path=output_path,
+        )
+        output_path = "1"
         check_constraints(
             constraints,
             sample_range,
