@@ -78,20 +78,12 @@ class AWG5200Channel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        output_path = self._awg.query(f"OUTPUT{self.num}:PATH?")
-        if output_path in [SignalSourceOutputPaths.DCHB.value, SignalSourceOutputPaths.DCHV.value]:
-            self._awg.set_if_needed(
-                f"{self.name}:VOLTAGE:OFFSET",
-                value,
-                tolerance=tolerance,
-                percentage=percentage,
-            )
-        elif value:  # pragma: no cover
-            offset_error = (
-                f"The offset can only be set with an output signal path of "
-                f"{SignalSourceOutputPaths.DCHB.value} or {SignalSourceOutputPaths.DCHV.value}."
-            )
-            raise ValueError(offset_error)
+        self._awg.set_if_needed(
+            f"{self.name}:VOLTAGE:OFFSET",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
 
     def set_output_path(self, value: Optional[SignalSourceOutputPaths] = None) -> None:
         """Set the output signal path on the source.

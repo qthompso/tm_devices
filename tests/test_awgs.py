@@ -109,14 +109,6 @@ def test_awg5200(  # pylint: disable=too-many-locals
     output_path = awg520050.query("OUTPUT1:PATH?")
     assert output_path == default_path.value
 
-    # Can't set offset when output path is ACD.
-    awg520050.write("OUTPUT1:PATH ACD")
-    with pytest.raises(
-        ValueError, match="The offset can only be set with an output signal path of DCHB or DCHV."
-    ):
-        awg520050.source_channel["SOURCE1"].set_offset(0.1)
-    # Even with output path set to ACD, no errors raised because offset is being set to 0.
-    awg520050.source_channel["SOURCE1"].set_offset(0)
     awg520050_source_channel = cast(AWG5200Channel, awg520050.source_channel["SOURCE1"])
     _ = capsys.readouterr().out  # throw away stdout
     awg520050_source_channel.load_waveform(
