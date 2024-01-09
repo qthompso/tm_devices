@@ -73,7 +73,7 @@ def test_awg5200(  # pylint: disable=too-many-locals
         memory_max_record_length=16200000,
         memory_min_record_length=1,
     )
-    assert awg520050.opt_string == "50"
+    assert awg520050.opt_string == "50,SEQ"
     awg520050_constraints = awg520050.get_waveform_constraints(SignalSourceFunctionsAWG.SIN)
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9

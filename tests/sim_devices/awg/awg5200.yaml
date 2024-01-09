@@ -19,7 +19,7 @@ devices:
       - q: '*OPC?'
         r: '1'
       - q: '*OPT?'
-        r: '50'
+        r: 50,SEQ
       - q: '*RST'
       - q: '*CLS'
       - q: '*WAI'
