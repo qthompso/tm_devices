@@ -87,14 +87,14 @@ class AWG5K(AWG5KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[str],
+        output_path: Optional[SignalSourceOutputPaths],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = "0"
+            output_path = SignalSourceOutputPaths.DCA
 
         amplitude_range = ParameterBounds(lower=20.0e-3, upper=4.5)
-        if output_path == "0":
+        if output_path == SignalSourceOutputPaths.DCA:
             offset_range = ParameterBounds(lower=-2.25, upper=2.25)
         else:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)

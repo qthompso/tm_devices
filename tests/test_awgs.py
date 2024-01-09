@@ -78,8 +78,8 @@ def test_awg5200(  # pylint: disable=too-many-locals
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
     assert awg520050_constraints == ExtendedSourceDeviceConstants(
-        amplitude_range=ParameterBounds(lower=0.1, upper=2.0),
-        offset_range=ParameterBounds(lower=-0.5, upper=0.5),
+        amplitude_range=ParameterBounds(lower=25.0e-3, upper=750.0e-3),
+        offset_range=ParameterBounds(lower=-2.0, upper=2.0),
         frequency_range=ParameterBounds(lower=min_smaple_50 / 3600.0, upper=max_sample_50 / 10.0),
         sample_rate_range=ParameterBounds(lower=min_smaple_50, upper=max_sample_50),
         square_duty_cycle_range=None,
@@ -89,7 +89,7 @@ def test_awg5200(  # pylint: disable=too-many-locals
 
     awg520050_constraints = awg520050.get_waveform_constraints(
         SignalSourceFunctionsAWG.SIN,
-        output_path="DCHV",
+        output_path=SignalSourceOutputPaths.DCHV,
     )
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
@@ -188,7 +188,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
             output_path=output_path,
         )
 
-        output_path = "DCA"
+        output_path = SignalSourceOutputPaths.DCA
 
         sample_range = ParameterBounds(lower=min_smaple, upper=int(option[1:3]) * 1.0e9)
         check_constraints(
@@ -292,7 +292,7 @@ def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-ma
             SignalSourceFunctionsAWG.TRIANGLE,
             output_path=output_path,
         )
-        output_path = "1"
+        output_path = SignalSourceOutputPaths.DIR
         check_constraints(
             constraints,
             sample_range,
@@ -328,3 +328,17 @@ def test_awg5k(device_manager: DeviceManager) -> None:
             offset_range,
             length_range,
         )
+
+    # With DIR output path.
+    constraints = awg5k.get_waveform_constraints(
+        SignalSourceFunctionsAWG.CLOCK, output_path=SignalSourceOutputPaths.DIR
+    )
+    sample_range = ParameterBounds(lower=10.0e6, upper=int(awg5k.model[5]) * 600.0e6 + 600.0e6)
+    offset_range = ParameterBounds(lower=0, upper=0)
+    check_constraints(
+        constraints,
+        sample_range,
+        ampl_range,
+        offset_range,
+        length_range,
+    )

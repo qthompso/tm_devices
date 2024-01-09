@@ -546,7 +546,7 @@ class TekScope(
         function: Optional[SignalSourceFunctionsIAFG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[str] = None,
+        output_path: Optional[SignalSourceOutputPaths] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.

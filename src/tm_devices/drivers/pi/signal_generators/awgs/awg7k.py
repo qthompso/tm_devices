@@ -11,6 +11,7 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     ParameterBounds,
 )
 from tm_devices.drivers.pi.signal_generators.awgs.awg5k import AWG5KChannel
+from tm_devices.helpers import SignalSourceOutputPaths
 
 
 class AWG7KChannel(AWG5KChannel):
@@ -42,11 +43,11 @@ class AWG7K(AWG7KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[str],
+        output_path: Optional[SignalSourceOutputPaths],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = "0"
+            output_path = SignalSourceOutputPaths.DCA
 
         # if we are using the high bandwidth options
         if "02" in self.opt_string or "06" in self.opt_string:
@@ -54,7 +55,7 @@ class AWG7K(AWG7KMixin, AWG):
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         else:
             amplitude_range = ParameterBounds(lower=50e-3, upper=2.0)
-            if output_path == "0":
+            if output_path == SignalSourceOutputPaths.DCA:
                 offset_range = ParameterBounds(lower=-0.5, upper=0.5)
             else:
                 offset_range = ParameterBounds(lower=-0.0, upper=0.0)
