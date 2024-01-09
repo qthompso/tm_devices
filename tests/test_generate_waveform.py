@@ -61,6 +61,18 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
             output_path=SignalSourceOutputPaths.DIR,
         )
 
+    awg520025 = device_manager.add_awg("awg5200opt25-hostname", alias="awg520050")
+    seq_error = "A sequencing license is required to generate a burst waveform."
+    with pytest.raises(AssertionError, match=seq_error):
+        awg520025.generate_function(
+            10e3,
+            awg520025.source_device_constants.functions.DC,
+            1.0,
+            0.0,
+            channel="SOURCE1",
+            burst=1,
+        )
+
 
 def test_awg70k_gen_waveform(device_manager: DeviceManager) -> None:
     """Test generate waveform for AWG70k.
