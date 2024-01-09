@@ -126,15 +126,15 @@ class AWGChannel:
             burst: The number of wavelengths to be generated.
         """
         if not burst:
-            self._awg.set_and_check(f"{self.name}:WAVEFORM", f'"{filename}"')
+            self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{filename}"', allow_empty=True)
         elif burst > 0:
-            self._awg.set_and_check("AWGCONTROL:RMODE", "SEQ")
-            self._awg.set_and_check("SEQUENCE:LENGTH", "1")
+            self._awg.set_if_needed("AWGCONTROL:RMODE", "SEQ")
+            self._awg.set_if_needed("SEQUENCE:LENGTH", "1")
             self._awg.set_and_check(
                 f"SEQUENCE:ELEMENT1:WAVEFORM{self.num}",
                 f'"{filename}"',
             )
-            self._awg.set_and_check(
+            self._awg.set_if_needed(
                 "SEQUENCE:ELEMENT1:LOOP:COUNT",
                 burst,
             )
@@ -227,7 +227,7 @@ class AWG(SignalGenerator, ABC):
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
             if not burst:
-                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
+                self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
                 source_channel=source_channel,
                 output_path=output_path,

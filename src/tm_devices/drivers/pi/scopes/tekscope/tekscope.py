@@ -486,7 +486,7 @@ class TekScope(
         self._validate_generated_function(function)
         if not burst:
             # Turn off the Internal AFG
-            self.set_and_check("AFG:OUTPUT:STATE", 0)
+            self.set_if_needed("AFG:OUTPUT:STATE", 0)
 
         self.set_waveform_properties(
             frequency, function, amplitude, offset, burst, termination, duty_cycle, symmetry
@@ -522,21 +522,21 @@ class TekScope(
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         if burst > 0:
-            self.set_and_check("AFG:OUTPUT:MODE", "BURST")
-            self.set_and_check("AFG:BURST:CCOUNT", f"{burst}")
+            self.set_if_needed("AFG:OUTPUT:MODE", "BURST")
+            self.set_if_needed("AFG:BURST:CCOUNT", f"{burst}")
         # Generate the waveform from the Internal AFG
         # Frequency
         self.internal_afg.set_frequency(frequency)
         # Offset
         self.internal_afg.set_offset(offset)
         # Duty Cycle
-        self.set_and_check("AFG:SQUARE:DUTY", duty_cycle)
+        self.set_if_needed("AFG:SQUARE:DUTY", duty_cycle)
         # Function
         if function == SignalSourceFunctionsIAFG.RAMP:
-            self.set_and_check("AFG:RAMP:SYMMETRY", symmetry)
-        self.set_and_check("AFG:FUNCTION", function.value)
+            self.set_if_needed("AFG:RAMP:SYMMETRY", symmetry)
+        self.set_if_needed("AFG:FUNCTION", function.value)
         # Termination impedance
-        self.set_and_check("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
+        self.set_if_needed("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
         self.internal_afg.set_amplitude(amplitude)
 
