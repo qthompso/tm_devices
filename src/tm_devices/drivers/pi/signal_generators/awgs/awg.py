@@ -222,7 +222,7 @@ class AWG(SignalGenerator, ABC):
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_filename(
-            frequency, function, symmetry
+            frequency, function, output_path, symmetry
         )
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
@@ -275,7 +275,7 @@ class AWG(SignalGenerator, ABC):
         function: Optional[SignalSourceFunctionsAWG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[str] = None,
+        output_path: Optional[SignalSourceOutputPaths] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -327,13 +327,18 @@ class AWG(SignalGenerator, ABC):
     # Private Methods
     ################################################################################################
     def _get_predefined_filename(
-        self, frequency: float, function: SignalSourceFunctionsAWG, symmetry: Optional[float] = 50.0
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsAWG,
+        output_path: Optional[SignalSourceOutputPaths],
+        symmetry: Optional[float] = 50.0,
     ) -> Tuple[str, float]:
         """Get the predefined file name for the provided function.
 
         Args:
             frequency: The frequency of the waveform to generate.
             function: The waveform shape to generate.
+            output_path: The output signal path of the specified channel.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name = ""
@@ -342,7 +347,7 @@ class AWG(SignalGenerator, ABC):
             function = function.TRIANGLE
         if function != SignalSourceFunctionsAWG.DC and not function.value.startswith("*"):
             device_constraints = self.get_waveform_constraints(
-                function=function, frequency=frequency
+                function=function, frequency=frequency, output_path=output_path
             )
             if function == SignalSourceFunctionsAWG.SIN:
                 premade_signal_rl = [3600, 1000, 960, 360, 100, 36, 10]
@@ -380,7 +385,7 @@ class AWG(SignalGenerator, ABC):
     @abstractmethod
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[str],
+        output_path: Optional[SignalSourceOutputPaths],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         raise NotImplementedError
 

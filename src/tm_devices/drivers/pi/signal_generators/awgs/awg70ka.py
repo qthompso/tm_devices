@@ -112,15 +112,15 @@ class AWG70KA(AWG70KAMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[str],
+        output_path: Optional[SignalSourceOutputPaths],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = "DIR"
+            output_path = SignalSourceOutputPaths.DIR
 
         amplitude_range = ParameterBounds(lower=0.125, upper=0.5)
 
-        if output_path == "DCA":
+        if output_path == SignalSourceOutputPaths.DCA:
             offset_range = ParameterBounds(lower=-400.0e-3, upper=800.0e-3)
         else:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)

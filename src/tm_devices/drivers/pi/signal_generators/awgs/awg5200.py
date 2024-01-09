@@ -91,7 +91,7 @@ class AWG5200(AWG5200Mixin, AWG):
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_filename(
-            frequency, function, symmetry
+            frequency, function, output_path, symmetry
         )
         self.ieee_cmds.opc()
         self.ieee_cmds.cls()
@@ -119,15 +119,15 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[str],
+        output_path: Optional[SignalSourceOutputPaths],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = "DCHB"
+            output_path = SignalSourceOutputPaths.DCHB
 
-        if "DC" in self.opt_string and output_path == "DCHB":
+        if "DC" in self.opt_string and output_path == SignalSourceOutputPaths.DCHB:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
-        elif output_path == "DCHV":
+        elif output_path == SignalSourceOutputPaths.DCHV:
             amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
         else:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=750.0e-3)

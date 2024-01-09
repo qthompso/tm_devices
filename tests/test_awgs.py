@@ -83,7 +83,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
 
     awg520050_constraints = awg520050.get_waveform_constraints(
         SignalSourceFunctionsAWG.SIN,
-        output_path="DCHV",
+        output_path=SignalSourceOutputPaths.DCHV,
     )
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
@@ -147,7 +147,7 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
             output_path=output_path,
         )
 
-        output_path = "DCA"
+        output_path = SignalSourceOutputPaths.DCA
 
         sample_range = ParameterBounds(lower=min_smaple, upper=int(option[1:3]) * 1.0e9)
         check_constraints(
@@ -209,7 +209,7 @@ def test_awg7k(device_manager: DeviceManager) -> None:
             SignalSourceFunctionsAWG.TRIANGLE,
             output_path=output_path,
         )
-        output_path = "1"
+        output_path = SignalSourceOutputPaths.DIR
         check_constraints(
             constraints,
             sample_range,
@@ -254,3 +254,17 @@ def test_awg5k(device_manager: DeviceManager) -> None:
             offset_range,
             length_range,
         )
+
+    # With DIR output path.
+    constraints = awg5k.get_waveform_constraints(
+        SignalSourceFunctionsAWG.CLOCK, output_path=SignalSourceOutputPaths.DIR
+    )
+    sample_range = ParameterBounds(lower=10.0e6, upper=int(awg5k.model[5]) * 600.0e6 + 600.0e6)
+    offset_range = ParameterBounds(lower=0, upper=0)
+    check_constraints(
+        constraints,
+        sample_range,
+        ampl_range,
+        offset_range,
+        length_range,
+    )
