@@ -26,8 +26,7 @@ class AWG5KChannel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        output_path = float(self._awg.query(f"AWGCONTROL:DOUTPUT{self.num}:STATE?"))
-        if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string) and not output_path:
+        if not float(self._awg.query(f"AWGCONTROL:DOUTPUT{self.num}:STATE?")):
             self._awg.set_if_needed(
                 f"{self.name}:VOLTAGE:OFFSET",
                 value,
@@ -36,8 +35,7 @@ class AWG5KChannel(AWGChannel):
             )
         elif value:
             offset_error = (
-                f"The offset can only be set on {self._awg.model} without an 02 or 06 "
-                "option and with an output signal path of "
+                f"The offset can only be set on {self._awg.model} with an output signal path of "
                 f"{SignalSourceOutputPaths.DCA.value} "
                 f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)."
             )
@@ -49,17 +47,16 @@ class AWG5KChannel(AWGChannel):
         Args:
             value: The output signal path.
         """
-        if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string):
-            if not value or value == SignalSourceOutputPaths.DCA:
-                output_state = 0
-            elif value == SignalSourceOutputPaths.DIR:
-                output_state = 1
-            else:
-                output_signal_path_error = (
-                    f"{value.value} is an invalid output signal path for {self._awg.model}."
-                )
-                raise ValueError(output_signal_path_error)
-            self._awg.set_if_needed(f"AWGCONTROL:DOUTPUT{self.num}:STATE", output_state)
+        if not value or value == SignalSourceOutputPaths.DCA:
+            output_state = 0
+        elif value == SignalSourceOutputPaths.DIR:
+            output_state = 1
+        else:
+            output_signal_path_error = (
+                f"{value.value} is an invalid output signal path for {self._awg.model}."
+            )
+            raise ValueError(output_signal_path_error)
+        self._awg.set_if_needed(f"AWGCONTROL:DOUTPUT{self.num}:STATE", output_state)
 
 
 class AWG5K(AWG5KMixin, AWG):
