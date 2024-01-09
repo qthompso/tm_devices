@@ -1,5 +1,7 @@
 # pyright: reportPrivateUsage=none
 """Test the AWGs."""
+from typing import cast
+
 import pytest
 
 from tm_devices import DeviceManager
@@ -9,6 +11,9 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     ParameterBounds,
     SignalSourceFunctionsAWG,
 )
+from tm_devices.drivers.pi.signal_generators.awgs.awg70ka import AWG70KAChannel
+from tm_devices.drivers.pi.signal_generators.awgs.awg5200 import AWG5200Channel
+from tm_devices.helpers import SignalSourceOutputPaths
 
 
 def check_constraints(
@@ -41,7 +46,9 @@ def check_constraints(
     )
 
 
-def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
+def test_awg5200(  # pylint: disable=too-many-locals
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Test the AWG5200 driver.
 
     Args:
@@ -66,7 +73,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         memory_max_record_length=16200000,
         memory_min_record_length=1,
     )
-    assert awg520050.opt_string == "50,HV"
+    assert awg520050.opt_string == "50,SEQ"
     awg520050_constraints = awg520050.get_waveform_constraints(SignalSourceFunctionsAWG.SIN)
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
@@ -79,7 +86,6 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         pulse_width_range=None,
         ramp_symmetry_range=None,
     )
-
 
     awg520050_constraints = awg520050.get_waveform_constraints(
         SignalSourceFunctionsAWG.SIN,
@@ -97,11 +103,35 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         ramp_symmetry_range=None,
     )
 
+    # Set output path as default.
+    default_path = SignalSourceOutputPaths.DCHB
+    awg520050.source_channel["SOURCE1"].set_output_path()
+    output_path = awg520050.query("OUTPUT1:PATH?")
+    assert output_path == default_path.value
+
+    awg520050_source_channel = cast(AWG5200Channel, awg520050.source_channel["SOURCE1"])
+    _ = capsys.readouterr().out  # throw away stdout
+    awg520050_source_channel.load_waveform(
+        awg520050_source_channel.sample_waveform_file,
+        "*SINE100",
+    )
+    sasset_waveform_cmd = (
+        "MMEMORY:OPEN:SASSET:WAVEFORM "
+        '"C:\\\\Program Files\\\\Tektronix\\\\AWG5200\\\\Samples\\\\AWG5k7k Predefined Waveforms'
+        '.awgx", "*SINE100"'
+    )
+    stdout = capsys.readouterr().out
+    assert sasset_waveform_cmd in stdout
+
+    with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
+        awg520050_source_channel.load_waveform(
+            "unittest.txt",
+            "*SINE100",
+        )
+
     awg520025 = device_manager.add_awg("awg5200opt25-hostname", alias="awg520025")
     assert awg520025.opt_string == "25,DC"
-    awg520025_constraints = awg520025.get_waveform_constraints(
-        waveform_length=500,
-    )
+    awg520025_constraints = awg520025.get_waveform_constraints(waveform_length=500)
     min_smaple_25 = 300.0
     max_sample_25 = 2.5e9
     assert awg520025_constraints == ExtendedSourceDeviceConstants(
@@ -118,11 +148,14 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         awg520025.get_waveform_constraints()
 
 
-def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-many-locals
+def test_awg70k(  # pylint: disable=too-many-locals
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Test the AWG70K driver.
 
     Args:
         device_manager: The DeviceManager object.
+        capsys: The captured stdout and stderr.
     """
     ampl_range = ParameterBounds(lower=0.125, upper=0.5)
     awg70ka150 = device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
@@ -158,21 +191,63 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
             length_range,
         )
 
-    awg70ka150.source_channel["SOURCE1"].set_offset(2.0)
-    current_high = float(awg70ka150.query("SOURCE1:VOLTAGE:HIGH?"))
-    current_low = float(awg70ka150.query("SOURCE1:VOLTAGE:LOW?"))
-    current_amplitude = current_high - current_low
-    offset = current_high - (current_amplitude / 2)
-    assert offset == 2.0
+    # Invalid output path.
+    with pytest.raises(ValueError, match="DCHB is an invalid output signal path for AWG70001."):
+        awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DCHB)
 
-    awg70ka150.source_channel["SOURCE1"].set_amplitude(4.0)
-    current_high = float(awg70ka150.query("SOURCE1:VOLTAGE:HIGH?"))
-    current_low = float(awg70ka150.query("SOURCE1:VOLTAGE:LOW?"))
-    current_amplitude = current_high - current_low
-    assert current_amplitude == 4.0
+    # DIR as output path.
+    default_path = SignalSourceOutputPaths.DIR
+    awg70ka150.source_channel["SOURCE1"].set_output_path()
+    output_path = awg70ka150.query("OUTPUT1:PATH?")
+    assert output_path == default_path.value
+    # Cannot set offset with output path set to DIR.
+    with pytest.raises(
+        ValueError,
+        match="The offset can only be set with an output signal path of DCA.",
+    ):
+        awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
+    _ = capsys.readouterr().out  # throw away stdout
+    # Even with output path set to DIR, no errors raised because offset is being set to 0.
+    awg70ka150.source_channel["SOURCE1"].set_offset(0)
+    stdout = capsys.readouterr().out
+    assert "SOURCE1:VOLTAGE:OFFSET" not in stdout
+
+    # DCA as output path.
+    awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DCA)
+    output_path = awg70ka150.query("OUTPUT1:PATH?")
+    assert output_path == SignalSourceOutputPaths.DCA.value
+    awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
+    offset = float(awg70ka150.query("SOURCE1:VOLTAGE:OFFSET?"))
+    assert offset == 0.1
+
+    awg70ka150.source_channel["SOURCE1"].set_frequency(500000000)
+    current_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
+    assert float(current_frequency) == 500000000
+
+    # Load specific waveform.
+    _ = capsys.readouterr().out  # throw away stdout
+    awg70ka150_source_channel = cast(AWG70KAChannel, awg70ka150.source_channel["SOURCE1"])
+    awg70ka150_source_channel.load_waveform(
+        awg70ka150_source_channel.sample_waveform_file,
+        "*SINE100",
+    )
+    sasset_waveform_cmd = (
+        "MMEMORY:OPEN:SASSET:WAVEFORM "
+        '"C:\\\\Program Files\\\\Tektronix\\\\AWG70000\\\\Samples\\\\AWG5k7k Predefined Waveforms'
+        '.awgx", "*SINE100"'
+    )
+    stdout = capsys.readouterr().out
+    assert sasset_waveform_cmd in stdout
+
+    # Invalid file type for waveform file.
+    with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
+        awg70ka150_source_channel.load_waveform(
+            "unittest.txt",
+            "*SINE100",
+        )
 
 
-def test_awg7k(device_manager: DeviceManager) -> None:
+def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-many-locals
     """Test the AWG7K driver.
 
     Args:
@@ -230,23 +305,14 @@ def test_awg5k(device_manager: DeviceManager) -> None:
     awg5kc = device_manager.add_awg("awg5012c-hostname", alias="awg5kc")
     length_range = ParameterBounds(lower=960, upper=960)
     awg_list = [awg5k, awg5kb, awg5kc]
-
+    offset_range = ParameterBounds(lower=-2.25, upper=2.25)
     ampl_range = ParameterBounds(lower=20.0e-3, upper=4.5)
-    output_path = None
 
     for awg in awg_list:
         sample_range = ParameterBounds(lower=10.0e6, upper=int(awg.model[5]) * 600.0e6 + 600.0e6)
 
-        constraints = awg.get_waveform_constraints(
-            SignalSourceFunctionsAWG.CLOCK,
-            output_path=output_path
-        )
-        if not output_path:
-            offset_range = ParameterBounds(lower=-2.25, upper=2.25)
-        else:
-            offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.CLOCK)
 
-        output_path = "1"
         check_constraints(
             constraints,
             sample_range,
