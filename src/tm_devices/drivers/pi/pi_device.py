@@ -1,4 +1,4 @@
-# pyright: reportUnnecessaryTypeIgnoreComment=none
+# pylint: disable=too-many-lines  # pyright: reportUnnecessaryTypeIgnoreComment=none
 """Base Programmable Interface (PI) device driver module."""
 import inspect
 import os
@@ -71,7 +71,7 @@ class PIDevice(Device, ABC):
             if not bool(os.environ.get("TM_DEVICES_UNIT_TESTS_RUNNING"))
             else UNIT_TEST_TIMEOUT
         )
-        self._ieee_cmds = self._IEEE_COMMANDS_CLASS(self)  # type: ignore
+        self._ieee_cmds = self._IEEE_COMMANDS_CLASS(self)
         self.reset_visa_timeout()
 
     ################################################################################################
@@ -572,7 +572,7 @@ class PIDevice(Device, ABC):
 
         return response
 
-    def query_response(
+    def query_response(  # noqa: PLR0913
         self,
         query: str,
         value: Union[str, float],
@@ -580,6 +580,7 @@ class PIDevice(Device, ABC):
         percentage: bool = False,
         remove_quotes: bool = False,
         custom_message_prefix: str = "",
+        allow_empty: bool = False,
     ) -> Tuple[bool, str]:
         """Query the and verify the result.
 
@@ -592,11 +593,12 @@ class PIDevice(Device, ABC):
                  True means percent tolerance: +/- (tolerance / 100) * value.
             remove_quotes: Set this to True to remove all double quotes from the returned value.
             custom_message_prefix: A custom message to be prepended to the failure message.
+            allow_empty: Set this to True if an empty return string is permitted.
 
         Returns:
             Tuple containing the boolean verification result and the value returned from the query.
         """
-        actual_value = self.query(query, remove_quotes=remove_quotes)
+        actual_value = self.query(query, remove_quotes=remove_quotes, allow_empty=allow_empty)
         message_prefix = f"query_response failed for query: {query}"
         if custom_message_prefix:
             message_prefix = f"{custom_message_prefix}\n{message_prefix}"
@@ -711,6 +713,7 @@ class PIDevice(Device, ABC):
         *,
         expected_value: Optional[Union[str, float]] = None,
         opc: Optional[bool] = None,
+        allow_empty: Optional[bool] = None,
     ) -> Tuple[bool, str]:
         """Set the given command if the given value is different from the current value.
 
@@ -727,6 +730,7 @@ class PIDevice(Device, ABC):
             custom_message_prefix: A custom message to be prepended to the failure message.
             expected_value: An optional, alternative value expected to be returned.
             opc: Boolean indicating if ``*OPC?`` should be queried after sending the command.
+            allow_empty: Set this to True if an empty return string is permitted.
 
         Returns:
             Tuple containing the boolean value indicating if the command needed to be set and
@@ -734,7 +738,13 @@ class PIDevice(Device, ABC):
         """
         try:
             query_passed, actual_value = self.query_response(
-                command + "?", value, tolerance, percentage, remove_quotes, custom_message_prefix
+                query=command + "?",
+                value=value,
+                tolerance=tolerance,
+                percentage=percentage,
+                remove_quotes=remove_quotes,
+                custom_message_prefix=custom_message_prefix,
+                allow_empty=bool(allow_empty),
             )
         except AssertionError:
             query_passed = False
