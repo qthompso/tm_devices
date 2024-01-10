@@ -264,7 +264,7 @@ class AWG(SignalGenerator, ABC):
             burst: The number of wavelengths to be generated.
         """
         first_source_channel = self.source_channel["SOURCE1"]
-        first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
+        first_source_channel.set_frequency(needed_sample_rate, tolerance=2, percentage=True)
         source_channel.setup_burst_waveform(predefined_name, burst)
         source_channel.set_amplitude(amplitude)
         source_channel.set_output_path(output_path)

@@ -250,7 +250,7 @@ class AFG(SignalGenerator, ABC):
             # if termination is MAXIMUM or MINIMUM or INFINITY
             self.set_if_needed(f"OUTPUT{source_channel.num}:IMPEDANCE", termination)
         # Frequency
-        source_channel.set_frequency(frequency)
+        source_channel.set_frequency(frequency, tolerance=2, percentage=True)
         # Offset
         source_channel.set_offset(offset, tolerance=0.01)
         if function == SignalSourceFunctionsAFG.PULSE:
