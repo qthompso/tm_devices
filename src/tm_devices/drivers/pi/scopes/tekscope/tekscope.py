@@ -526,7 +526,7 @@ class TekScope(
             self.set_if_needed("AFG:BURST:CCOUNT", f"{burst}")
         # Generate the waveform from the Internal AFG
         # Frequency
-        self.internal_afg.set_frequency(frequency)
+        self.internal_afg.set_frequency(frequency, tolerance=2, percentage=True)
         # Offset
         self.internal_afg.set_offset(offset)
         # Duty Cycle
