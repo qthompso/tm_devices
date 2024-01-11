@@ -66,13 +66,22 @@ class AWG70KAChannel(AWGChannel):
             value: The output signal path.
         """
         if not value:
-            value = SignalSourceOutputPaths.DIR
-        if value not in [SignalSourceOutputPaths.DIR, SignalSourceOutputPaths.DCA]:
+            try:
+                self._awg.set_and_check(f"OUTPUT{self.num}:PATH", SignalSourceOutputPaths.DCA.value)
+            except AssertionError:
+                expected_esr_message = (
+                    '-222,"Data out of range;Data Out of Range - '
+                    'OUTPUT1:PATH DCA\r\n"\n0,"No error"'
+                )
+                self._awg.expect_esr("16", expected_esr_message)
+                self._awg.set_and_check(f"OUTPUT{self.num}:PATH", SignalSourceOutputPaths.DIR.value)
+        elif value in [SignalSourceOutputPaths.DIR, SignalSourceOutputPaths.DCA]:
+            self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
+        else:
             output_signal_path_error = (
                 f"{value.value} is an invalid output signal path for {self._awg.model}."
             )
             raise ValueError(output_signal_path_error)
-        self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
 
 
 class AWG70KA(AWG70KAMixin, AWG):

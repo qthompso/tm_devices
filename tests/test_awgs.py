@@ -148,7 +148,7 @@ def test_awg5200(  # pylint: disable=too-many-locals
         awg520025.get_waveform_constraints()
 
 
-def test_awg70k(  # pylint: disable=too-many-locals
+def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
     device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Test the AWG70K driver.
@@ -195,19 +195,24 @@ def test_awg70k(  # pylint: disable=too-many-locals
     with pytest.raises(ValueError, match="DCHB is an invalid output signal path for AWG70001."):
         awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DCHB)
 
-    # DIR as output path.
-    default_path = SignalSourceOutputPaths.DIR
+    # Set default output path (will try DCA and succeed).
     awg70ka150.source_channel["SOURCE1"].set_output_path()
     output_path = awg70ka150.query("OUTPUT1:PATH?")
-    assert output_path == default_path.value
+    assert output_path == SignalSourceOutputPaths.DCA.value
+
+    # Set output path to DIR.
+    awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DIR)
+    output_path = awg70ka150.query("OUTPUT1:PATH?")
+    assert output_path == SignalSourceOutputPaths.DIR.value
     # Cannot set offset with output path set to DIR.
     with pytest.raises(
         ValueError,
         match="The offset can only be set with an output signal path of DCA.",
     ):
         awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
-    _ = capsys.readouterr().out  # throw away stdout
+
     # Even with output path set to DIR, no errors raised because offset is being set to 0.
+    _ = capsys.readouterr().out  # throw away stdout
     awg70ka150.source_channel["SOURCE1"].set_offset(0)
     stdout = capsys.readouterr().out
     assert "SOURCE1:VOLTAGE:OFFSET" not in stdout
