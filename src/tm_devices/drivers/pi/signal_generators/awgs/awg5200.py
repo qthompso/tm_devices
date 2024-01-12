@@ -57,16 +57,11 @@ class AWG5200Channel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._awg.set_if_needed(
-            "CLOCK:SRATE",
-            round(value, -1),
-            tolerance=tolerance,
-            percentage=percentage,
-        )
+        self._awg.write(f"CLOCK:SRATE {value}")
         time.sleep(0.1)
         self._awg.ieee_cmds.opc()
         self._awg.ieee_cmds.cls()
-        self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=10, percentage=percentage)
+        self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=tolerance, percentage=percentage)
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the offset on the source.
