@@ -3,19 +3,14 @@ import inspect
 import os
 import struct
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
-from functools import cached_property
-from typing import Dict, Literal, Optional, Tuple, Type
+from typing import Literal, Type
 
-from tm_devices.driver_mixins.signal_generator_mixin import (
-    ExtendedSourceDeviceConstants,
-    ParameterBounds,
-    SourceDeviceConstants,
-)
+from tm_devices.driver_mixins.signal_generator_mixin import SourceDeviceConstants
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
-from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAWG
+from tm_devices.helpers import DeviceTypes, ReadOnlyCachedProperty, SignalSourceFunctionsAWG
 
 
 @dataclass(frozen=True)
@@ -43,7 +38,7 @@ class AWG(SignalSource, ABC):
         """Return the device constants."""
         return self._DEVICE_CONSTANTS  # type: ignore
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
         return int(self.query("AWGControl:CONFigure:CNUMber?", verbose=False))
@@ -102,58 +97,6 @@ class AWG(SignalSource, ABC):
             f" is not yet implemented for the {self.__class__.__name__} driver"
         )
 
-    def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self,
-        function: Optional[SignalSourceFunctionsAWG] = None,
-        waveform_length: Optional[int] = None,
-        frequency: Optional[float] = None,
-        load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
-    ) -> ExtendedSourceDeviceConstants:
-        """Get the constraints that restrict the waveform to certain parameter ranges.
-
-        Args:
-            function: The function that needs to be generated.
-            waveform_length: The length of the waveform if no function or arbitrary is provided.
-            frequency: The frequency of the waveform that needs to be generated.
-            load_impedance: The suggested impedance on the source.
-        """
-        del frequency, load_impedance
-
-        amplitude_range, offset_range, sample_rate_range = self._get_series_specific_constraints()
-
-        if function and not waveform_length:
-            func_sample_rate_lookup: Dict[str, ParameterBounds] = {
-                SignalSourceFunctionsAWG.SIN.name: ParameterBounds(lower=10, upper=3600),
-                SignalSourceFunctionsAWG.CLOCK.name: ParameterBounds(lower=960, upper=960),
-                SignalSourceFunctionsAWG.SQUARE.name: ParameterBounds(lower=10, upper=1000),
-                SignalSourceFunctionsAWG.RAMP.name: ParameterBounds(lower=10, upper=1000),
-                SignalSourceFunctionsAWG.TRIANGLE.name: ParameterBounds(lower=10, upper=1000),
-                SignalSourceFunctionsAWG.DC.name: ParameterBounds(lower=1000, upper=1000),
-            }
-            slowest_frequency = (
-                sample_rate_range.lower / func_sample_rate_lookup[function.name].upper
-            )
-            fastest_frequency = (
-                sample_rate_range.upper / func_sample_rate_lookup[function.name].lower
-            )
-        elif waveform_length and not function:
-            slowest_frequency = sample_rate_range.lower / waveform_length
-            fastest_frequency = sample_rate_range.upper / waveform_length
-        else:
-            msg = "AWG Constraints require exclusively function or waveform_length."
-            raise ValueError(msg)
-
-        frequency_range = ParameterBounds(
-            lower=slowest_frequency,
-            upper=fastest_frequency,
-        )
-        return ExtendedSourceDeviceConstants(
-            amplitude_range=amplitude_range,
-            offset_range=offset_range,
-            frequency_range=frequency_range,
-            sample_rate_range=sample_rate_range,
-        )
-
     ################################################################################################
     # Private Methods
     ################################################################################################
@@ -190,9 +133,3 @@ class AWG(SignalSource, ABC):
                 termination="\r\n",
                 encoding="latin-1",
             )
-
-    @abstractmethod
-    def _get_series_specific_constraints(
-        self,
-    ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
-        raise NotImplementedError
