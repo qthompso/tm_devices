@@ -714,6 +714,7 @@ class PIDevice(Device, ABC):
         expected_value: Optional[Union[str, float]] = None,
         opc: Optional[bool] = None,
         allow_empty: Optional[bool] = None,
+        verify_value: Optional[bool] = None,
     ) -> Tuple[bool, str]:
         """Set the given command if the given value is different from the current value.
 
@@ -731,6 +732,7 @@ class PIDevice(Device, ABC):
             expected_value: An optional, alternative value expected to be returned.
             opc: Boolean indicating if ``*OPC?`` should be queried after sending the command.
             allow_empty: Set this to True if an empty return string is permitted.
+            verify_value: Boolean indicating to verify value after write.
 
         Returns:
             Tuple containing the boolean value indicating if the command needed to be set and
@@ -748,16 +750,20 @@ class PIDevice(Device, ABC):
             )
         except AssertionError:
             query_passed = False
-            actual_value = self.set_and_check(
-                command,
-                value,
-                tolerance,
-                percentage,
-                remove_quotes,
-                custom_message_prefix,
-                expected_value=expected_value,
-                opc=opc,
-            )
+            if verify_value or verify_value is None:
+                actual_value = self.set_and_check(
+                    command,
+                    value,
+                    tolerance,
+                    percentage,
+                    remove_quotes,
+                    custom_message_prefix,
+                    expected_value=expected_value,
+                    opc=opc,
+                )
+            else:
+                self.write(f"{command} {value}", opc=bool(opc))
+                actual_value = ""
         return not query_passed, actual_value
 
     @final
