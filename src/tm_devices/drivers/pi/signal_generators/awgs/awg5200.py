@@ -57,7 +57,7 @@ class AWG5200Channel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._awg.write(f"CLOCK:SRATE {value}")
+        self._awg.set_if_needed("CLOCK:SRATE", value=value, verify_value=False)
         time.sleep(0.1)
         self._awg.ieee_cmds.opc()
         self._awg.ieee_cmds.cls()
