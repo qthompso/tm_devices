@@ -164,3 +164,10 @@ class AWG70KA(AWG70KAMixin, AWG):
         # first digit indicates the number of channels, second and third indicate sample rate (GHz)
         sample_rate_range = ParameterBounds(lower=1.5e3, upper=int(max_sample_rate) * 1.0e9)
         return amplitude_range, offset_range, sample_rate_range
+
+    def _cleanup(self) -> None:
+        """Perform the cleanup defined for the device."""
+        for source_channel in self.source_channel.values():
+            source_channel.set_output_path()
+            source_channel.set_offset(0)
+        super()._cleanup()
