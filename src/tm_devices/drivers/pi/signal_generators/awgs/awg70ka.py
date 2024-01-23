@@ -71,7 +71,7 @@ class AWG70KAChannel(AWGChannel):
             except AssertionError:  # pragma: no cover
                 expected_esr_message = (
                     '-222,"Data out of range;Data Out of Range - '
-                    'OUTPUT1:PATH DCA\r\n"\n0,"No error"'
+                    f'OUTPUT{self.num}:PATH DCA\r\n"\n0,"No error"'
                 )
                 self._awg.expect_esr("16", expected_esr_message)
                 self._awg.set_and_check(f"OUTPUT{self.num}:PATH", SignalSourceOutputPaths.DIR.value)
