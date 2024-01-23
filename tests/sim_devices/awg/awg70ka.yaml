@@ -107,6 +107,27 @@ devices:
         specs:
           type: str
           valid: [DIR, DCA]
+      output2_path:
+        default: DIR
+        getter:
+          q: OUTPUT2:PATH?
+          r: '{:s}'
+        setter:
+          q: OUTPUT2:PATH {:s}
+        specs:
+          type: str
+          valid: [DIR, DCA]
+      source2_offset:
+        default: 0.0
+        getter:
+          q: SOURCE2:VOLTAGE:OFFSET?
+          r: '{:f}'
+        setter:
+          q: SOURCE2:VOLTAGE:OFFSET {:f}
+        specs:
+          min: -0.5
+          max: 0.5
+          type: float
       memory_import:
         default: ''
         getter:
@@ -174,6 +195,48 @@ devices:
           r: '{:s}'
         setter:
           q: MMEMory:IMPort {:s}
+      output1_path:
+        default: DIR
+        getter:
+          q: OUTPUT1:PATH?
+          r: '{:s}'
+        setter:
+          q: OUTPUT1:PATH {:s}
+        specs:
+          type: str
+          valid: [DIR, DCA]
+      source1_offset:
+        default: 0.0
+        getter:
+          q: SOURCE1:VOLTAGE:OFFSET?
+          r: '{:f}'
+        setter:
+          q: SOURCE1:VOLTAGE:OFFSET {:f}
+        specs:
+          min: -0.5
+          max: 0.5
+          type: float
+      output2_path:
+        default: DIR
+        getter:
+          q: OUTPUT2:PATH?
+          r: '{:s}'
+        setter:
+          q: OUTPUT2:PATH {:s}
+        specs:
+          type: str
+          valid: [DIR, DCA]
+      source2_offset:
+        default: 0.0
+        getter:
+          q: SOURCE2:VOLTAGE:OFFSET?
+          r: '{:f}'
+        setter:
+          q: SOURCE2:VOLTAGE:OFFSET {:f}
+        specs:
+          min: -0.5
+          max: 0.5
+          type: float
   awg70002aopt216:
     eom:
       USB INSTR:
@@ -226,3 +289,45 @@ devices:
           r: '{:s}'
         setter:
           q: MMEMory:IMPort {:s}
+      output1_path:
+        default: DIR
+        getter:
+          q: OUTPUT1:PATH?
+          r: '{:s}'
+        setter:
+          q: OUTPUT1:PATH {:s}
+        specs:
+          type: str
+          valid: [DIR, DCA]
+      source1_offset:
+        default: 0.0
+        getter:
+          q: SOURCE1:VOLTAGE:OFFSET?
+          r: '{:f}'
+        setter:
+          q: SOURCE1:VOLTAGE:OFFSET {:f}
+        specs:
+          min: -0.5
+          max: 0.5
+          type: float
+      output2_path:
+        default: DIR
+        getter:
+          q: OUTPUT2:PATH?
+          r: '{:s}'
+        setter:
+          q: OUTPUT2:PATH {:s}
+        specs:
+          type: str
+          valid: [DIR, DCA]
+      source2_offset:
+        default: 0.0
+        getter:
+          q: SOURCE2:VOLTAGE:OFFSET?
+          r: '{:f}'
+        setter:
+          q: SOURCE2:VOLTAGE:OFFSET {:f}
+        specs:
+          min: -0.5
+          max: 0.5
+          type: float
