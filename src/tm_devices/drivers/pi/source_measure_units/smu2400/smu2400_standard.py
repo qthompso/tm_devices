@@ -7,7 +7,7 @@ from typing import Optional, Tuple, TYPE_CHECKING, Union
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi._ieee488_2_commands import IEEE4882Commands
 from tm_devices.drivers.pi.pi_device import PIDevice
-from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
+from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
 from tm_devices.drivers.pi.source_measure_units.source_measure_unit import SourceMeasureUnit
 from tm_devices.helpers import ReadOnlyCachedProperty
 
@@ -59,7 +59,7 @@ class SMU2400Standard(SourceMeasureUnit, ABC):
         Returns:
             Boolean indicating if the check passed or failed and a string with the results.
         """
-        return SignalGenerator.expect_esr(self, esr, error_string)  # type: ignore
+        return SignalSource.expect_esr(self, esr, error_string)  # type: ignore[arg-type]
 
     def get_eventlog_status(self) -> Tuple[bool, str]:
         """Help function for getting the eventlog status.
@@ -67,7 +67,7 @@ class SMU2400Standard(SourceMeasureUnit, ABC):
         Returns:
             Boolean indicating no error, String containing concatenated contents of event log.
         """
-        return SignalGenerator.get_eventlog_status(self)  # type: ignore
+        return SignalSource.get_eventlog_status(self)  # type: ignore[arg-type]
 
     def run_script(self, script_name: str) -> None:  # noqa: ARG002
         """Not Implemented."""
@@ -84,7 +84,6 @@ class SMU2400Standard(SourceMeasureUnit, ABC):
         custom_message_prefix: str = "",
         *,
         expected_value: Optional[Union[str, float]] = None,
-        opc: Optional[bool] = None,
     ) -> str:
         """Send the given command with the given value and then verify the results.
 
@@ -100,7 +99,6 @@ class SMU2400Standard(SourceMeasureUnit, ABC):
             remove_quotes: Set this to True to remove all double quotes from the returned value.
             custom_message_prefix: A custom message to be prepended to the failure message.
             expected_value: An optional, alternative value expected to be returned.
-            opc: Boolean indicating if ``*OPC?`` should be queried after sending the command.
 
         Returns:
             The output of the query portion of the method.
@@ -114,7 +112,6 @@ class SMU2400Standard(SourceMeasureUnit, ABC):
             remove_quotes,
             custom_message_prefix,
             expected_value=expected_value,
-            opc=opc,
         )
 
     def load_script(

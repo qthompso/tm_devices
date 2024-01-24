@@ -6,7 +6,7 @@ from abc import ABC
 from typing import Tuple, Union
 
 from tm_devices.drivers.pi.pi_device import PIDevice
-from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
+from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
 from tm_devices.helpers import DeviceTypes
 
 
@@ -31,7 +31,7 @@ class PowerSupplyUnit(PIDevice, ABC):
         Returns:
             Boolean indicating if the check passed or failed and a string with the results.
         """
-        return SignalGenerator.expect_esr(self, esr, error_string)  # type: ignore
+        return SignalSource.expect_esr(self, esr, error_string)  # type: ignore[arg-type]
 
     def get_eventlog_status(self) -> Tuple[bool, str]:
         """Help function for getting the eventlog status.
@@ -39,4 +39,4 @@ class PowerSupplyUnit(PIDevice, ABC):
         Returns:
             Boolean indicating no error, String containing concatenated contents of event log.
         """
-        return SignalGenerator.get_eventlog_status(self)  # type: ignore
+        return SignalSource.get_eventlog_status(self)  # type: ignore[arg-type]
