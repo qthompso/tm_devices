@@ -167,7 +167,7 @@ class AWG70KA(AWG70KAMixin, AWG):
 
     def _cleanup(self) -> None:
         """Perform the cleanup defined for the device."""
+        super()._cleanup()
         for source_channel in self.source_channel.values():
             source_channel.set_output_path()
             source_channel.set_offset(0)
-        super()._cleanup()
