@@ -75,7 +75,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     ):
         afg3252c.generate_function(
             25e6,
-            afg3252c.source_device_constants.functions.PULSE,
+            afg3252c.source_device_constants.functions.PULSE.value,  # type: ignore[arg-type]
             1.0,
             0.0,
             "all",
