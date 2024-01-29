@@ -1,10 +1,9 @@
 """AWG5200 device driver module."""
 import time
 
-from functools import cached_property
 from pathlib import Path
 from types import MappingProxyType
-from typing import cast, Literal, Optional, Tuple
+from typing import cast, Dict, Literal, Optional, Tuple
 
 from tm_devices.commands import AWG5200Mixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -13,7 +12,11 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
-from tm_devices.helpers import SignalSourceFunctionsAWG, SignalSourceOutputPaths
+from tm_devices.helpers import (
+    ReadOnlyCachedProperty,
+    SignalSourceFunctionsAWG,
+    SignalSourceOutputPaths,
+)
 
 
 class AWG5200Channel(AWGChannel):
@@ -123,10 +126,10 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
         """Mapping of channel names to AWGChannel objects."""
-        channel_map = {}
+        channel_map: Dict[str, AWG5200Channel] = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWG5200Channel(self, channel_name)
         return MappingProxyType(channel_map)

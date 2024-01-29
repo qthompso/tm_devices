@@ -75,7 +75,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     ):
         afg3252c.generate_function(
             25e6,
-            afg3252c.source_device_constants.functions.PULSE.value,  # type: ignore
+            afg3252c.source_device_constants.functions.PULSE,
             1.0,
             0.0,
             "all",
@@ -193,6 +193,10 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
     afg31021 = device_manager.add_afg("afg31021-hostname")
 
     _ = capsys.readouterr().out  # throw away stdout
+
+    # Check hostname
+    assert afg31021.hostname == "AFG31021-HOSTNAME"
+
     # simulate a reboot
     afg31021.reboot()
 

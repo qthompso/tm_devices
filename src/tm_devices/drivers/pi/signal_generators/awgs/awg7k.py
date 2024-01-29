@@ -1,7 +1,6 @@
 """AWG7K device driver module."""
-from functools import cached_property
 from types import MappingProxyType
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from tm_devices.commands import AWG7KMixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -11,7 +10,7 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     ParameterBounds,
 )
 from tm_devices.drivers.pi.signal_generators.awgs.awg5k import AWG5KChannel
-from tm_devices.helpers import SignalSourceOutputPaths
+from tm_devices.helpers import ReadOnlyCachedProperty, SignalSourceOutputPaths
 
 
 class AWG7KChannel(AWG5KChannel):
@@ -66,10 +65,10 @@ class AWG7K(AWG7KMixin, AWG):
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
         """Mapping of channel names to AWGChannel objects."""
-        channel_map = {}
+        channel_map: Dict[str, AWG7KChannel] = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWG7KChannel(self, channel_name)
         return MappingProxyType(channel_map)

@@ -1,4 +1,4 @@
-# pylint: disable=too-many-lines  # pyright: reportUnnecessaryTypeIgnoreComment=none
+# pyright: reportUnnecessaryTypeIgnoreComment=none
 """Base Programmable Interface (PI) device driver module."""
 import inspect
 import os
@@ -7,7 +7,6 @@ import time
 
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from functools import cached_property
 from typing import final, Generator, List, Optional, Sequence, Tuple, Union
 
 import pyvisa as visa
@@ -26,12 +25,12 @@ from tm_devices.helpers import (
     get_visa_backend,
     print_with_timestamp,
     PYVISA_PY_BACKEND,
+    ReadOnlyCachedProperty,
 )
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
-# pylint: disable=too-many-instance-attributes,too-many-public-methods
-class PIDevice(Device, ABC):
+class PIDevice(Device, ABC):  # pylint: disable=too-many-public-methods
     """Base Programmable Interface (PI) device driver."""
 
     # This is a class constant that can be overwritten by children which defines
@@ -64,7 +63,6 @@ class PIDevice(Device, ABC):
         elif self._visa_library_path.endswith(".yaml"):  # pragma: no cover
             # Mark this as a simulated VISA backend
             self._visa_library_path += "@sim"
-        self._visa_backend = self._get_visa_backend()
         # Use a default timeout of 30 seconds, if running unit tests use a smaller amount.
         self._default_visa_timeout = (
             30000
@@ -82,7 +80,7 @@ class PIDevice(Device, ABC):
     def all_channel_names_list(self) -> Tuple[str, ...]:
         """Return a tuple containing all the channel names."""
 
-    @cached_property
+    @ReadOnlyCachedProperty
     @abstractmethod
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
@@ -122,7 +120,7 @@ class PIDevice(Device, ABC):
         """
         # TODO: implement for all driver subclasses then remove this blanket NotImplementedError
         raise NotImplementedError(
-            f"``.{inspect.currentframe().f_code.co_name}()``"  # pyright: ignore
+            f"``.{inspect.currentframe().f_code.co_name}()``"  # pyright: ignore[reportOptionalMemberAccess]
             f" is not yet implemented for the {self.__class__.__name__} driver"
         )
 
@@ -137,7 +135,7 @@ class PIDevice(Device, ABC):
         """
         # TODO: implement for all driver subclasses then remove this blanket NotImplementedError
         raise NotImplementedError(
-            f"``.{inspect.currentframe().f_code.co_name}()``"  # pyright: ignore
+            f"``.{inspect.currentframe().f_code.co_name}()``"  # pyright: ignore[reportOptionalMemberAccess]
             f" is not yet implemented for the {self.__class__.__name__} driver"
         )
 
@@ -158,11 +156,6 @@ class PIDevice(Device, ABC):
     def resource_expression(self) -> str:
         """Return the VISA resource expression."""
         return self._resource_expression
-
-    @property
-    def visa_backend(self) -> str:
-        """Return the VISA backend in use."""
-        return self._visa_backend
 
     @property
     def visa_timeout(self) -> float:
@@ -191,7 +184,7 @@ class PIDevice(Device, ABC):
     ################################################################################################
     # Cached Properties
     ################################################################################################
-    @cached_property
+    @ReadOnlyCachedProperty
     def sw_version(self) -> Version:
         """Return the software version of the device."""
         id_string_parts = self.idn_string.split(",")
@@ -208,27 +201,27 @@ class PIDevice(Device, ABC):
             retval = get_version(sw_version)
         return retval
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def idn_string(self) -> str:
         r"""Return the string returned from the ``*IDN?`` query when the device was created."""
         return self.ieee_cmds.idn()
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def manufacturer(self) -> str:
         """Return the manufacturer of the device."""
         return self.idn_string.split(",")[0].strip()
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def model(self) -> str:
         """Return the full model of the device."""
         return self.idn_string.split(",")[1].strip()
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def serial(self) -> str:
         """Return the serial number of the device."""
         return self.idn_string.split(",")[2].strip()
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def series(self) -> str:
         """Return the series of the device.
 
@@ -236,6 +229,11 @@ class PIDevice(Device, ABC):
             The series of the device, e.g. MSO5, TSOVu, TEKSCOPE, AFG3K, AWG5200
         """
         return get_model_series(self.model)
+
+    @ReadOnlyCachedProperty
+    def visa_backend(self) -> str:
+        """Return the VISA backend in use."""
+        return get_visa_backend(self._visa_resource.visalib.library_path.path)
 
     ################################################################################################
     # Context Manager Methods
@@ -282,13 +280,15 @@ class PIDevice(Device, ABC):
     def disable_srq_events(self) -> None:  # pragma: no cover
         """Disable the service request event for the device."""
         self._visa_resource.disable_event(
-            visa_constants.VI_EVENT_SERVICE_REQ, visa_constants.VI_QUEUE  # type: ignore
+            visa_constants.VI_EVENT_SERVICE_REQ,  # pyright: ignore[reportArgumentType]
+            visa_constants.VI_QUEUE,  # pyright: ignore[reportArgumentType]
         )
 
     def enable_srq_events(self) -> None:  # pragma: no cover
         """Enable the service request event for the device."""
         self._visa_resource.enable_event(
-            visa_constants.VI_EVENT_SERVICE_REQ, visa_constants.VI_QUEUE  # type: ignore
+            visa_constants.VI_EVENT_SERVICE_REQ,  # pyright: ignore[reportArgumentType]
+            visa_constants.VI_QUEUE,  # pyright: ignore[reportArgumentType]
         )
 
     def get_visa_stb(self) -> int:  # pragma: no cover
@@ -430,7 +430,7 @@ class PIDevice(Device, ABC):
             print_with_timestamp(f"({self._name_and_alias}) Query Binary Values >>  {query!r}")
 
         try:
-            response = self._visa_resource.query_binary_values(query)  # pyright: ignore
+            response = self._visa_resource.query_binary_values(query)  # pyright: ignore[reportUnknownMemberType]
         except (visa.VisaIOError, socket.error) as error:
             pi_cmd_repr = f" for {query!r} " if self._verbose and verbose else " "
             msg = f"The query{pi_cmd_repr}failed with the following message: {error!r}"
@@ -789,7 +789,7 @@ class PIDevice(Device, ABC):
         """
         # The timeout value is multiplied by 1000 because the function expects milliseconds.
         return self._visa_resource.wait_on_event(
-            visa_constants.VI_EVENT_SERVICE_REQ,  # type: ignore
+            visa_constants.VI_EVENT_SERVICE_REQ,  # pyright: ignore[reportArgumentType]
             timeout * 1000,
         )
 
@@ -954,16 +954,8 @@ class PIDevice(Device, ABC):
     def _close(self) -> None:
         """Close this device and all its used resources and components."""
         self._visa_resource.close()
-        self._visa_resource = None  # type: ignore
+        self._visa_resource = None  # pyright: ignore[reportAttributeAccessIssue]
         self._is_open = False
-
-    def _get_visa_backend(self) -> str:
-        """Determine what the VISA backend is for this device.
-
-        Returns:
-            A string containing the VISA backend.
-        """
-        return get_visa_backend(self._visa_resource.visalib.library_path.path)
 
     def _has_errors(self) -> bool:
         """Check if the device has any errors.
@@ -976,7 +968,7 @@ class PIDevice(Device, ABC):
     def _open(self) -> bool:
         """Open necessary resources and components and return a boolean indicating success."""
         opened = True
-        if self._visa_resource is None:  # type: ignore
+        if self._visa_resource is None:  # pyright: ignore[reportUnnecessaryComparison]
             opened = False
             # 5 seconds when running unit tests, else 600 seconds (10 minutes)
             num_seconds_to_attempt_reconnection = (

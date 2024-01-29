@@ -3,9 +3,8 @@ import re
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from functools import cached_property
 from types import MappingProxyType
-from typing import Literal, Optional, Tuple, Type
+from typing import Dict, Literal, Optional, Tuple, Type
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
@@ -18,6 +17,7 @@ from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGener
 from tm_devices.helpers import (
     DeviceTypes,
     LoadImpedanceAFG,
+    ReadOnlyCachedProperty,
     SignalSourceFunctionsAFG,
     SignalSourceOutputPaths,
 )
@@ -115,10 +115,10 @@ class AFG(SignalGenerator, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AFGChannel]":
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AFGChannel]:
         """Mapping of channel names to AFGChannel objects."""
-        channel_map = {}
+        channel_map: Dict[str, AFGChannel] = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AFGChannel(self, channel_name)
         return MappingProxyType(channel_map)
@@ -126,9 +126,9 @@ class AFG(SignalGenerator, ABC):
     @property
     def source_device_constants(self) -> AFGSourceDeviceConstants:
         """Return the device constants."""
-        return self._DEVICE_CONSTANTS  # type: ignore
+        return self._DEVICE_CONSTANTS  # type: ignore[attr-defined]
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
         if match := re.match(r"AFG\d+(\d)", self.model):
@@ -138,7 +138,8 @@ class AFG(SignalGenerator, ABC):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]  # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals
+    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
         function: SignalSourceFunctionsAFG,
@@ -202,8 +203,8 @@ class AFG(SignalGenerator, ABC):
                 self.write("*TRG")
             # Initiate a phase sync (between CH 1 and CH 2 output waveforms on two channel AFGs)
             elif (
-                self.total_channels > 1
-                and function != SignalSourceFunctionsAFG.DC
+                self.total_channels > 1  # pylint: disable=comparison-with-callable
+                and function.value != SignalSourceFunctionsAFG.DC.value
                 and not burst_state
             ):
                 self.write("SOURCE1:PHASE:INITIATE")

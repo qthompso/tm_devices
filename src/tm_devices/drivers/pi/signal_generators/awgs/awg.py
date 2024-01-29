@@ -1,10 +1,9 @@
 """Base AWG device driver module."""
-import os
 import struct
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from functools import cached_property
+from pathlib import Path
 from types import MappingProxyType
 from typing import Dict, Literal, Optional, Tuple, Type
 
@@ -18,6 +17,7 @@ from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGener
 from tm_devices.helpers import (
     DeviceTypes,
     LoadImpedanceAFG,
+    ReadOnlyCachedProperty,
     SignalSourceFunctionsAWG,
     SignalSourceOutputPaths,
 )
@@ -156,10 +156,10 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":  # pragma: no cover
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AWGChannel]:  # pragma: no cover
         """Mapping of channel names to AWGChannel objects."""
-        channel_map = {}
+        channel_map: Dict[str, AWGChannel] = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWGChannel(self, channel_name)
         return MappingProxyType(channel_map)
@@ -167,9 +167,9 @@ class AWG(SignalGenerator, ABC):
     @property
     def source_device_constants(self) -> AWGSourceDeviceConstants:
         """Return the device constants."""
-        return self._DEVICE_CONSTANTS  # type: ignore
+        return self._DEVICE_CONSTANTS  # type: ignore[attr-defined]
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
         return int(self.query("AWGControl:CONFigure:CNUMber?", verbose=False))
@@ -414,7 +414,7 @@ class AWG(SignalGenerator, ABC):
             bin_waveform = struct.unpack(">" + str(info_len) + "H", waveform_data)
 
             # Turn "path/to/stuff.wfm" into "stuff.wfm".
-            filename_target = os.path.basename(target_file)
+            filename_target = Path(target_file).name
             # Write the waveform data to the AWG memory.
             string_to_send = 'MMEMORY:DATA "' + filename_target + '",'
             self._visa_resource.write_binary_values(
