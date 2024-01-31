@@ -716,7 +716,7 @@ class PIDevice(Device, ABC):  # pylint: disable=too-many-public-methods
         allow_empty: Optional[bool] = None,
         verify_value: Optional[bool] = None,
     ) -> Tuple[bool, str]:
-        """Set the given command if the given value is different from the current value.
+        """Query the command's field and update it if the value does not match the input.
 
         Args:
             command: The command to send.
