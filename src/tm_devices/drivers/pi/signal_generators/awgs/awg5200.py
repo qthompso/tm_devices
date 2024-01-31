@@ -28,15 +28,24 @@ class AWG5200Channel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
+        # This is an overlapping command for the AWG5200, and will overlap the
+        # next command and/or overlap the previous if it is still running.
         self._pi_device.set_if_needed(
             "CLOCK:SRATE",
             round(value, -1),
             tolerance=tolerance,
             percentage=percentage,
         )
+        # there is a known issue where setting other parameters while clock rate is being set
+        # may lock the AWG5200 software.
+
+        # wait a fraction of a second for overlapping command CLOCK:SRATE to proceed
         time.sleep(0.1)
+        # wait till overlapping command finishes
         self._pi_device.ieee_cmds.opc()
+        # clear queue
         self._pi_device.ieee_cmds.cls()
+        # ensure that the clock rate was actually set
         self._pi_device.poll_query(30, "CLOCK:SRATE?", value, tolerance=10, percentage=percentage)
 
 
@@ -93,25 +102,46 @@ class AWG5200(AWG5200Mixin, AWG):
         predefined_name, needed_sample_rate = self._get_predefined_filename(
             frequency, function, symmetry
         )
+        # wait for operation complete from PI commands before setting up attributes
+        # an overlapping command being set while frequency is being set may lock up the source
         self.ieee_cmds.opc()
+        # clear queue
         self.ieee_cmds.cls()
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
+            # turn channel off
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
+            # Settings the frequency is done
             self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+            # setting amplitude is a blocking command
             source_channel.set_amplitude(amplitude)
+            # setting offset is a blocking command
             source_channel.set_offset(offset)
-            self.ieee_cmds.wai()
+
+            # wait a fraction of a second for blocking command CLOCK:SRATE to proceed
+            # this fixes the channel from locking up the awg5200 too many blocking commands in a
+            # row may block the next query if the queue is too long
+            time.sleep(0.1)
+            # wait until the blocking command is complete
             self.ieee_cmds.opc()
+            # clear queue
             self.ieee_cmds.cls()
+            # turn channel on
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
+        # ensure previous command is finished
         self.ieee_cmds.opc()
+        # this is an overlapping command
         self.write("AWGCONTROL:RUN")
+        # wait a fraction of a second for overlapping command AWGCONTROL:RUN to proceed
         time.sleep(0.1)
+        # ensure previous command is finished
         self.ieee_cmds.opc()
+        # clear queue
         self.ieee_cmds.cls()
+        # ensure that the control run was actually set
         self.poll_query(30, "AWGControl:RSTate?", 2.0)
+        # we expect no errors
         self.expect_esr(0)
 
     ################################################################################################
@@ -124,18 +154,20 @@ class AWG5200(AWG5200Mixin, AWG):
         """Get constraints which are dependent on the model series."""
         if not output_path:
             output_path = "DCHB"
-
+        # Direct Current High Bandwidth with the DC options has 1.5 V amplitude
         if "DC" in self.opt_string and output_path == "DCHB":
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
+        # Direct Current High Voltage path connected has an even higher amplitude, 5 V
         elif output_path == "DCHV":
             amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
+        # Else, the upper bound is 750 mV
         else:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=750.0e-3)
 
         offset_range = ParameterBounds(lower=-2.0, upper=2.0)
-
-        max_sample_rate = 25.0 if "25" in self.opt_string else 50.0
         # option is the sample rate in hundreds of Mega Hertz
+        max_sample_rate = 25.0 if "25" in self.opt_string else 50.0
+        # option 50 would have 5.0 GHz, option 2.5 would have 2.5 GHz
         sample_rate_range = ParameterBounds(lower=300.0, upper=max_sample_rate * 100.0e6)
 
         return amplitude_range, offset_range, sample_rate_range

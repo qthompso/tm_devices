@@ -80,7 +80,6 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         ramp_symmetry_range=None,
     )
 
-
     awg520050_constraints = awg520050.get_waveform_constraints(
         SignalSourceFunctionsAWG.SIN,
         output_path="DCHV",
@@ -124,7 +123,6 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
     Args:
         device_manager: The DeviceManager object.
     """
-    ampl_range = ParameterBounds(lower=0.125, upper=0.5)
     awg70ka150 = device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
     awg70ka225 = device_manager.add_awg("awg70002aopt225-hostname", alias="awg70ka225")
     awg70ka216 = device_manager.add_awg("awg70002aopt216-hostname", alias="awg70ka216")
@@ -139,8 +137,10 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
 
         if not output_path:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+            ampl_range = ParameterBounds(lower=0.125, upper=0.5)
         else:
             offset_range = ParameterBounds(lower=-0.4, upper=0.8)
+            ampl_range = ParameterBounds(lower=31.0e-3, upper=1.2)
 
         constraints = awg.get_waveform_constraints(
             SignalSourceFunctionsAWG.RAMP,
@@ -176,7 +176,7 @@ def test_awg70k(device_manager: DeviceManager) -> None:  # pylint: disable=too-m
     assert float(current_frequency) == 500000000
 
 
-def test_awg7k(device_manager: DeviceManager) -> None:
+def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-many-locals
     """Test the AWG7K driver.
 
     Args:
@@ -242,8 +242,7 @@ def test_awg5k(device_manager: DeviceManager) -> None:
         sample_range = ParameterBounds(lower=10.0e6, upper=int(awg.model[5]) * 600.0e6 + 600.0e6)
 
         constraints = awg.get_waveform_constraints(
-            SignalSourceFunctionsAWG.CLOCK,
-            output_path=output_path
+            SignalSourceFunctionsAWG.CLOCK, output_path=output_path
         )
         if not output_path:
             offset_range = ParameterBounds(lower=-2.25, upper=2.25)

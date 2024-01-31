@@ -82,11 +82,14 @@ class AWG7K(AWG7KMixin, AWG):
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         else:
             amplitude_range = ParameterBounds(lower=50e-3, upper=2.0)
+            # if the DIR path is disconnected
             if output_path == "0":
                 offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+            # if the DIR path is connected
             else:
                 offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         # AWG(Arbitrary Waveform Generator)7(Series)xx(GS/s)x(Channels)z(Model)
+        # AWG7122C means the sample rate max is 12 GHz, a AWG7062C would have a 6 GHz max
         sample_rate_range = ParameterBounds(lower=10.0e6, upper=int(self.model[4:6]) * 1.0e9)
 
         return amplitude_range, offset_range, sample_rate_range

@@ -27,7 +27,7 @@ class AFG3KC(AFG3K):
     @staticmethod
     def _get_driver_specific_multipliers(model_number: str) -> Tuple[float, float]:
         """Get multipliers for frequency dependant for different functions."""
-        # handle amplitude
+        # the square wave and other wave constraints are difference for model 02 and 05
         if model_number == "02":
             square_wave_multiplier = 1
             other_wave_multiplier = 0.02

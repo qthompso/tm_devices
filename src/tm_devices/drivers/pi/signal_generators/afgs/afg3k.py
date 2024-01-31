@@ -26,7 +26,9 @@ class AFG3K(AFG3KMixin, AFG):
     def _get_driver_specific_multipliers(model_number: str) -> Tuple[float, float]:
         """Get multipliers for frequency dependant for different functions."""
         del model_number
+        # the square waveform constraints are half og the SIN wave constraints
         square_wave_multiplier = 0.5
+        # other wave constraints are 1% of the SIN wave constraints
         other_wave_multiplier = 0.01
         return square_wave_multiplier, other_wave_multiplier
 
@@ -46,6 +48,7 @@ class AFG3K(AFG3KMixin, AFG):
             frequency: The frequency of the waveform that needs to be generated.
             load_impedance: The suggested impedance on the source.
         """
+        # the model number is the second and third digit of the model serial, ex. 3(15)1
         model_number = self.model[4:6]
 
         lower_base_amplitude = 40.0e-3
@@ -57,7 +60,7 @@ class AFG3K(AFG3KMixin, AFG):
 
         base_freq = 10.0e6
 
-        # handle amplitude
+        # the amplitude of the waveforms depends on the model number
         if model_number in {"02", "05"}:
             lower_amplitude_multiplier = 0.5
             upper_amplitude_multiplier = 0.5
@@ -79,7 +82,7 @@ class AFG3K(AFG3KMixin, AFG):
 
             offset_multiplier = 1
 
-        # handle sample_rate
+        # if the waveform length is less than 16 KB, than the AFG can use a higher sample rate
         if (
             model_number in {"05", "10", "15", "25"}
             and waveform_length
@@ -90,19 +93,22 @@ class AFG3K(AFG3KMixin, AFG):
         else:
             sample_rate = 250.0e6
 
-        # model 15 and 25 have threshold where the amplitude is reduced
+        # model 15 and 25 have threshold where the amplitude is reduced when frequency is too high
         if model_number in {"15", "25"} and (
             not frequency or frequency > 50.0e6 / upper_amplitude_multiplier
         ):
             upper_amplitude_multiplier *= 0.8
 
+        # special case multiplier for model 02 and model 25
         model_multiplier = 2.5 if "02" in model_number else min(float(model_number), 24.0)
 
         square_wave_mult, other_wave_mult = self._get_driver_specific_multipliers(model_number)
 
+        # SIN waves are representative of the model number
         if function.name in {SignalSourceFunctionsAFG.SIN.name}:
             high_freq_range = base_freq * model_multiplier
             low_freq_range = 1.0e-6
+        # each waveform has a maximum frequency which is a multiple of SIN wave constraints
         elif function.name in {
             SignalSourceFunctionsAFG.ARBITRARY.name,
             SignalSourceFunctionsAFG.PULSE.name,
@@ -114,6 +120,7 @@ class AFG3K(AFG3KMixin, AFG):
             high_freq_range = base_freq * model_multiplier * other_wave_mult
             low_freq_range = 1.0e-6
 
+        # load impedance can double the amplitude and offset range
         amplitude_range = ParameterBounds(
             lower=lower_base_amplitude * lower_amplitude_multiplier * load_impedance_multiplier,
             upper=upper_base_amplitude * upper_amplitude_multiplier * load_impedance_multiplier,
