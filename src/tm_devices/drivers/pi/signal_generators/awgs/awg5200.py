@@ -1,10 +1,9 @@
 """AWG5200 device driver module."""
 import time
 
-from functools import cached_property
 from pathlib import Path
 from types import MappingProxyType
-from typing import cast, Literal, Optional, Tuple
+from typing import cast, Dict, Literal, Optional, Tuple, Type
 
 from tm_devices.commands import AWG5200Mixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -13,39 +12,26 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
-from tm_devices.helpers import SignalSourceFunctionsAWG, SignalSourceOutputPaths
+from tm_devices.helpers import (
+    ReadOnlyCachedProperty,
+    SignalSourceFunctionsAWG,
+    SignalSourceOutputPaths5200,
+    SignalSourceOutputPathsBase,
+)
 
 
 class AWG5200Channel(AWGChannel):
     """AWG5200 channel driver."""
 
-    sample_waveform_file = (
-        "C:\\Program Files\\Tektronix\\AWG5200\\Samples\\AWG5k7k Predefined Waveforms.awgx"
-    )
+    def __init__(self, awg: "AWG", channel_name: str) -> None:
+        """Create an AWG5200 channel object.
 
-    def load_waveform(
-        self,
-        waveform_file: str,
-        waveform: Optional[str] = None,
-    ) -> None:
-        """Load in all waveforms or a specific waveform from a waveform file.
-
-        Arguments:
-            waveform_file: The waveform file to load.
-            waveform: The specific waveform to load from the waveform file.
+        Args:
+            awg: An AWG5200 object.
+            channel_name: The channel name for the AWG channel.
         """
-        waveform_file_type = Path(waveform_file).suffix.lower()
-        if waveform_file_type not in [".awg", ".awgx", ".mat", ".seqx"]:
-            waveform_file_type_error = (
-                f"{waveform_file_type} is an invalid waveform file extension."
-            )
-            raise ValueError(waveform_file_type_error)
-        if not waveform:
-            self._awg.write(command=f'MMEMORY:OPEN:SASSET "{waveform_file}"', opc=True)
-        else:
-            self._awg.write(
-                command=f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_file}", "{waveform}"', opc=True
-            )
+        super().__init__(awg, channel_name)
+        self._awg = cast(AWG5200, awg)
 
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the frequency on the source.
@@ -57,7 +43,7 @@ class AWG5200Channel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._awg.set_if_needed("CLOCK:SRATE", value=value, verify_value=False, opc=True)
+        self._awg.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
         time.sleep(0.1)
         self._awg.ieee_cmds.opc()
         self._awg.ieee_cmds.cls()
@@ -80,34 +66,34 @@ class AWG5200Channel(AWGChannel):
             percentage=percentage,
         )
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPaths] = None) -> None:
+    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source.
 
         Args:
             value: The output signal path.
         """
         if not value:
-            value = SignalSourceOutputPaths.DCHB
-        if value not in [SignalSourceOutputPaths.DCHB, SignalSourceOutputPaths.DCHV]:
+            value = self._awg.output_signal_path.DCHB
+        if value not in self._awg.output_signal_path:
             output_signal_path_error = (
                 f"{value.value} is an invalid output signal path for {self._awg.model}."
             )
             raise ValueError(output_signal_path_error)
         self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
 
-    def setup_burst_waveform(self, filename: str, burst: int) -> None:
+    def setup_burst_waveform(self, filename: str, burst_count: int = 0) -> None:
         """Prepare device for burst waveform.
 
         Args:
             filename: The filename for the burst waveform to generate.
-            burst: The number of wavelengths to be generated.
+            burst_count: The number of wavelengths to be generated.
         """
-        if burst > 0 and "SEQ" not in self._awg.opt_string:
+        if burst_count > 0 and "SEQ" not in self._awg.opt_string:
             sequence_license_error = (
                 "A sequencing license is required to generate a burst waveform."
             )
             raise AssertionError(sequence_license_error)
-        if not burst:
+        if not burst_count:
             self._awg.set_and_check(f"{self.name}:WAVEFORM", f'"{filename}"')
 
 
@@ -119,14 +105,22 @@ class AWG5200(AWG5200Mixin, AWG):
         memory_max_record_length=16200000,
         memory_min_record_length=1,
     )
+    sample_waveform_file = (
+        "C:\\Program Files\\Tektronix\\AWG5200\\Samples\\AWG5k7k Predefined Waveforms.awgx"
+    )
 
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
+    @property
+    def output_signal_path(self) -> Type[SignalSourceOutputPaths5200]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Return the output signal path enum."""
+        return SignalSourceOutputPaths5200
+
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
         """Mapping of channel names to AWGChannel objects."""
-        channel_map = {}
+        channel_map: Dict[str, AWG5200Channel] = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWG5200Channel(self, channel_name)
         return MappingProxyType(channel_map)
@@ -134,6 +128,32 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Public Methods
     ################################################################################################
+    def load_waveform_set(
+        self,
+        waveform_file: Optional[str] = None,
+        waveform: Optional[str] = None,
+    ) -> None:
+        """Load in all waveforms or a specific waveform from a waveform file.
+
+        Arguments:
+            waveform_file: The waveform file to load.
+            waveform: The specific waveform to load from the waveform file.
+        """
+        if not waveform_file:
+            waveform_file = self.sample_waveform_file
+        waveform_file_type = Path(waveform_file).suffix.lower()
+        if waveform_file_type not in [".awg", ".awgx", ".mat", ".seqx"]:
+            waveform_file_type_error = (
+                f"{waveform_file_type} is an invalid waveform file extension."
+            )
+            raise ValueError(waveform_file_type_error)
+        if not waveform:
+            self.write(command=f'MMEMORY:OPEN:SASSET "{waveform_file}"', opc=True)
+        else:
+            self.write(
+                command=f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_file}", "{waveform}"', opc=True
+            )
+
     def generate_function(  # noqa: PLR0913  # pylint: disable=too-many-locals
         self,
         frequency: float,
@@ -141,7 +161,7 @@ class AWG5200(AWG5200Mixin, AWG):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPaths] = None,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
@@ -196,7 +216,7 @@ class AWG5200(AWG5200Mixin, AWG):
     def set_waveform_properties(  # noqa: PLR0913
         self,
         source_channel: AWGChannel,
-        output_path: Optional[SignalSourceOutputPaths],
+        output_path: Optional[SignalSourceOutputPathsBase],
         predefined_name: str,
         needed_sample_rate: float,
         amplitude: float,
@@ -215,8 +235,9 @@ class AWG5200(AWG5200Mixin, AWG):
 
             burst: The number of wavelengths to be generated.
         """
+        if predefined_name not in self.query("WLISt:LIST?").split(","):
+            self.load_waveform_set()
         source_channel = cast(AWG5200Channel, source_channel)
-        source_channel.load_waveform(waveform_file=source_channel.sample_waveform_file)
         super().set_waveform_properties(
             source_channel=source_channel,
             output_path=output_path,
@@ -232,15 +253,15 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPaths],
+        output_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = SignalSourceOutputPaths.DCHB
+            output_path = self.output_signal_path.DCHB
 
-        if "DC" in self.opt_string and output_path == SignalSourceOutputPaths.DCHB:
+        if "DC" in self.opt_string and output_path == self.output_signal_path.DCHB:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
-        elif output_path == SignalSourceOutputPaths.DCHV:
+        elif output_path == self.output_signal_path.DCHV:
             amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
         else:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=750.0e-3)

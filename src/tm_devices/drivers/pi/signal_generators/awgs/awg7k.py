@@ -1,7 +1,6 @@
 """AWG7K device driver module."""
-from functools import cached_property
 from types import MappingProxyType
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from tm_devices.commands import AWG7KMixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -11,7 +10,10 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     ParameterBounds,
 )
 from tm_devices.drivers.pi.signal_generators.awgs.awg5k import AWG5KChannel
-from tm_devices.helpers import SignalSourceOutputPaths
+from tm_devices.helpers import (
+    ReadOnlyCachedProperty,
+    SignalSourceOutputPathsBase,
+)
 
 
 class AWG7KChannel(AWG5KChannel):
@@ -36,15 +38,17 @@ class AWG7KChannel(AWG5KChannel):
                 percentage=percentage,
             )
         elif value:
+            # No error is raised when 0 is the offset value and the output path is in a state where
+            # offset cannot be set.
             offset_error = (
                 f"The offset can only be set on {self._awg.model} without an 02 or 06 "
                 "option and with an output signal path of "
-                f"{SignalSourceOutputPaths.DCA.value} "
+                f"{self._awg.output_signal_path.DCA.value} "
                 f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)."
             )
             raise ValueError(offset_error)
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPaths] = None) -> None:
+    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source.
 
         Args:
@@ -66,10 +70,10 @@ class AWG7K(AWG7KMixin, AWG):
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
         """Mapping of channel names to AWGChannel objects."""
-        channel_map = {}
+        channel_map: Dict[str, AWG7KChannel] = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWG7KChannel(self, channel_name)
         return MappingProxyType(channel_map)
@@ -79,11 +83,11 @@ class AWG7K(AWG7KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPaths],
+        output_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = SignalSourceOutputPaths.DCA
+            output_path = self.output_signal_path.DCA
 
         # if we are using the high bandwidth options
         if "02" in self.opt_string or "06" in self.opt_string:
@@ -91,7 +95,7 @@ class AWG7K(AWG7KMixin, AWG):
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         else:
             amplitude_range = ParameterBounds(lower=50e-3, upper=2.0)
-            if output_path == SignalSourceOutputPaths.DCA:
+            if output_path == self.output_signal_path.DCA:
                 offset_range = ParameterBounds(lower=-0.5, upper=0.5)
             else:
                 offset_range = ParameterBounds(lower=-0.0, upper=0.0)

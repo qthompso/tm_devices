@@ -5,8 +5,8 @@ from typing import cast
 import pytest
 
 from tm_devices import DeviceManager
-from tm_devices.drivers import MSO5
-from tm_devices.helpers import SignalSourceOutputPaths
+from tm_devices.drivers import AWG5K, AWG7K, AWG70KA, AWG5200, MSO5
+from tm_devices.helpers import SignalSourceOutputPaths5200, SignalSourceOutputPathsNon5200
 
 
 def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
@@ -15,7 +15,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg520050 = device_manager.add_awg("awg520050-hostname", alias="awg520050")
+    awg520050 = cast(AWG5200, device_manager.add_awg("awg5200opt50-hostname", alias="awg520050a"))
 
     awg520050.generate_function(
         10e3, awg520050.source_device_constants.functions.SIN, 1.0, 0.2, channel="SOURCE1"
@@ -58,10 +58,10 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_path=SignalSourceOutputPaths.DIR,
+            output_path=SignalSourceOutputPathsNon5200.DIR,
         )
 
-    awg520025 = device_manager.add_awg("awg5200opt25-hostname", alias="awg520050")
+    awg520025 = cast(AWG5200, device_manager.add_awg("awg5200opt25-hostname", alias="awg520050"))
     seq_error = "A sequencing license is required to generate a burst waveform."
     with pytest.raises(AssertionError, match=seq_error):
         awg520025.generate_function(
@@ -74,20 +74,25 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
         )
 
 
-def test_awg70k_gen_waveform(device_manager: DeviceManager) -> None:
+def test_awg70k_gen_waveform(
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Test generate waveform for AWG70k.
 
     Args:
         device_manager: The DeviceManager object.
+        capsys: The captured stdout and stderr.
     """
-    awg70ka150 = device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
+    awg70ka150 = cast(
+        AWG70KA, device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
+    )
     awg70ka150.generate_function(
         frequency=10e4,
         function=awg70ka150.source_device_constants.functions.CLOCK,
         amplitude=1.0,
         offset=0.1,
         channel="SOURCE1",
-        output_path=SignalSourceOutputPaths.DCA,
+        output_path=awg70ka150.output_signal_path.DCA,
     )
     source1_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
     assert float(source1_frequency) == 96000000
@@ -102,6 +107,22 @@ def test_awg70k_gen_waveform(device_manager: DeviceManager) -> None:
 
     assert awg70ka150.expect_esr(0)[0]
     assert awg70ka150.get_eventlog_status() == (True, '0,"No error"')
+    assert "MMEMORY:OPEN:SASSET" not in capsys.readouterr().out
+
+    # call generate_function with only *DC in the waveform list.
+    awg70ka225 = cast(
+        AWG70KA, device_manager.add_awg("awg70002aopt225-hostname", alias="awg70ka225")
+    )
+    _ = capsys.readouterr().out  # throw away stdout
+    awg70ka225.generate_function(
+        frequency=10e4,
+        function=awg70ka150.source_device_constants.functions.CLOCK,
+        amplitude=1.0,
+        offset=0.1,
+        channel="SOURCE1",
+        output_path=awg70ka150.output_signal_path.DCA,
+    )
+    assert "MMEMORY:OPEN:SASSET" in capsys.readouterr().out
 
 
 def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
@@ -110,8 +131,8 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg7k01 = device_manager.add_awg("AWG705101-hostname", alias="awg7k01")
-    awg7k06 = device_manager.add_awg("AWG710206-hostname", alias="awg7k06")
+    awg7k01 = cast(AWG7K, device_manager.add_awg("awg7051opt01-hostname", alias="awg7k01"))
+    awg7k06 = cast(AWG7K, device_manager.add_awg("awg7102opt06-hostname", alias="awg7k06"))
 
     error_match = (
         "The offset can only be set on AWG7102 without an 02 or 06 option and with an output "
@@ -155,7 +176,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_path=SignalSourceOutputPaths.DIR,
+            output_path=awg7k01.output_signal_path.DIR,
         )
 
     # DCHB is not a valid output signal path for AWG7k's.
@@ -166,7 +187,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_path=SignalSourceOutputPaths.DCHB,
+            output_path=SignalSourceOutputPaths5200.DCHB,
         )
 
     assert awg7k01.expect_esr(0)[0]
@@ -179,7 +200,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
         1.0,
         0.0,
         channel="SOURCE1",
-        output_path=SignalSourceOutputPaths.DCA,
+        output_path=awg7k01.output_signal_path.DCA,
     )
     source1_frequency = awg7k01.query("SOURCE1:FREQUENCY?")
     assert float(source1_frequency) == 96000000
@@ -227,7 +248,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg5k = device_manager.add_awg("AWG5012-hostname", alias="awg5k")
+    awg5k = cast(AWG5K, device_manager.add_awg("AWG5012-hostname", alias="awg5k"))
     # Sine
     awg5k.generate_function(
         10e3, awg5k.source_device_constants.functions.SIN, 2.0, 2.0, channel="SOURCE1"
@@ -255,7 +276,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
             2.0,
             2.0,
             channel="SOURCE1",
-            output_path=SignalSourceOutputPaths.DIR,
+            output_path=awg5k.output_signal_path.DIR,
         )
 
     # Even with an output path of DIR, no error is raised because no offset is requested (0).
@@ -265,7 +286,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
         2.0,
         0,
         channel="SOURCE1",
-        output_path=SignalSourceOutputPaths.DIR,
+        output_path=awg5k.output_signal_path.DIR,
     )
 
 
@@ -416,7 +437,7 @@ def test_internal_afg_gen_waveform(
     ):
         scope.generate_function(
             25e6,
-            scope.source_device_constants.functions.PULSE.value,  # type: ignore
+            scope.source_device_constants.functions.PULSE.value,  # type: ignore[reportArgumentType]
             1.0,
             0.0,
             "all",
