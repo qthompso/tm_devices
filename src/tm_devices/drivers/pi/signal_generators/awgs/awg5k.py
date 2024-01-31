@@ -9,7 +9,10 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
-from tm_devices.helpers import ReadOnlyCachedProperty, SignalSourceOutputPaths
+from tm_devices.helpers import (
+    ReadOnlyCachedProperty,
+    SignalSourceOutputPathsBase,
+)
 
 
 class AWG5KChannel(AWGChannel):
@@ -33,22 +36,24 @@ class AWG5KChannel(AWGChannel):
                 percentage=percentage,
             )
         elif value:
+            # No error is raised when 0 is the offset value and the output path is in a state where
+            # offset cannot be set.
             offset_error = (
                 f"The offset can only be set on {self._awg.model} with an output signal path of "
-                f"{SignalSourceOutputPaths.DCA.value} "
+                f"{self._awg.output_signal_path.DCA.value} "
                 f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)."
             )
             raise ValueError(offset_error)
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPaths] = None) -> None:
+    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source.
 
         Args:
             value: The output signal path.
         """
-        if not value or value == SignalSourceOutputPaths.DCA:
+        if not value or value == self._awg.output_signal_path.DCA:
             output_state = 0
-        elif value == SignalSourceOutputPaths.DIR:
+        elif value == self._awg.output_signal_path.DIR:
             output_state = 1
         else:
             output_signal_path_error = (
@@ -83,14 +88,14 @@ class AWG5K(AWG5KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPaths],
+        output_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = SignalSourceOutputPaths.DCA
+            output_path = self.output_signal_path.DCA
 
         amplitude_range = ParameterBounds(lower=20.0e-3, upper=4.5)
-        if output_path == SignalSourceOutputPaths.DCA:
+        if output_path == self.output_signal_path.DCA:
             offset_range = ParameterBounds(lower=-2.25, upper=2.25)
         else:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)

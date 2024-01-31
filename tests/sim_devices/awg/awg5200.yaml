@@ -27,6 +27,9 @@ devices:
         r: '4'
       - q: 'MMEMory:IMPort '
       - q: AWGCONTROL:RUN
+      - q: WLISt:LIST?
+        r: '"*Triangle960,*Triangle1000,*Triangle100,*Triangle10,*Square960,*Square1000,*Square100,*Square10,*Sine960,*Sine3600,*Sine360,*Sine36,*Sine1000,*Sine100,*Sine10,*Ramp96
+          0,*Ramp1000,*Ramp100,*Ramp10,*DC"'
     error:
       status_register:
         - q: '*ESR?'
@@ -156,6 +159,9 @@ devices:
       - q: AWGControl:CONFigure:CNUMber?
         r: '4'
       - q: 'MMEMory:IMPort '
+      - q: WLISt:LIST?
+        r: '"*Triangle960,*Triangle1000,*Triangle100,*Triangle10,*Square960,*Square1000,*Square100,*Square10,*Sine960,*Sine3600,*Sine360,*Sine36,*Sine1000,*Sine100,*Sine10,*Ramp96
+          0,*Ramp1000,*Ramp100,*Ramp10,*DC"'
     error:
       status_register:
         - q: '*ESR?'

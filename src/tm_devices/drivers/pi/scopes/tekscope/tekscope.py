@@ -46,7 +46,7 @@ from tm_devices.helpers import (
     LoadImpedanceAFG,
     ReadOnlyCachedProperty,
     SignalSourceFunctionsIAFG,
-    SignalSourceOutputPaths,
+    SignalSourceOutputPathsBase,
 )
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
@@ -460,7 +460,7 @@ class TekScope(
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPaths] = None,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -546,7 +546,7 @@ class TekScope(
         function: Optional[SignalSourceFunctionsIAFG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[SignalSourceOutputPaths] = None,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.

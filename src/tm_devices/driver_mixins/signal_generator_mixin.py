@@ -8,7 +8,7 @@ from tm_devices.driver_mixins.class_extension_mixin import ExtendableMixin
 from tm_devices.helpers.enums import (
     LoadImpedanceAFG,
     SignalSourceFunctionBase,
-    SignalSourceOutputPaths,
+    SignalSourceOutputPathsBase,
 )
 
 _SourceDeviceTypeVar = TypeVar("_SourceDeviceTypeVar", bound="SourceDeviceConstants")
@@ -81,7 +81,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPaths] = None,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,

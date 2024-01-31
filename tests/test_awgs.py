@@ -1,19 +1,28 @@
 # pyright: reportPrivateUsage=none
 """Test the AWGs."""
-from typing import cast
+from typing import cast, Optional
 
 import pytest
 
 from tm_devices import DeviceManager
+from tm_devices.drivers import (
+    AWG5K,
+    AWG5KB,
+    AWG5KC,
+    AWG7K,
+    AWG7KB,
+    AWG7KC,
+    AWG70KA,
+    AWG70KB,
+    AWG5200,
+)
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ExtendedSourceDeviceConstants,
     ParameterBounds,
     SignalSourceFunctionsAWG,
 )
-from tm_devices.drivers.pi.signal_generators.awgs.awg70ka import AWG70KAChannel
-from tm_devices.drivers.pi.signal_generators.awgs.awg5200 import AWG5200Channel
-from tm_devices.helpers import SignalSourceOutputPaths
+from tm_devices.helpers import SignalSourceOutputPaths5200, SignalSourceOutputPathsNon5200
 
 
 def check_constraints(
@@ -46,16 +55,15 @@ def check_constraints(
     )
 
 
-def test_awg5200(  # pylint: disable=too-many-locals
-    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
     """Test the AWG5200 driver.
 
     Args:
         device_manager: The DeviceManager object.
         capsys: The captured stdout and stderr.
     """
-    awg520050 = device_manager.add_awg("awg5200opt50-hostname", alias="awg520050")
+    awg520050 = cast(AWG5200, device_manager.add_awg("awg5200opt50-hostname", alias="awg520050"))
+    awg520025 = cast(AWG5200, device_manager.add_awg("awg5200opt25-hostname", alias="awg520025"))
     assert id(device_manager.get_awg(number_or_alias="awg520050")) == id(awg520050)
     assert id(device_manager.get_awg(number_or_alias=awg520050.device_number)) == id(awg520050)
     assert awg520050.total_channels == 4
@@ -89,7 +97,7 @@ def test_awg5200(  # pylint: disable=too-many-locals
 
     awg520050_constraints = awg520050.get_waveform_constraints(
         SignalSourceFunctionsAWG.SIN,
-        output_path=SignalSourceOutputPaths.DCHV,
+        output_path=awg520050.output_signal_path.DCHV,
     )
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
@@ -104,15 +112,14 @@ def test_awg5200(  # pylint: disable=too-many-locals
     )
 
     # Set output path as default.
-    default_path = SignalSourceOutputPaths.DCHB
+    default_path = awg520050.output_signal_path.DCHB
     awg520050.source_channel["SOURCE1"].set_output_path()
     output_path = awg520050.query("OUTPUT1:PATH?")
     assert output_path == default_path.value
 
-    awg520050_source_channel = cast(AWG5200Channel, awg520050.source_channel["SOURCE1"])
     _ = capsys.readouterr().out  # throw away stdout
-    awg520050_source_channel.load_waveform(
-        awg520050_source_channel.sample_waveform_file,
+    awg520050.load_waveform_set(
+        awg520050.sample_waveform_file,
         "*SINE100",
     )
     sasset_waveform_cmd = (
@@ -124,12 +131,11 @@ def test_awg5200(  # pylint: disable=too-many-locals
     assert sasset_waveform_cmd in stdout
 
     with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
-        awg520050_source_channel.load_waveform(
+        awg520050.load_waveform_set(
             "unittest.txt",
             "*SINE100",
         )
 
-    awg520025 = device_manager.add_awg("awg5200opt25-hostname", alias="awg520025")
     assert awg520025.opt_string == "25,DC"
     awg520025_constraints = awg520025.get_waveform_constraints(waveform_length=500)
     min_smaple_25 = 300.0
@@ -148,7 +154,7 @@ def test_awg5200(  # pylint: disable=too-many-locals
         awg520025.get_waveform_constraints()
 
 
-def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
+def test_awg70k(  # pylint: disable=too-many-locals
     device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Test the AWG70K driver.
@@ -158,14 +164,22 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
         capsys: The captured stdout and stderr.
     """
     ampl_range = ParameterBounds(lower=0.125, upper=0.5)
-    awg70ka150 = device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
-    awg70ka225 = device_manager.add_awg("awg70002aopt225-hostname", alias="awg70ka225")
-    awg70ka216 = device_manager.add_awg("awg70002aopt216-hostname", alias="awg70ka216")
-    awg70kb208 = device_manager.add_awg("awg70002bopt208-hostname", alias="awg70kb208")
+    awg70ka150 = cast(
+        AWG70KA, device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
+    )
+    awg70ka225 = cast(
+        AWG70KA, device_manager.add_awg("awg70002aopt225-hostname", alias="awg70ka225")
+    )
+    awg70ka216 = cast(
+        AWG70KA, device_manager.add_awg("awg70002aopt216-hostname", alias="awg70ka216")
+    )
+    awg70kb208 = cast(
+        AWG70KB, device_manager.add_awg("awg70002bopt208-hostname", alias="awg70kb208")
+    )
     length_range = ParameterBounds(lower=10, upper=1000)
     min_smaple = 1.5e3
     awg_list = [awg70ka150, awg70ka225, awg70ka216, awg70kb208]
-    output_path = None
+    output_path: Optional[SignalSourceOutputPathsNon5200] = None
     for awg in awg_list:
         option = awg.alias[-3:]
         assert awg.opt_string == option
@@ -180,7 +194,7 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
             output_path=output_path,
         )
 
-        output_path = SignalSourceOutputPaths.DCA
+        output_path = awg.output_signal_path.DCA
 
         sample_range = ParameterBounds(lower=min_smaple, upper=int(option[1:3]) * 1.0e9)
         check_constraints(
@@ -193,17 +207,17 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
 
     # Invalid output path.
     with pytest.raises(ValueError, match="DCHB is an invalid output signal path for AWG70001."):
-        awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DCHB)
+        awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths5200.DCHB)
 
     # Set default output path (will try DCA and succeed).
     awg70ka150.source_channel["SOURCE1"].set_output_path()
-    output_path = awg70ka150.query("OUTPUT1:PATH?")
-    assert output_path == SignalSourceOutputPaths.DCA.value
+    output_path_query = awg70ka150.query("OUTPUT1:PATH?")
+    assert output_path_query == awg70ka150.output_signal_path.DCA.value
 
     # Set output path to DIR.
-    awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DIR)
-    output_path = awg70ka150.query("OUTPUT1:PATH?")
-    assert output_path == SignalSourceOutputPaths.DIR.value
+    awg70ka150.source_channel["SOURCE1"].set_output_path(awg70ka150.output_signal_path.DIR)
+    output_path_query = awg70ka150.query("OUTPUT1:PATH?")
+    assert output_path_query == SignalSourceOutputPathsNon5200.DIR.value
     # Cannot set offset with output path set to DIR.
     with pytest.raises(
         ValueError,
@@ -218,9 +232,9 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
     assert "SOURCE1:VOLTAGE:OFFSET" not in stdout
 
     # DCA as output path.
-    awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths.DCA)
-    output_path = awg70ka150.query("OUTPUT1:PATH?")
-    assert output_path == SignalSourceOutputPaths.DCA.value
+    awg70ka150.source_channel["SOURCE1"].set_output_path(awg70ka150.output_signal_path.DCA)
+    output_path_query = awg70ka150.query("OUTPUT1:PATH?")
+    assert output_path_query == SignalSourceOutputPathsNon5200.DCA.value
     awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
     offset = float(awg70ka150.query("SOURCE1:VOLTAGE:OFFSET?"))
     assert offset == 0.1
@@ -231,9 +245,8 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
 
     # Load specific waveform.
     _ = capsys.readouterr().out  # throw away stdout
-    awg70ka150_source_channel = cast(AWG70KAChannel, awg70ka150.source_channel["SOURCE1"])
-    awg70ka150_source_channel.load_waveform(
-        awg70ka150_source_channel.sample_waveform_file,
+    awg70ka150.load_waveform_set(
+        awg70ka150.sample_waveform_file,
         "*SINE100",
     )
     sasset_waveform_cmd = (
@@ -246,7 +259,7 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
 
     # Invalid file type for waveform file.
     with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
-        awg70ka150_source_channel.load_waveform(
+        awg70ka150.load_waveform_set(
             "unittest.txt",
             "*SINE100",
         )
@@ -258,16 +271,16 @@ def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-ma
     Args:
         device_manager: The DeviceManager object.
     """
-    awg7k01 = device_manager.add_awg("awg7051opt01-hostname", alias="awg7k01")
-    awg7k06 = device_manager.add_awg("awg7102opt06-hostname", alias="awg7k06")
-    awg7kb02 = device_manager.add_awg("awg7062bopt02-hostname", alias="awg7kb02")
-    awg7kb01 = device_manager.add_awg("awg7121bopt01-hostname", alias="awg7kb01")
-    awg7kc06 = device_manager.add_awg("awg7082copt01-hostname", alias="awg7kc01")
-    awg7kc01 = device_manager.add_awg("awg7122copt06-hostname", alias="awg7kc06")
+    awg7k01 = cast(AWG7K, device_manager.add_awg("awg7051opt01-hostname", alias="awg7k01"))
+    awg7k06 = cast(AWG7K, device_manager.add_awg("awg7102opt06-hostname", alias="awg7k06"))
+    awg7kb02 = cast(AWG7KB, device_manager.add_awg("awg7062bopt02-hostname", alias="awg7kb02"))
+    awg7kb01 = cast(AWG7KB, device_manager.add_awg("awg7121bopt01-hostname", alias="awg7kb01"))
+    awg7kc06 = cast(AWG7KC, device_manager.add_awg("awg7082copt01-hostname", alias="awg7kc01"))
+    awg7kc01 = cast(AWG7KC, device_manager.add_awg("awg7122copt06-hostname", alias="awg7kc06"))
     length_range = ParameterBounds(lower=10, upper=1000)
     awg_list = [awg7k01, awg7k06, awg7kb02, awg7kb01, awg7kc06, awg7kc01]
 
-    output_path = None
+    output_path: Optional[SignalSourceOutputPathsNon5200] = None
     for awg in awg_list:
         option = awg.alias[-2:]
         assert awg.opt_string == option
@@ -289,7 +302,7 @@ def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-ma
             SignalSourceFunctionsAWG.TRIANGLE,
             output_path=output_path,
         )
-        output_path = SignalSourceOutputPaths.DIR
+        output_path = awg.output_signal_path.DIR
         check_constraints(
             constraints,
             sample_range,
@@ -305,9 +318,9 @@ def test_awg5k(device_manager: DeviceManager) -> None:
     Args:
         device_manager: The DeviceManager object.
     """
-    awg5k = device_manager.add_awg("awg5012-hostname", alias="awg5k")
-    awg5kb = device_manager.add_awg("awg5002b-hostname", alias="awg5kb")
-    awg5kc = device_manager.add_awg("awg5012c-hostname", alias="awg5kc")
+    awg5k = cast(AWG5K, device_manager.add_awg("awg5012-hostname", alias="awg5k"))
+    awg5kb = cast(AWG5KB, device_manager.add_awg("awg5002b-hostname", alias="awg5kb"))
+    awg5kc = cast(AWG5KC, device_manager.add_awg("awg5012c-hostname", alias="awg5kc"))
     length_range = ParameterBounds(lower=960, upper=960)
     awg_list = [awg5k, awg5kb, awg5kc]
     offset_range = ParameterBounds(lower=-2.25, upper=2.25)
@@ -328,7 +341,7 @@ def test_awg5k(device_manager: DeviceManager) -> None:
 
     # With DIR output path.
     constraints = awg5k.get_waveform_constraints(
-        SignalSourceFunctionsAWG.CLOCK, output_path=SignalSourceOutputPaths.DIR
+        SignalSourceFunctionsAWG.CLOCK, output_path=awg5k.output_signal_path.DIR
     )
     sample_range = ParameterBounds(lower=10.0e6, upper=int(awg5k.model[5]) * 600.0e6 + 600.0e6)
     offset_range = ParameterBounds(lower=0, upper=0)

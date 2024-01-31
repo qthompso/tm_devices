@@ -19,7 +19,7 @@ from tm_devices.helpers import (
     LoadImpedanceAFG,
     ReadOnlyCachedProperty,
     SignalSourceFunctionsAFG,
-    SignalSourceOutputPaths,
+    SignalSourceOutputPathsBase,
 )
 
 
@@ -146,7 +146,7 @@ class AFG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPaths] = None,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -201,12 +201,12 @@ class AFG(SignalGenerator, ABC):
 
             if burst > 0:
                 self.write("*TRG")
-            # Initiate a phase sync (between CH 1 and CH 2 output waveforms on two channel AFGs)
             elif (
                 self.total_channels > 1  # pylint: disable=comparison-with-callable
                 and function.value != SignalSourceFunctionsAFG.DC.value
                 and not burst_state
             ):
+                # Initiate a phase sync (between CH 1 and CH 2 output waveforms on two channel AFGs)
                 self.write("SOURCE1:PHASE:INITIATE")
             # Check for system errors
             self.expect_esr(0)
@@ -277,7 +277,7 @@ class AFG(SignalGenerator, ABC):
         function: Optional[SignalSourceFunctionsAFG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[SignalSourceOutputPaths] = None,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
