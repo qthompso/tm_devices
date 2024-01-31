@@ -19,7 +19,7 @@ devices:
       - q: '*OPC?'
         r: '1'
       - q: '*OPT?'
-        r: '50,HV'
+        r: 50,HV
       - q: '*RST'
       - q: '*CLS'
       - q: '*WAI'
@@ -135,7 +135,7 @@ devices:
       - q: '*OPC?'
         r: '1'
       - q: '*OPT?'
-        r: '25,DC'
+        r: 25,DC
       - q: '*RST'
       - q: '*CLS'
       - q: AWGControl:CONFigure:CNUMber?
