@@ -88,13 +88,15 @@ class AWG5200Channel(AWGChannel):
             filename: The filename for the burst waveform to generate.
             burst_count: The number of wavelengths to be generated.
         """
+        del filename
         if burst_count > 0 and "SEQ" not in self._awg.opt_string:
             sequence_license_error = (
                 "A sequencing license is required to generate a burst waveform."
             )
             raise AssertionError(sequence_license_error)
-        if not burst_count:
-            self._awg.set_and_check(f"{self.name}:WAVEFORM", f'"{filename}"')
+        if burst_count <= 0:
+            error_message = f"{burst_count} is an invalid burst value. Burst count must be > 0."
+            raise ValueError(error_message)
 
 
 class AWG5200(AWG5200Mixin, AWG):
