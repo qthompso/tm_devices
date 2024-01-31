@@ -41,6 +41,17 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     assert awg520050.expect_esr(0)[0]
     assert awg520050.get_eventlog_status() == (True, '0,"No error"')
 
+    # Invalid burst
+    with pytest.raises(ValueError, match="-1 is an invalid burst value. Burst count must be > 0."):
+        awg520050.generate_function(
+            10e3,
+            awg520050.source_device_constants.functions.SIN,
+            1.0,
+            0.0,
+            channel="SOURCE1",
+            burst=-1,
+        )
+
     # Frequency is too high to produce CLOCK function on this AWG.
     with pytest.raises(
         ValueError,
@@ -231,7 +242,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
     assert awg7k01.get_eventlog_status() == (True, '0,"No error"')
 
     # Invalid burst
-    with pytest.raises(ValueError, match="-1 is an invalid burst value. Burst must be >= 0."):
+    with pytest.raises(ValueError, match="-1 is an invalid burst value. Burst count must be > 0."):
         awg7k01.generate_function(
             10e3,
             awg7k01.source_device_constants.functions.SIN,

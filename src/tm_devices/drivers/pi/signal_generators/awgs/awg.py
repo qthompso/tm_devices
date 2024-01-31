@@ -121,17 +121,15 @@ class AWGChannel:
         """
         raise NotImplementedError
 
-    # TODO: rename function
+    # TODO: change filename arg to to waveform_name
     def setup_burst_waveform(self, filename: str, burst_count: int = 0) -> None:
-        """Prepare device for burst waveform.
+        """Prepare source channel for a burst waveform.
 
         Args:
             filename: The filename for the burst waveform to generate.
             burst_count: The number of wavelengths to be generated.
         """
-        if not burst_count:
-            self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{filename}"', allow_empty=True)
-        elif burst_count > 0:
+        if burst_count > 0:
             self._awg.set_if_needed("AWGCONTROL:RMODE", "SEQ")
             self._awg.set_if_needed("SEQUENCE:LENGTH", "1")
             self._awg.set_and_check(
@@ -143,8 +141,16 @@ class AWGChannel:
                 burst_count,
             )
         else:
-            error_message = f"{burst_count} is an invalid burst value. Burst must be >= 0."
+            error_message = f"{burst_count} is an invalid burst value. Burst count must be > 0."
             raise ValueError(error_message)
+
+    def setup_waveform(self, filename: str) -> None:
+        """Prepare source channel for a waveform (non-burst).
+
+        Args:
+            filename: The filename for the burst waveform to generate.
+        """
+        self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{filename}"', allow_empty=True)
 
 
 @family_base_class
@@ -292,7 +298,11 @@ class AWG(SignalGenerator, ABC):
         """
         first_source_channel = self.source_channel["SOURCE1"]
         first_source_channel.set_frequency(needed_sample_rate, tolerance=2, percentage=True)
-        source_channel.setup_burst_waveform(predefined_name, burst)
+        if not burst:
+            source_channel.setup_waveform(predefined_name)
+        else:
+            source_channel.setup_burst_waveform(predefined_name, burst)
+
         source_channel.set_amplitude(amplitude)
         source_channel.set_output_path(output_path)
         source_channel.set_offset(offset)
