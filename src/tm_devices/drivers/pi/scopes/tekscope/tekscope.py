@@ -40,7 +40,6 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
 )
 from tm_devices.driver_mixins.usb_drives_mixin import USBDrivesMixin
 from tm_devices.drivers.device import family_base_class
-from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.scopes.scope import Scope
 from tm_devices.helpers import (
     DeviceConfigEntry,
@@ -83,13 +82,13 @@ class TekScopeChannel:
 class InternalAFGChannel:
     """Internal AFG channel driver."""
 
-    def __init__(self, pi_device: PIDevice) -> None:
+    def __init__(self, tekscope: "TekScope") -> None:
         """Create an InternalAFG channel object.
 
         Args:
-            pi_device: A PI device object.
+            tekscope: A TekScope object.
         """
-        self._pi_device = pi_device
+        self._tekscope = tekscope
 
     def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the amplitude on the source.
@@ -101,7 +100,7 @@ class InternalAFGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._tekscope.set_if_needed(
             "AFG:AMPLITUDE",
             value,
             tolerance=tolerance,
@@ -118,7 +117,7 @@ class InternalAFGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._tekscope.set_if_needed(
             "AFG:FREQUENCY",
             value,
             tolerance=tolerance,
@@ -135,7 +134,7 @@ class InternalAFGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._tekscope.set_if_needed(
             "AFG:OFFSET",
             value,
             tolerance=tolerance,
@@ -149,8 +148,8 @@ class InternalAFGChannel:
             burst_count: The number of wavelengths to be generated.
         """
         # set to external as to not burst every millisecond
-        self._pi_device.set_if_needed("AFG:OUTPUT:MODE", "BURST")
-        self._pi_device.set_if_needed("AFG:BURST:CCOUNT", f"{burst_count}")
+        self._tekscope.set_if_needed("AFG:OUTPUT:MODE", "BURST")
+        self._tekscope.set_if_needed("AFG:BURST:CCOUNT", f"{burst_count}")
 
 
 # pylint: disable=too-many-public-methods

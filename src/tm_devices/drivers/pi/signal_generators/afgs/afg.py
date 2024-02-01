@@ -12,7 +12,6 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
     SourceDeviceConstants,
 )
 from tm_devices.drivers.device import family_base_class
-from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.helpers import (
     DeviceTypes,
@@ -33,16 +32,16 @@ class AFGSourceDeviceConstants(SourceDeviceConstants):
 class AFGChannel:
     """AFG channel driver."""
 
-    def __init__(self, pi_device: PIDevice, channel_name: str) -> None:
+    def __init__(self, afg: "AFG", channel_name: str) -> None:
         """Create an AFG channel object.
 
         Args:
-            pi_device: A PI device object.
+            afg: An AFG object.
             channel_name: The channel name for the AFG channel.
         """
         self._name = channel_name
         self._num = int("".join(filter(str.isdigit, channel_name)))
-        self._pi_device = pi_device
+        self._afg = afg
 
     @property
     def name(self) -> str:
@@ -64,7 +63,7 @@ class AFGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._afg.set_if_needed(
             f"{self._name}:VOLTAGE:AMPLITUDE",
             value,
             tolerance=tolerance,
@@ -81,7 +80,7 @@ class AFGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._afg.set_if_needed(
             f"{self._name}:FREQUENCY:FIXED",
             value,
             tolerance=tolerance,
@@ -98,7 +97,7 @@ class AFGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._afg.set_if_needed(
             f"{self._name}:VOLTAGE:OFFSET",
             value,
             tolerance=tolerance,
@@ -112,10 +111,10 @@ class AFGChannel:
             burst_count: The number of wavelengths to be generated.
         """
         # set to external as to not burst every millisecond
-        self._pi_device.set_if_needed("TRIGGER:SEQUENCE:SOURCE", "EXT")
-        self._pi_device.set_if_needed(f"{self.name}:BURST:STATE", 1)
-        self._pi_device.set_if_needed(f"{self.name}:BURST:MODE", "TRIG")
-        self._pi_device.set_if_needed(f"{self.name}:BURST:NCYCLES", burst_count)
+        self._afg.set_if_needed("TRIGGER:SEQUENCE:SOURCE", "EXT")
+        self._afg.set_if_needed(f"{self.name}:BURST:STATE", 1)
+        self._afg.set_if_needed(f"{self.name}:BURST:MODE", "TRIG")
+        self._afg.set_if_needed(f"{self.name}:BURST:NCYCLES", burst_count)
 
 
 @family_base_class
