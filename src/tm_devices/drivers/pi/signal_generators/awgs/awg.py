@@ -7,6 +7,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Type
 
+from tm_devices.driver_mixins.class_extension_mixin import ExtendableMixin
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
     ParameterBounds,
@@ -31,7 +32,7 @@ class AWGSourceDeviceConstants(SourceDeviceConstants):
     functions: Type[SignalSourceFunctionsAWG] = SignalSourceFunctionsAWG
 
 
-class AWGChannel:
+class AWGChannel(ExtendableMixin):
     """AWG channel driver."""
 
     def __init__(self, awg: "AWG", channel_name: str) -> None:
