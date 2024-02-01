@@ -43,7 +43,7 @@ class AWG7KChannel(AWG5KChannel):
             offset_error = (
                 f"The offset can only be set on {self._awg.model} without an 02 or 06 "
                 "option and with an output signal path of "
-                f"{self._awg.output_signal_path.DCA.value} "
+                f"{self._awg.OutputSignalPath.DCA.value} "
                 f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)."
             )
             raise ValueError(offset_error)
@@ -87,7 +87,7 @@ class AWG7K(AWG7KMixin, AWG):
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = self.output_signal_path.DCA
+            output_path = self.OutputSignalPath.DCA
 
         # if we are using the high bandwidth options
         if "02" in self.opt_string or "06" in self.opt_string:
@@ -95,7 +95,7 @@ class AWG7K(AWG7KMixin, AWG):
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         else:
             amplitude_range = ParameterBounds(lower=50e-3, upper=2.0)
-            if output_path == self.output_signal_path.DCA:
+            if output_path == self.OutputSignalPath.DCA:
                 offset_range = ParameterBounds(lower=-0.5, upper=0.5)
             else:
                 offset_range = ParameterBounds(lower=-0.0, upper=0.0)

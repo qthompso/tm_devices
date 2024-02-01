@@ -42,7 +42,7 @@ class AWG70KAChannel(AWGChannel):
         if not value:
             try:
                 self._awg.set_and_check(
-                    f"OUTPUT{self.num}:PATH", self._awg.output_signal_path.DCA.value
+                    f"OUTPUT{self.num}:PATH", self._awg.OutputSignalPath.DCA.value
                 )
             except AssertionError:  # pragma: no cover
                 expected_esr_message = (
@@ -51,9 +51,9 @@ class AWG70KAChannel(AWGChannel):
                 )
                 self._awg.expect_esr("16", expected_esr_message)
                 self._awg.set_and_check(
-                    f"OUTPUT{self.num}:PATH", self._awg.output_signal_path.DIR.value
+                    f"OUTPUT{self.num}:PATH", self._awg.OutputSignalPath.DIR.value
                 )
-        elif value in self._awg.output_signal_path:
+        elif value in self._awg.OutputSignalPath:
             self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
         else:
             output_signal_path_error = (
@@ -158,11 +158,11 @@ class AWG70KA(AWG70KAMixin, AWG):
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = self.output_signal_path.DIR
+            output_path = self.OutputSignalPath.DIR
 
         amplitude_range = ParameterBounds(lower=0.125, upper=0.5)
 
-        if output_path == self.output_signal_path.DCA:
+        if output_path == self.OutputSignalPath.DCA:
             offset_range = ParameterBounds(lower=-400.0e-3, upper=800.0e-3)
         else:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
