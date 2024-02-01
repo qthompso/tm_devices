@@ -42,6 +42,7 @@ class AWGChannel(ExtendableMixin):
             awg: An AWG object.
             channel_name: The channel name for the AWG channel.
         """
+        super().__init__()
         self._name = channel_name
         self._num = int("".join(filter(str.isdigit, channel_name)))
         self._awg = awg
