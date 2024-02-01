@@ -118,7 +118,7 @@ class AWG70KA(AWG70KAMixin, AWG):
                 command=f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_file}", "{waveform}"', opc=True
             )
 
-    def set_waveform_properties(  # noqa: PLR0913
+    def set_waveform_properties(
         self,
         source_channel: AWGChannel,
         output_path: Optional[SignalSourceOutputPathsBase],
@@ -126,7 +126,6 @@ class AWG70KA(AWG70KAMixin, AWG):
         needed_sample_rate: float,
         amplitude: float,
         offset: float,
-        burst: int,
     ) -> None:
         """Set the properties of the waveform.
 
@@ -137,7 +136,6 @@ class AWG70KA(AWG70KAMixin, AWG):
             needed_sample_rate: The required sample
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
-            burst: The number of wavelengths to be generated.
         """
         if predefined_name not in self.query("WLISt:LIST?", allow_empty=True):
             self.load_waveform_set()
@@ -149,7 +147,6 @@ class AWG70KA(AWG70KAMixin, AWG):
             needed_sample_rate=needed_sample_rate,
             amplitude=amplitude,
             offset=offset,
-            burst=burst,
         )
 
     ################################################################################################

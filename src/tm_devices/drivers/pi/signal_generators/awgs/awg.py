@@ -121,34 +121,11 @@ class AWGChannel:
         """
         raise NotImplementedError
 
-    # TODO: change filename arg to to waveform_name
-    def setup_burst_waveform(self, filename: str, burst_count: int = 0) -> None:
-        """Prepare source channel for a burst waveform.
-
-        Args:
-            filename: The filename for the burst waveform to generate.
-            burst_count: The number of wavelengths to be generated.
-        """
-        if burst_count > 0:
-            self._awg.set_if_needed("AWGCONTROL:RMODE", "SEQ")
-            self._awg.set_if_needed("SEQUENCE:LENGTH", "1")
-            self._awg.set_and_check(
-                f"SEQUENCE:ELEMENT1:WAVEFORM{self.num}",
-                f'"{filename}"',
-            )
-            self._awg.set_if_needed(
-                "SEQUENCE:ELEMENT1:LOOP:COUNT",
-                burst_count,
-            )
-        else:
-            error_message = f"{burst_count} is an invalid burst value. Burst count must be > 0."
-            raise ValueError(error_message)
-
     def setup_waveform(self, filename: str) -> None:
-        """Prepare source channel for a waveform (non-burst).
+        """Prepare source channel for a waveform.
 
         Args:
-            filename: The filename for the burst waveform to generate.
+            filename: The filename for the waveform to generate.
         """
         self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{filename}"', allow_empty=True)
 
@@ -225,7 +202,7 @@ class AWG(SignalGenerator, ABC):
         """
         raise NotImplementedError
 
-    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]  # pylint: disable=too-many-locals
+    def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
@@ -233,7 +210,6 @@ class AWG(SignalGenerator, ABC):
         offset: float,
         channel: str = "all",
         output_path: Optional[SignalSourceOutputPathsBase] = None,
-        burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
@@ -248,7 +224,6 @@ class AWG(SignalGenerator, ABC):
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
             output_path: The output signal path of the specified channel.
-            burst: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
@@ -259,8 +234,7 @@ class AWG(SignalGenerator, ABC):
         )
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
-            if not burst:
-                self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "0")
+            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
                 source_channel=source_channel,
                 output_path=output_path,
@@ -268,13 +242,47 @@ class AWG(SignalGenerator, ABC):
                 needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
                 offset=offset,
-                burst=burst,
             )
             self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "1")
         self.write("AWGCONTROL:RUN")
         self.expect_esr(0)
 
-    def set_waveform_properties(  # noqa: PLR0913
+    def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsAWG,
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        burst_count: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 50.0,
+    ) -> None:
+        """Set up the AWG for sending a burst of waveforms given the following parameters.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The waveform shape to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            burst_count: The number of wavelengths to be generated.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        raise NotImplementedError
+
+    def generate_burst(self) -> None:
+        """Generate a burst of waveforms by forcing trigger."""
+        raise NotImplementedError
+
+    def set_waveform_properties(
         self,
         source_channel: AWGChannel,
         output_path: Optional[SignalSourceOutputPathsBase],
@@ -282,7 +290,6 @@ class AWG(SignalGenerator, ABC):
         needed_sample_rate: float,
         amplitude: float,
         offset: float,
-        burst: int,
     ) -> None:
         """Set the properties of the waveform.
 
@@ -293,16 +300,10 @@ class AWG(SignalGenerator, ABC):
             needed_sample_rate: The required sample
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
-
-            burst: The number of wavelengths to be generated.
         """
         first_source_channel = self.source_channel["SOURCE1"]
         first_source_channel.set_frequency(needed_sample_rate, tolerance=2, percentage=True)
-        if not burst:
-            source_channel.setup_waveform(predefined_name)
-        else:
-            source_channel.setup_burst_waveform(predefined_name, burst)
-
+        source_channel.setup_waveform(predefined_name)
         source_channel.set_amplitude(amplitude)
         source_channel.set_output_path(output_path)
         source_channel.set_offset(offset)

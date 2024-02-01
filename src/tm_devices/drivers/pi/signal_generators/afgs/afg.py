@@ -150,7 +150,6 @@ class AFG(SignalGenerator, ABC):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    # pylint: disable=too-many-locals
     def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
@@ -159,7 +158,6 @@ class AFG(SignalGenerator, ABC):
         offset: float,
         channel: str = "all",
         output_path: Optional[SignalSourceOutputPathsBase] = None,
-        burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -174,7 +172,6 @@ class AFG(SignalGenerator, ABC):
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
             output_path: The output signal path of the specified channel.
-            burst: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
@@ -186,21 +183,19 @@ class AFG(SignalGenerator, ABC):
         # Generate the waveform on the given channel
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
-            # grab the number(s) in the channel name
-            if not burst:
-                # Temporarily turn off this channel
-                self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 0)
+            # Temporarily turn off this channel
+            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 0)
             self.set_waveform_properties(
-                frequency,
-                function,
-                amplitude,
-                offset,
-                source_channel,
-                burst,
-                termination,
-                duty_cycle,
-                polarity,
-                symmetry,
+                frequency=frequency,
+                function=function,
+                amplitude=amplitude,
+                offset=offset,
+                source_channel=source_channel,
+                burst_count=0,
+                termination=termination,
+                duty_cycle=duty_cycle,
+                polarity=polarity,
+                symmetry=symmetry,
             )
             # Turn on the channel
             self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 1)
@@ -210,10 +205,7 @@ class AFG(SignalGenerator, ABC):
             for burst_channel in range(1, self.total_channels + 1):
                 if self.query(f"SOURCE{burst_channel}:BURST:STATE?") == "1":
                     burst_state = True
-
-            if burst > 0:
-                self.write("*TRG")
-            elif (
+            if (
                 self.total_channels > 1  # pylint: disable=comparison-with-callable
                 and function.value != SignalSourceFunctionsAFG.DC.value
                 and not burst_state
@@ -223,6 +215,60 @@ class AFG(SignalGenerator, ABC):
             # Check for system errors
             self.expect_esr(0)
 
+    def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsAFG,
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        burst_count: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 100.0,
+    ) -> None:
+        """Set up the AFG for sending a burst of waveforms given the following parameters.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The waveform shape to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            burst_count: The number of wavelengths to be generated.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        del output_path  # Not used in AFGs.
+        self._validate_generated_function(function)
+        # Generate the waveform on the given channel
+        for channel_name in self._validate_channels(channel):
+            source_channel = self.source_channel[channel_name]
+            self.set_waveform_properties(
+                frequency=frequency,
+                function=function,
+                amplitude=amplitude,
+                offset=offset,
+                source_channel=source_channel,
+                burst_count=burst_count,
+                termination=termination,
+                duty_cycle=duty_cycle,
+                polarity=polarity,
+                symmetry=symmetry,
+            )
+            # Turn on the channel
+            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 1)
+
+    def generate_burst(self) -> None:
+        """Generate a burst of waveforms by forcing trigger."""
+        self.write("*TRG")
+        self.expect_esr(0)
+
     def set_waveform_properties(  # noqa: PLR0913
         self,
         frequency: float,
@@ -230,7 +276,7 @@ class AFG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         source_channel: AFGChannel,
-        burst: int = 0,
+        burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -244,7 +290,7 @@ class AFG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             source_channel: The source channel class for the requested channel.
-            burst: The number of wavelengths to be generated.
+            burst_count: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
@@ -277,8 +323,8 @@ class AFG(SignalGenerator, ABC):
         self.set_if_needed(f"{source_channel.name}:FUNCTION", function.value)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
         source_channel.set_amplitude(amplitude, tolerance=0.01)
-        if burst > 0:
-            source_channel.setup_burst_waveform(burst)
+        if burst_count > 0:
+            source_channel.setup_burst_waveform(burst_count)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,

@@ -82,7 +82,6 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         offset: float,
         channel: str = "all",
         output_path: Optional[SignalSourceOutputPathsBase] = None,
-        burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -97,12 +96,48 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
             output_path: The output signal path of the specified channel.
-            burst: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
+        raise NotImplementedError
+
+    @abstractmethod
+    def setup_burst(  # noqa: PLR0913
+        self,
+        frequency: float,
+        function: _SignalSourceTypeVar,  # pyright: ignore[reportInvalidTypeVarUse]
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        burst_count: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 50.0,
+    ) -> None:
+        """Set up the device for sending a burst of waveforms given the following parameters.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The function to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel number to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            burst_count: The number of wavelengths to be generated.
+            termination: The impedance to set the channel to.
+            duty_cycle: The duty cycle to set the signal to.
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def generate_burst(self) -> None:
+        """Generate a burst of waveforms by forcing trigger."""
         raise NotImplementedError
 
     @abstractmethod

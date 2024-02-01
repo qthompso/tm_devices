@@ -31,26 +31,14 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
     output1_state = awg520050.query("OUTPUT1:STATE?")
     assert int(output1_state) == 1
 
-    # AWG5200 doesn't handle burst greater than 0.
     awg520050.generate_function(
-        10e3, awg520050.source_device_constants.functions.DC, 1.0, 0.0, channel="SOURCE1", burst=1
+        10e3, awg520050.source_device_constants.functions.DC, 1.0, 0.0, channel="SOURCE1"
     )
     source1_waveform_file = awg520050.query("SOURCE1:WAVEFORM?")
-    assert source1_waveform_file != '"*DC"'
+    assert source1_waveform_file == '"*DC"'
 
     assert awg520050.expect_esr(0)[0]
     assert awg520050.get_eventlog_status() == (True, '0,"No error"')
-
-    # Invalid burst
-    with pytest.raises(ValueError, match="-1 is an invalid burst value. Burst count must be > 0."):
-        awg520050.generate_function(
-            10e3,
-            awg520050.source_device_constants.functions.SIN,
-            1.0,
-            0.0,
-            channel="SOURCE1",
-            burst=-1,
-        )
 
     # Frequency is too high to produce CLOCK function on this AWG.
     with pytest.raises(
@@ -70,18 +58,6 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
             0.2,
             channel="SOURCE1",
             output_path=SignalSourceOutputPathsNon5200.DIR,
-        )
-
-    awg520025 = cast(AWG5200, device_manager.add_awg("awg5200opt25-hostname", alias="awg520050"))
-    seq_error = "A sequencing license is required to generate a burst waveform."
-    with pytest.raises(AssertionError, match=seq_error):
-        awg520025.generate_function(
-            10e3,
-            awg520025.source_device_constants.functions.DC,
-            1.0,
-            0.0,
-            channel="SOURCE1",
-            burst=1,
         )
 
 
@@ -227,31 +203,6 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
     source1_waveform_file = awg7k01.query("SOURCE1:WAVEFORM?")
     assert source1_waveform_file == '"*Triangle10"'
 
-    # Burst > 0
-    awg7k01.generate_function(
-        10e3, awg7k01.source_device_constants.functions.SIN, 1.0, 0.0, channel="SOURCE1", burst=100
-    )
-    source1_frequency = awg7k01.query("SOURCE1:FREQUENCY?")
-    assert float(source1_frequency) == 36000000
-    source1_waveform_file = awg7k01.query("SEQUENCE:ELEMENT1:WAVEFORM1?")
-    assert source1_waveform_file == '"*Sine3600"'
-    source1_loop_count = awg7k01.query("SEQUENCE:ELEMENT1:LOOP:COUNT?")
-    assert float(source1_loop_count) == 100
-
-    assert awg7k01.expect_esr(0)[0]
-    assert awg7k01.get_eventlog_status() == (True, '0,"No error"')
-
-    # Invalid burst
-    with pytest.raises(ValueError, match="-1 is an invalid burst value. Burst count must be > 0."):
-        awg7k01.generate_function(
-            10e3,
-            awg7k01.source_device_constants.functions.SIN,
-            1.0,
-            0.0,
-            channel="SOURCE1",
-            burst=-1,
-        )
-
 
 def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     """Test generate waveform for AWG5k.
@@ -329,15 +280,16 @@ def test_afg3k_gen_waveform(
     assert "SOURCE1:BURST:MODE" not in capsys.readouterr().out
     assert "SOURCE1:BURST:NCYCLES" not in capsys.readouterr().out
 
-    afg3kc.generate_function(
+    afg3kc.setup_burst(
         25e6,
         afg3kc.source_device_constants.functions.SIN,
         1.0,
         0.0,
         "SOURCE1",
-        burst=1,
+        burst_count=1,
         termination="HIGHZ",
     )
+    afg3kc.generate_burst()
     assert "OUTPUT1:IMPEDANCE INFINITY" in capsys.readouterr().out
     source1_frequency = afg3kc.query("SOURCE1:FREQUENCY:FIXED?")
     assert float(source1_frequency) == 25e6
@@ -360,15 +312,16 @@ def test_afg3k_gen_waveform(
     output1_state = afg3kc.query("OUTPUT1:STATE?")
     assert int(output1_state) == 1
 
-    afg3kc.generate_function(
+    afg3kc.setup_burst(
         25e6,
         afg3kc.source_device_constants.functions.RAMP,
         1.0,
         0.0,
         "SOURCE1",
-        burst=1,
+        burst_count=1,
         termination="FIFTY",
     )
+    afg3kc.generate_burst()
     impedance = afg3kc.query("OUTPUT1:IMPEDANCE?")
     assert float(impedance) == 50
     ramp_symmetry = afg3kc.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
@@ -430,7 +383,8 @@ def test_internal_afg_gen_waveform(
     impedance = scope.query("AFG:OUTPUT:LOAD:IMPEDANCE?")
     assert impedance == "HIGHZ"
 
-    scope.generate_function(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst=1)
+    scope.setup_burst(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst_count=1)
+    scope.generate_burst()
     output_mode = scope.query("AFG:OUTPUT:MODE?")
     assert output_mode == "BURST"
     burst_ccount = scope.query("AFG:BURST:CCOUNT?")
