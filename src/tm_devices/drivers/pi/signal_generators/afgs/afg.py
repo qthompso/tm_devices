@@ -105,6 +105,18 @@ class AFGChannel:
             percentage=percentage,
         )
 
+    def setup_burst_waveform(self, burst_count: int) -> None:
+        """Prepare source channel for a burst waveform.
+
+        Args:
+            burst_count: The number of wavelengths to be generated.
+        """
+        # set to external as to not burst every millisecond
+        self._pi_device.set_if_needed("TRIGGER:SEQUENCE:SOURCE", "EXT")
+        self._pi_device.set_if_needed(f"{self.name}:BURST:STATE", 1)
+        self._pi_device.set_if_needed(f"{self.name}:BURST:MODE", "TRIG")
+        self._pi_device.set_if_needed(f"{self.name}:BURST:NCYCLES", burst_count)
+
 
 @family_base_class
 class AFG(SignalGenerator, ABC):
@@ -178,7 +190,7 @@ class AFG(SignalGenerator, ABC):
             if not burst:
                 # Temporarily turn off this channel
                 self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 0)
-            self.set_waveform_propeties(
+            self.set_waveform_properties(
                 frequency,
                 function,
                 amplitude,
@@ -211,7 +223,7 @@ class AFG(SignalGenerator, ABC):
             # Check for system errors
             self.expect_esr(0)
 
-    def set_waveform_propeties(  # noqa: PLR0913
+    def set_waveform_properties(  # noqa: PLR0913
         self,
         frequency: float,
         function: SignalSourceFunctionsAFG,
@@ -266,11 +278,7 @@ class AFG(SignalGenerator, ABC):
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
         source_channel.set_amplitude(amplitude, tolerance=0.01)
         if burst > 0:
-            # set to external as to not burst every millisecond
-            self.set_if_needed("TRIGGER:SEQUENCE:SOURCE", "EXT")
-            self.set_if_needed(f"{source_channel.name}:BURST:STATE", 1)
-            self.set_if_needed(f"{source_channel.name}:BURST:MODE", "TRIG")
-            self.set_if_needed(f"{source_channel.name}:BURST:NCYCLES", burst)
+            source_channel.setup_burst_waveform(burst)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
