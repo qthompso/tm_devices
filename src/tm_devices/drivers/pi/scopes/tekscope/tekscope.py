@@ -141,6 +141,16 @@ class InternalAFGChannel:
             percentage=percentage,
         )
 
+    def setup_burst_waveform(self, burst_count: int) -> None:
+        """Prepare the internal AFG for a burst waveform.
+
+        Args:
+            burst_count: The number of wavelengths to be generated.
+        """
+        # set to external as to not burst every millisecond
+        self._pi_device.set_if_needed("AFG:OUTPUT:MODE", "BURST")
+        self._pi_device.set_if_needed("AFG:BURST:CCOUNT", f"{burst_count}")
+
 
 # pylint: disable=too-many-public-methods
 @family_base_class
@@ -504,7 +514,7 @@ class TekScope(
         function: SignalSourceFunctionsIAFG,
         amplitude: float,
         offset: float,
-        burst: int = 0,
+        burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         symmetry: float = 50.0,
@@ -516,14 +526,13 @@ class TekScope(
             function: The waveform shape to generate.
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
-            burst: The number of wavelengths to be generated.
+            burst_count: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        if burst > 0:
-            self.set_if_needed("AFG:OUTPUT:MODE", "BURST")
-            self.set_if_needed("AFG:BURST:CCOUNT", f"{burst}")
+        if burst_count > 0:
+            self.internal_afg.setup_burst_waveform(burst_count)
         # Generate the waveform from the Internal AFG
         # Frequency
         self.internal_afg.set_frequency(frequency, tolerance=2, percentage=True)
