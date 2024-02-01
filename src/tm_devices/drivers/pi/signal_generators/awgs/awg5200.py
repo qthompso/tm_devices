@@ -81,23 +81,6 @@ class AWG5200Channel(AWGChannel):
             raise ValueError(output_signal_path_error)
         self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
 
-    def setup_burst_waveform(self, filename: str, burst_count: int = 0) -> None:
-        """Prepare device for burst waveform.
-
-        Args:
-            filename: The filename for the burst waveform to generate.
-            burst_count: The number of wavelengths to be generated.
-        """
-        del filename
-        if burst_count > 0 and "SEQ" not in self._awg.opt_string:
-            sequence_license_error = (
-                "A sequencing license is required to generate a burst waveform."
-            )
-            raise AssertionError(sequence_license_error)
-        if burst_count <= 0:
-            error_message = f"{burst_count} is an invalid burst value. Burst count must be > 0."
-            raise ValueError(error_message)
-
 
 class AWG5200(AWG5200Mixin, AWG):
     """AWG5200 device driver."""
@@ -156,7 +139,7 @@ class AWG5200(AWG5200Mixin, AWG):
                 command=f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_file}", "{waveform}"', opc=True
             )
 
-    def generate_function(  # noqa: PLR0913  # pylint: disable=too-many-locals
+    def generate_function(  # noqa: PLR0913
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
@@ -164,7 +147,6 @@ class AWG5200(AWG5200Mixin, AWG):
         offset: float,
         channel: str = "all",
         output_path: Optional[SignalSourceOutputPathsBase] = None,
-        burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
@@ -179,7 +161,6 @@ class AWG5200(AWG5200Mixin, AWG):
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
             output_path: The output signal path of the specified channel.
-            burst: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
@@ -192,8 +173,7 @@ class AWG5200(AWG5200Mixin, AWG):
         self.ieee_cmds.cls()
         for channel_name in self._validate_channels(channel):
             source_channel = cast(AWG5200Channel, self.source_channel[channel_name])
-            if not burst:
-                self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
+            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
                 source_channel=source_channel,
                 output_path=output_path,
@@ -201,7 +181,6 @@ class AWG5200(AWG5200Mixin, AWG):
                 needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
                 offset=offset,
-                burst=burst,
             )
             self.ieee_cmds.wai()
             self.ieee_cmds.opc()
@@ -215,7 +194,7 @@ class AWG5200(AWG5200Mixin, AWG):
         self.poll_query(30, "AWGControl:RSTate?", 2.0)
         self.expect_esr(0)
 
-    def set_waveform_properties(  # noqa: PLR0913
+    def set_waveform_properties(
         self,
         source_channel: AWGChannel,
         output_path: Optional[SignalSourceOutputPathsBase],
@@ -223,7 +202,6 @@ class AWG5200(AWG5200Mixin, AWG):
         needed_sample_rate: float,
         amplitude: float,
         offset: float,
-        burst: int,
     ) -> None:
         """Set the properties of the waveform.
 
@@ -234,8 +212,6 @@ class AWG5200(AWG5200Mixin, AWG):
             needed_sample_rate: The required sample
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
-
-            burst: The number of wavelengths to be generated.
         """
         if predefined_name not in self.query("WLISt:LIST?").split(","):
             self.load_waveform_set()
@@ -247,7 +223,6 @@ class AWG5200(AWG5200Mixin, AWG):
             needed_sample_rate=needed_sample_rate,
             amplitude=amplitude,
             offset=offset,
-            burst=burst,
         )
 
     ################################################################################################

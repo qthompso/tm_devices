@@ -1,4 +1,5 @@
 """Base TekScope scope device driver module."""
+# pylint: disable=too-many-lines
 import math
 import os
 import warnings
@@ -471,7 +472,6 @@ class TekScope(
         offset: float,
         channel: str = "all",
         output_path: Optional[SignalSourceOutputPathsBase] = None,
-        burst: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -486,7 +486,6 @@ class TekScope(
             offset: The offset of the signal to generate.
             channel: The channel number to output the signal from, or 'all'.
             output_path: The output signal path of the specified channel.
-            burst: The number of waveforms to be generated.
             termination: The impedance to set the channel to.
             duty_cycle: The duty cycle to set the signal to.
             polarity: The polarity to set the signal to.
@@ -494,18 +493,69 @@ class TekScope(
         """
         del polarity, channel, output_path  # these aren't used
         self._validate_generated_function(function)
-        if not burst:
-            # Turn off the Internal AFG
-            self.set_if_needed("AFG:OUTPUT:STATE", 0)
-
+        # Turn off the Internal AFG
+        self.set_if_needed("AFG:OUTPUT:STATE", 0)
         self.set_waveform_properties(
-            frequency, function, amplitude, offset, burst, termination, duty_cycle, symmetry
+            frequency=frequency,
+            function=function,
+            amplitude=amplitude,
+            offset=offset,
+            burst_count=0,
+            termination=termination,
+            duty_cycle=duty_cycle,
+            symmetry=symmetry,
         )
-
         # Turn on the Internal AFG
         self.set_if_needed("AFG:OUTPUT:STATE", 1)
-        if burst > 0:
-            self.write("AFG:BURST:TRIGGER")
+        # Don't check for errors as any measurement with low amplitude will generate an error
+
+    def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsIAFG,
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        burst_count: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 50.0,
+    ) -> None:
+        """Set up the Internal AFG for sending a burst of waveforms given the following parameters.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The function to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel number to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            burst_count: The number of wavelengths to be generated.
+            termination: The impedance to set the channel to.
+            duty_cycle: The duty cycle to set the signal to.
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        del polarity, channel, output_path  # these aren't used
+        self._validate_generated_function(function)
+        self.set_waveform_properties(
+            frequency=frequency,
+            function=function,
+            amplitude=amplitude,
+            offset=offset,
+            burst_count=burst_count,
+            termination=termination,
+            duty_cycle=duty_cycle,
+            symmetry=symmetry,
+        )
+        # Turn on the Internal AFG
+        self.set_if_needed("AFG:OUTPUT:STATE", 1)
+
+    def generate_burst(self) -> None:
+        """Generate a burst of waveforms by forcing trigger."""
+        self.write("AFG:BURST:TRIGGER")
         # Don't check for errors as any measurement with low amplitude will generate an error
 
     def set_waveform_properties(  # noqa: PLR0913
