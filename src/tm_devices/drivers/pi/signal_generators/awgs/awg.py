@@ -173,7 +173,6 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    # TODO: single function that calls PI commands based on wfm type
     def load_waveform(self, wfm_name: str, waveform_file_path: str, wfm_type: str) -> None:
         """Load a waveform into the memory of the AWG.
 
@@ -188,19 +187,6 @@ class AWG(SignalGenerator, ABC):
             waveform_file_path += '"'
         self.write(f'MMEMory:IMPort "{wfm_name}", {waveform_file_path}, {wfm_type}')
         self._ieee_cmds.opc()
-
-    def load_waveform_set(
-        self,
-        waveform_file: Optional[str] = None,
-        waveform: Optional[str] = None,
-    ) -> None:
-        """Load in all waveforms or a specific waveform from a waveform file.
-
-        Arguments:
-            waveform_file: The waveform file to load.
-            waveform: The specific waveform to load from the waveform file.
-        """
-        raise NotImplementedError
 
     def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
