@@ -79,7 +79,7 @@ def test_awg70k_gen_waveform(
         amplitude=1.0,
         offset=0.1,
         channel="SOURCE1",
-        output_path=awg70ka150.output_signal_path.DCA,
+        output_path=awg70ka150.OutputSignalPath.DCA,
     )
     source1_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
     assert float(source1_frequency) == 96000000
@@ -107,7 +107,7 @@ def test_awg70k_gen_waveform(
         amplitude=1.0,
         offset=0.1,
         channel="SOURCE1",
-        output_path=awg70ka150.output_signal_path.DCA,
+        output_path=awg70ka150.OutputSignalPath.DCA,
     )
     assert "MMEMORY:OPEN:SASSET" in capsys.readouterr().out
 
@@ -163,7 +163,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_path=awg7k01.output_signal_path.DIR,
+            output_path=awg7k01.OutputSignalPath.DIR,
         )
 
     # DCHB is not a valid output signal path for AWG7k's.
@@ -187,7 +187,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
         1.0,
         0.0,
         channel="SOURCE1",
-        output_path=awg7k01.output_signal_path.DCA,
+        output_path=awg7k01.OutputSignalPath.DCA,
     )
     source1_frequency = awg7k01.query("SOURCE1:FREQUENCY?")
     assert float(source1_frequency) == 96000000
@@ -238,7 +238,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
             2.0,
             2.0,
             channel="SOURCE1",
-            output_path=awg5k.output_signal_path.DIR,
+            output_path=awg5k.OutputSignalPath.DIR,
         )
 
     # Even with an output path of DIR, no error is raised because no offset is requested (0).
@@ -248,7 +248,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
         2.0,
         0,
         channel="SOURCE1",
-        output_path=awg5k.output_signal_path.DIR,
+        output_path=awg5k.OutputSignalPath.DIR,
     )
 
 

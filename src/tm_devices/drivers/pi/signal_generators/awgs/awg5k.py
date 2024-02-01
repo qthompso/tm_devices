@@ -40,7 +40,7 @@ class AWG5KChannel(AWGChannel):
             # offset cannot be set.
             offset_error = (
                 f"The offset can only be set on {self._awg.model} with an output signal path of "
-                f"{self._awg.output_signal_path.DCA.value} "
+                f"{self._awg.OutputSignalPath.DCA.value} "
                 f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)."
             )
             raise ValueError(offset_error)
@@ -51,9 +51,9 @@ class AWG5KChannel(AWGChannel):
         Args:
             value: The output signal path.
         """
-        if not value or value == self._awg.output_signal_path.DCA:
+        if not value or value == self._awg.OutputSignalPath.DCA:
             output_state = 0
-        elif value == self._awg.output_signal_path.DIR:
+        elif value == self._awg.OutputSignalPath.DIR:
             output_state = 1
         else:
             output_signal_path_error = (
@@ -92,10 +92,10 @@ class AWG5K(AWG5KMixin, AWG):
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = self.output_signal_path.DCA
+            output_path = self.OutputSignalPath.DCA
 
         amplitude_range = ParameterBounds(lower=20.0e-3, upper=4.5)
-        if output_path == self.output_signal_path.DCA:
+        if output_path == self.OutputSignalPath.DCA:
             offset_range = ParameterBounds(lower=-2.25, upper=2.25)
         else:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)

@@ -98,7 +98,7 @@ class AWGChannel(ExtendableMixin):
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
         output_path = self._awg.query(f"OUTPUT{self.num}:PATH?")
-        if output_path == self._awg.output_signal_path.DCA.value:
+        if output_path == self._awg.OutputSignalPath.DCA.value:
             self._awg.set_if_needed(
                 f"{self.name}:VOLTAGE:OFFSET",
                 value,
@@ -110,7 +110,7 @@ class AWGChannel(ExtendableMixin):
             # offset cannot be set.
             offset_error = (
                 f"The offset can only be set with an output signal path of "
-                f"{self._awg.output_signal_path.DCA.value}."
+                f"{self._awg.OutputSignalPath.DCA.value}."
             )
             raise ValueError(offset_error)
 
@@ -149,7 +149,7 @@ class AWG(SignalGenerator, ABC):
     # Properties
     ################################################################################################
     @property
-    def output_signal_path(self) -> Type[SignalSourceOutputPathsNon5200]:
+    def OutputSignalPath(self) -> Type[SignalSourceOutputPathsNon5200]:  # noqa: N802  # pylint: disable=invalid-name
         """Return the output signal path enum."""
         return SignalSourceOutputPathsNon5200
 

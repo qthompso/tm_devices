@@ -97,7 +97,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
 
     awg520050_constraints = awg520050.get_waveform_constraints(
         SignalSourceFunctionsAWG.SIN,
-        output_path=awg520050.output_signal_path.DCHV,
+        output_path=awg520050.OutputSignalPath.DCHV,
     )
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
@@ -112,7 +112,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
     )
 
     # Set output path as default.
-    default_path = awg520050.output_signal_path.DCHB
+    default_path = awg520050.OutputSignalPath.DCHB
     awg520050.source_channel["SOURCE1"].set_output_path()
     output_path = awg520050.query("OUTPUT1:PATH?")
     assert output_path == default_path.value
@@ -194,7 +194,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
             output_path=output_path,
         )
 
-        output_path = awg.output_signal_path.DCA
+        output_path = awg.OutputSignalPath.DCA
 
         sample_range = ParameterBounds(lower=min_smaple, upper=int(option[1:3]) * 1.0e9)
         check_constraints(
@@ -212,10 +212,10 @@ def test_awg70k(  # pylint: disable=too-many-locals
     # Set default output path (will try DCA and succeed).
     awg70ka150.source_channel["SOURCE1"].set_output_path()
     output_path_query = awg70ka150.query("OUTPUT1:PATH?")
-    assert output_path_query == awg70ka150.output_signal_path.DCA.value
+    assert output_path_query == awg70ka150.OutputSignalPath.DCA.value
 
     # Set output path to DIR.
-    awg70ka150.source_channel["SOURCE1"].set_output_path(awg70ka150.output_signal_path.DIR)
+    awg70ka150.source_channel["SOURCE1"].set_output_path(awg70ka150.OutputSignalPath.DIR)
     output_path_query = awg70ka150.query("OUTPUT1:PATH?")
     assert output_path_query == SignalSourceOutputPathsNon5200.DIR.value
     # Cannot set offset with output path set to DIR.
@@ -232,7 +232,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
     assert "SOURCE1:VOLTAGE:OFFSET" not in stdout
 
     # DCA as output path.
-    awg70ka150.source_channel["SOURCE1"].set_output_path(awg70ka150.output_signal_path.DCA)
+    awg70ka150.source_channel["SOURCE1"].set_output_path(awg70ka150.OutputSignalPath.DCA)
     output_path_query = awg70ka150.query("OUTPUT1:PATH?")
     assert output_path_query == SignalSourceOutputPathsNon5200.DCA.value
     awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
@@ -302,7 +302,7 @@ def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-ma
             SignalSourceFunctionsAWG.TRIANGLE,
             output_path=output_path,
         )
-        output_path = awg.output_signal_path.DIR
+        output_path = awg.OutputSignalPath.DIR
         check_constraints(
             constraints,
             sample_range,
@@ -341,7 +341,7 @@ def test_awg5k(device_manager: DeviceManager) -> None:
 
     # With DIR output path.
     constraints = awg5k.get_waveform_constraints(
-        SignalSourceFunctionsAWG.CLOCK, output_path=awg5k.output_signal_path.DIR
+        SignalSourceFunctionsAWG.CLOCK, output_path=awg5k.OutputSignalPath.DIR
     )
     sample_range = ParameterBounds(lower=10.0e6, upper=int(awg5k.model[5]) * 600.0e6 + 600.0e6)
     offset_range = ParameterBounds(lower=0, upper=0)

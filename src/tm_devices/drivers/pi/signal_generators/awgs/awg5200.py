@@ -73,8 +73,8 @@ class AWG5200Channel(AWGChannel):
             value: The output signal path.
         """
         if not value:
-            value = self._awg.output_signal_path.DCHB
-        if value not in self._awg.output_signal_path:
+            value = self._awg.OutputSignalPath.DCHB
+        if value not in self._awg.OutputSignalPath:
             output_signal_path_error = (
                 f"{value.value} is an invalid output signal path for {self._awg.model}."
             )
@@ -98,7 +98,7 @@ class AWG5200(AWG5200Mixin, AWG):
     # Properties
     ################################################################################################
     @property
-    def output_signal_path(self) -> Type[SignalSourceOutputPaths5200]:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def OutputSignalPath(self) -> Type[SignalSourceOutputPaths5200]:  # noqa: N802  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return the output signal path enum."""
         return SignalSourceOutputPaths5200
 
@@ -234,11 +234,11 @@ class AWG5200(AWG5200Mixin, AWG):
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = self.output_signal_path.DCHB
+            output_path = self.OutputSignalPath.DCHB
 
-        if "DC" in self.opt_string and output_path == self.output_signal_path.DCHB:
+        if "DC" in self.opt_string and output_path == self.OutputSignalPath.DCHB:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
-        elif output_path == self.output_signal_path.DCHV:
+        elif output_path == self.OutputSignalPath.DCHV:
             amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
         else:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=750.0e-3)
