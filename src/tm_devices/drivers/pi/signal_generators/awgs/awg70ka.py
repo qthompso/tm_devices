@@ -122,7 +122,7 @@ class AWG70KA(AWG70KAMixin, AWG):
         self,
         source_channel: AWGChannel,
         output_path: Optional[SignalSourceOutputPathsBase],
-        predefined_name: str,
+        waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
         offset: float,
@@ -132,18 +132,18 @@ class AWG70KA(AWG70KAMixin, AWG):
         Args:
             source_channel: The source channel class for the requested channel.
             output_path: The output signal path of the specified channel.
-            predefined_name: The name of the function to generate.
-            needed_sample_rate: The required sample
+            waveform_name: The name of the waveform from the waveform list to generate.
+            needed_sample_rate: The required sample rate.
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
         """
-        if predefined_name not in self.query("WLISt:LIST?", allow_empty=True):
+        if waveform_name not in self.query("WLISt:LIST?", allow_empty=True):
             self.load_waveform_set()
         source_channel = cast(AWG70KAChannel, source_channel)
         super().set_waveform_properties(
             source_channel=source_channel,
             output_path=output_path,
-            predefined_name=predefined_name,
+            waveform_name=waveform_name,
             needed_sample_rate=needed_sample_rate,
             amplitude=amplitude,
             offset=offset,
