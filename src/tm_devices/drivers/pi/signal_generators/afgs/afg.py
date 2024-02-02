@@ -87,6 +87,14 @@ class AFGChannel:
             percentage=percentage,
         )
 
+    def set_function(self, value: SignalSourceFunctionsAFG) -> None:
+        """Set the function on the source channel.
+
+        Args:
+            value: The function name.
+        """
+        self._afg.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
+
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the offset on the source channel.
 
@@ -319,7 +327,7 @@ class AFG(SignalGenerator, ABC):
         # Function
         if function == SignalSourceFunctionsAFG.RAMP:
             self.set_if_needed(f"{source_channel.name}:FUNCTION:RAMP:SYMMETRY", symmetry)
-        self.set_if_needed(f"{source_channel.name}:FUNCTION", function.value)
+        source_channel.set_function(function)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
         source_channel.set_amplitude(amplitude, tolerance=0.01)
         if burst_count > 0:

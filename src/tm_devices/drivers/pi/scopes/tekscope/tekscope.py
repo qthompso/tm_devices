@@ -141,6 +141,14 @@ class InternalAFGChannel:
             percentage=percentage,
         )
 
+    def set_function(self, value: SignalSourceFunctionsIAFG) -> None:
+        """Set the function on the internal AFG.
+
+        Args:
+            value: The function name.
+        """
+        self._tekscope.set_if_needed("AFG:FUNCTION", str(value.value))
+
     def setup_burst_waveform(self, burst_count: int) -> None:
         """Prepare the internal AFG for a burst waveform.
 
@@ -592,7 +600,7 @@ class TekScope(
         # Function
         if function == SignalSourceFunctionsIAFG.RAMP:
             self.set_if_needed("AFG:RAMP:SYMMETRY", symmetry)
-        self.set_if_needed("AFG:FUNCTION", function.value)
+        self.internal_afg.set_function(function)
         # Termination impedance
         self.set_if_needed("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
