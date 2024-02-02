@@ -34,7 +34,7 @@ class AWG5200Channel(AWGChannel):
         self._awg = cast(AWG5200, awg)
 
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the frequency on the source.
+        """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
@@ -50,7 +50,7 @@ class AWG5200Channel(AWGChannel):
         self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=tolerance, percentage=percentage)
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
+        """Set the offset on the source channel.
 
         Args:
             value: The offset value to set.
@@ -67,7 +67,7 @@ class AWG5200Channel(AWGChannel):
         )
 
     def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
-        """Set the output signal path on the source.
+        """Set the output signal path on the source channel.
 
         Args:
             value: The output signal path.

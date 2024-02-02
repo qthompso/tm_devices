@@ -54,7 +54,7 @@ class AFGChannel:
         return self._num
 
     def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the amplitude on the source.
+        """Set the amplitude on the source channel.
 
         Args:
             value: The amplitude value to set.
@@ -71,7 +71,7 @@ class AFGChannel:
         )
 
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the frequency on the source.
+        """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
@@ -88,7 +88,7 @@ class AFGChannel:
         )
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
+        """Set the offset on the source channel.
 
         Args:
             value: The offset value to set.

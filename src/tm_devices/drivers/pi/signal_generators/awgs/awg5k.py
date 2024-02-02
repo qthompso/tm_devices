@@ -19,7 +19,7 @@ class AWG5KChannel(AWGChannel):
     """AWG5K channel driver."""
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
+        """Set the offset on the source channel.
 
         Args:
             value: The offset value to set.
@@ -46,7 +46,7 @@ class AWG5KChannel(AWGChannel):
             raise ValueError(offset_error)
 
     def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
-        """Set the output signal path on the source.
+        """Set the output signal path on the source channel.
 
         Args:
             value: The output signal path.
