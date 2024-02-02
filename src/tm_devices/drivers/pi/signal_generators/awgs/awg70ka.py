@@ -20,7 +20,7 @@ class AWG70KAChannel(AWGChannel):
     """AWG70KA channel driver."""
 
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the frequency on the source.
+        """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
@@ -34,7 +34,7 @@ class AWG70KAChannel(AWGChannel):
         )
 
     def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
-        """Set the output signal path on the source.
+        """Set the output signal path on the source channel.
 
         Args:
             value: The output signal path.
