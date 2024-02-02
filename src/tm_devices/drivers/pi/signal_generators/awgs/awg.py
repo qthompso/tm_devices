@@ -122,13 +122,13 @@ class AWGChannel(ExtendableMixin):
         """
         raise NotImplementedError
 
-    def setup_waveform(self, filename: str) -> None:
-        """Prepare source channel for a waveform.
+    def load_waveform(self, waveform_name: str) -> None:
+        """Load in a waveform from the waveform list to the source channel.
 
         Args:
-            filename: The filename for the waveform to generate.
+            waveform_name: The name of the waveform to generate.
         """
-        self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{filename}"', allow_empty=True)
+        self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{waveform_name}"', allow_empty=True)
 
 
 @family_base_class
@@ -225,7 +225,7 @@ class AWG(SignalGenerator, ABC):
             self.set_waveform_properties(
                 source_channel=source_channel,
                 output_path=output_path,
-                predefined_name=predefined_name,
+                waveform_name=predefined_name,
                 needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
                 offset=offset,
@@ -273,7 +273,7 @@ class AWG(SignalGenerator, ABC):
         self,
         source_channel: AWGChannel,
         output_path: Optional[SignalSourceOutputPathsBase],
-        predefined_name: str,
+        waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
         offset: float,
@@ -283,14 +283,14 @@ class AWG(SignalGenerator, ABC):
         Args:
             source_channel: The source channel class for the requested channel.
             output_path: The output signal path of the specified channel.
-            predefined_name: The name of the function to generate.
-            needed_sample_rate: The required sample
+            waveform_name: The name of the waveform from the waveform list to generate.
+            needed_sample_rate: The required sample rate.
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
         """
         first_source_channel = self.source_channel["SOURCE1"]
         first_source_channel.set_frequency(needed_sample_rate, tolerance=2, percentage=True)
-        source_channel.setup_waveform(predefined_name)
+        source_channel.load_waveform(waveform_name)
         source_channel.set_amplitude(amplitude)
         source_channel.set_output_path(output_path)
         source_channel.set_offset(offset)
@@ -354,7 +354,7 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Private Methods
     ################################################################################################
-    def _get_predefined_filename(
+    def _get_predefined_filename(  # TODO: change filename to waveform name
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
@@ -375,7 +375,6 @@ class AWG(SignalGenerator, ABC):
             device_constraints = self.get_waveform_constraints(
                 function=function, frequency=frequency, output_path=output_path
             )
-            # TODO: Make premade_signal_rl class private constant property
             if function == SignalSourceFunctionsAWG.SIN:
                 premade_signal_rl = self._PRE_MADE_SIGNAL_RECORD_LENGTH_SIN
             elif function == SignalSourceFunctionsAWG.CLOCK:
