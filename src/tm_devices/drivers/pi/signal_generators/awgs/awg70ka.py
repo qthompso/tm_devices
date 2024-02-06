@@ -4,6 +4,7 @@ from types import MappingProxyType
 from typing import cast, Dict, Optional, Tuple
 
 from tm_devices.commands import AWG70KAMixin
+from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
     AWGChannel,
@@ -62,6 +63,7 @@ class AWG70KAChannel(AWGChannel):
             raise ValueError(output_signal_path_error)
 
 
+@family_base_class
 class AWG70KA(AWG70KAMixin, AWG):
     """AWG70KA device driver."""
 
@@ -70,7 +72,7 @@ class AWG70KA(AWG70KAMixin, AWG):
         memory_max_record_length=2000000000,
         memory_min_record_length=1,
     )
-    sample_waveform_file = (
+    sample_waveform_set_file = (
         "C:\\Program Files\\Tektronix\\AWG70000\\Samples\\AWG5k7k Predefined Waveforms.awgx"
     )
 
@@ -88,35 +90,28 @@ class AWG70KA(AWG70KAMixin, AWG):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    # TODO: 2 functions:
-    #  - load_waveform_set
-    #  - load_waveform
-    def load_waveform_set(
-        self,
-        waveform_file: Optional[str] = None,
-        waveform: Optional[str] = None,
-    ) -> None:
-        """Load in all waveforms or a specific waveform from a waveform file.
+    def load_waveform_set(self, waveform_set_file: Optional[str] = None) -> None:
+        """Load a waveform set into the memory of the AWG.
 
         Arguments:
-            waveform_file: The waveform file to load.
-            waveform: The specific waveform to load from the waveform file.
+            waveform_set_file: The waveform set file to load
+                (The default is defined in the ``sample_wave_file`` attribute).
         """
-        # TODO: Separate loading waveform file and waveform
-        if not waveform_file:
-            waveform_file = self.sample_waveform_file
-        waveform_file_type = Path(waveform_file).suffix.lower()
-        if waveform_file_type not in [".awg", ".awgx", ".mat", ".seqx"]:
-            waveform_file_type_error = (
-                f"{waveform_file_type} is an invalid waveform file extension."
-            )
-            raise ValueError(waveform_file_type_error)
-        if not waveform:
-            self.write(command=f'MMEMORY:OPEN:SASSET "{waveform_file}"', opc=True)
-        else:
-            self.write(
-                command=f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_file}", "{waveform}"', opc=True
-            )
+        self._load_waveform_or_set(waveform_set_file=waveform_set_file, waveform_name=None)
+
+    def load_waveform_from_set(
+        self,
+        waveform_set_file: Optional[str] = None,
+        waveform_name: Optional[str] = None,
+    ) -> None:
+        """Load in a specific waveform from a waveform set into the memory of the AWG.
+
+        Arguments:
+            waveform_set_file: The waveform set file to load
+                (The default is defined in the ``sample_wave_file`` attribute).
+            waveform_name: The waveform name to load from the waveform set file.
+        """
+        self._load_waveform_or_set(waveform_set_file=waveform_set_file, waveform_name=waveform_name)
 
     def set_waveform_properties(
         self,
@@ -179,3 +174,30 @@ class AWG70KA(AWG70KAMixin, AWG):
         for source_channel in self.source_channel.values():
             source_channel.set_output_path()
             source_channel.set_offset(0)
+
+    def _load_waveform_or_set(
+        self,
+        waveform_set_file: Optional[str] = None,
+        waveform_name: Optional[str] = None,
+    ) -> None:
+        """Load in a waveform set or a specific waveform from a waveform set into memory.
+
+        Arguments:
+            waveform_set_file: The waveform set file to load.
+                (The default is defined in the ``sample_wave_file`` attribute).
+            waveform_name: The waveform name to load from the waveform set file.
+        """
+        if not waveform_set_file:
+            waveform_set_file = self.sample_waveform_set_file
+        waveform_file_type = Path(waveform_set_file).suffix.lower()
+        if waveform_file_type not in [".awg", ".awgx", ".mat", ".seqx"]:
+            waveform_file_type_error = (
+                f"{waveform_file_type} is an invalid waveform file extension."
+            )
+            raise ValueError(waveform_file_type_error)
+        if not waveform_name:
+            self.write(f'MMEMORY:OPEN:SASSET "{waveform_set_file}"', opc=True)
+        else:
+            self.write(
+                f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_set_file}", "{waveform_name}"', opc=True
+            )

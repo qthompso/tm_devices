@@ -3,6 +3,7 @@ from types import MappingProxyType
 from typing import Dict, Optional, Tuple
 
 from tm_devices.commands import AWG7KMixin
+from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
     AWGChannel,
@@ -58,6 +59,7 @@ class AWG7KChannel(AWG5KChannel):
             super().set_output_path(value)
 
 
+@family_base_class
 class AWG7K(AWG7KMixin, AWG):
     """AWG7K device driver."""
 

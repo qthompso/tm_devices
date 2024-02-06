@@ -13,7 +13,6 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
     ParameterBounds,
     SourceDeviceConstants,
 )
-from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.helpers import (
     DeviceTypes,
@@ -131,7 +130,6 @@ class AWGChannel(ExtendableMixin):
         self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{waveform_name}"', allow_empty=True)
 
 
-@family_base_class
 class AWG(SignalGenerator, ABC):
     """Base AWG device driver."""
 
@@ -188,21 +186,6 @@ class AWG(SignalGenerator, ABC):
             waveform_file_path += '"'
         self.write(f'MMEMory:IMPort "{wfm_name}", {waveform_file_path}, {wfm_type}')
         self._ieee_cmds.opc()
-
-    def load_waveform_set(  # pylint: disable=no-self-use
-        self,
-        waveform_file: Optional[str] = None,
-        waveform: Optional[str] = None,
-    ) -> None:
-        """Load in all waveforms or a specific waveform from a waveform file.
-
-        Arguments:
-            waveform_file: The waveform file to load.
-            waveform: The specific waveform to load from the waveform file.
-        """
-        del waveform_file, waveform
-        error_message = "This function can only be used on AWG70k's and AWG5200's"
-        raise NotImplementedError(error_message)
 
     def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
