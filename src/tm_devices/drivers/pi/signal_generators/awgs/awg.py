@@ -13,6 +13,7 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
     ParameterBounds,
     SourceDeviceConstants,
 )
+from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.helpers import (
     DeviceTypes,
@@ -31,6 +32,7 @@ class AWGSourceDeviceConstants(SourceDeviceConstants):
     functions: Type[SignalSourceFunctionsAWG] = SignalSourceFunctionsAWG
 
 
+@family_base_class
 class AWGChannel(ExtendableMixin):
     """AWG channel driver."""
 
