@@ -118,8 +118,8 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
     assert output_path == default_path.value
 
     _ = capsys.readouterr().out  # throw away stdout
-    awg520050.load_waveform_set(
-        awg520050.sample_waveform_file,
+    awg520050.load_waveform_from_set(
+        awg520050.sample_waveform_set_file,
         "*SINE100",
     )
     sasset_waveform_cmd = (
@@ -130,10 +130,10 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
     stdout = capsys.readouterr().out
     assert sasset_waveform_cmd in stdout
 
+    # Invalid file type for waveform file.
     with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
         awg520050.load_waveform_set(
             "unittest.txt",
-            "*SINE100",
         )
 
     assert awg520025.opt_string == "25,DC"
@@ -245,8 +245,8 @@ def test_awg70k(  # pylint: disable=too-many-locals
 
     # Load specific waveform.
     _ = capsys.readouterr().out  # throw away stdout
-    awg70ka150.load_waveform_set(
-        awg70ka150.sample_waveform_file,
+    awg70ka150.load_waveform_from_set(
+        awg70ka150.sample_waveform_set_file,
         "*SINE100",
     )
     sasset_waveform_cmd = (
@@ -261,7 +261,6 @@ def test_awg70k(  # pylint: disable=too-many-locals
     with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
         awg70ka150.load_waveform_set(
             "unittest.txt",
-            "*SINE100",
         )
 
 
@@ -352,6 +351,3 @@ def test_awg5k(device_manager: DeviceManager) -> None:
         offset_range,
         length_range,
     )
-    error_message = "This function can only be used on AWG70k's and AWG5200's"
-    with pytest.raises(NotImplementedError, match=error_message):
-        awg5k.load_waveform_set("unittest")

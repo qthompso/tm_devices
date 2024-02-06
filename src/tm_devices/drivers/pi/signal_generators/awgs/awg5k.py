@@ -3,6 +3,7 @@ from types import MappingProxyType
 from typing import Dict, Optional, Tuple
 
 from tm_devices.commands import AWG5KMixin
+from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
     AWGChannel,
@@ -63,6 +64,7 @@ class AWG5KChannel(AWGChannel):
         self._awg.set_if_needed(f"AWGCONTROL:DOUTPUT{self.num}:STATE", output_state)
 
 
+@family_base_class
 class AWG5K(AWG5KMixin, AWG):
     """AWG5K device driver."""
 
