@@ -352,3 +352,6 @@ def test_awg5k(device_manager: DeviceManager) -> None:
         offset_range,
         length_range,
     )
+    error_message = "This function can only be used on AWG70k's and AWG5200's"
+    with pytest.raises(NotImplementedError, match=error_message):
+        awg5k.load_waveform_set("unittest")
