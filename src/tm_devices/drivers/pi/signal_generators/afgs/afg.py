@@ -289,7 +289,7 @@ class AFG(SignalGenerator, ABC):
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
         symmetry: float = 100.0,
     ) -> None:
-        """Set the properties of the waveform.
+        """Set the given parameters on the provided source channel.
 
         Args:
             frequency: The frequency of the waveform to generate.

@@ -576,7 +576,7 @@ class TekScope(
         duty_cycle: float = 50.0,
         symmetry: float = 50.0,
     ) -> None:
-        """Set the properties of the waveform.
+        """Set the given parameters on the internal AFG.
 
         Args:
             frequency: The frequency of the waveform to generate.
