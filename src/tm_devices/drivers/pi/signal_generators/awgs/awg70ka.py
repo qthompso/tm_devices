@@ -122,7 +122,7 @@ class AWG70KA(AWG70KAMixin, AWG):
         amplitude: float,
         offset: float,
     ) -> None:
-        """Set the properties of the waveform.
+        """Set the given parameters on the provided source channel.
 
         Args:
             source_channel: The source channel class for the requested channel.
