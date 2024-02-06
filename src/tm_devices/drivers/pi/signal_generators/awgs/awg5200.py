@@ -3,7 +3,7 @@ import time
 
 from pathlib import Path
 from types import MappingProxyType
-from typing import cast, Dict, Literal, Optional, Tuple, Type
+from typing import cast, Dict, Literal, Optional, Tuple
 
 from tm_devices.commands import AWG5200Mixin
 from tm_devices.drivers.device import family_base_class
@@ -87,6 +87,8 @@ class AWG5200Channel(AWGChannel):
 class AWG5200(AWG5200Mixin, AWG):
     """AWG5200 device driver."""
 
+    OutputSignalPath = SignalSourceOutputPaths5200
+
     _DEVICE_CONSTANTS = AWGSourceDeviceConstants(
         memory_page_size=1,
         memory_max_record_length=16200000,
@@ -99,11 +101,6 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Properties
     ################################################################################################
-    @property
-    def OutputSignalPath(self) -> Type[SignalSourceOutputPaths5200]:  # noqa: N802  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Return the output signal path enum."""
-        return SignalSourceOutputPaths5200
-
     @ReadOnlyCachedProperty
     def source_channel(self) -> MappingProxyType[str, AWGChannel]:
         """Mapping of channel names to AWGChannel objects."""

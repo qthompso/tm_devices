@@ -133,6 +133,8 @@ class AWGChannel(ExtendableMixin):
 class AWG(SignalGenerator, ABC):
     """Base AWG device driver."""
 
+    OutputSignalPath = SignalSourceOutputPathsNon5200
+
     _DEVICE_TYPE = DeviceTypes.AWG.value
     _PRE_MADE_SIGNAL_RECORD_LENGTH_SIN: ClassVar[List[int]] = [3600, 1000, 960, 360, 100, 36, 10]
     _PRE_MADE_SIGNAL_RECORD_LENGTH_CLOCK: ClassVar[List[int]] = [960]
@@ -146,11 +148,6 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
-    @property
-    def OutputSignalPath(self) -> Type[SignalSourceOutputPathsNon5200]:  # noqa: N802  # pylint: disable=invalid-name
-        """Return the output signal path enum."""
-        return SignalSourceOutputPathsNon5200
-
     @ReadOnlyCachedProperty
     def source_channel(self) -> MappingProxyType[str, AWGChannel]:  # pragma: no cover
         """Mapping of channel names to AWGChannel objects."""
