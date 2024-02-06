@@ -114,7 +114,7 @@ class AWGChannel(ExtendableMixin):
             raise ValueError(offset_error)
 
     def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
-        """TODO: better? - Set the output signal path on the source channel.
+        """Set the output signal path on the source channel.
 
         Args:
             value: The output signal path.
@@ -316,7 +316,7 @@ class AWG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
     ) -> None:
-        """Set the properties of the waveform.
+        """Set the given parameters on the provided source channel.
 
         Args:
             source_channel: The source channel class for the requested channel.

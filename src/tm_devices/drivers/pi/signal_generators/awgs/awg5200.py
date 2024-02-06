@@ -242,7 +242,7 @@ class AWG5200(AWG5200Mixin, AWG):
         amplitude: float,
         offset: float,
     ) -> None:
-        """Set the properties of the waveform.
+        """Set the given parameters on the provided source channel.
 
         Args:
             source_channel: The source channel class for the requested channel.
