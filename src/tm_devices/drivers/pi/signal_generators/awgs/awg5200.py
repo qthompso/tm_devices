@@ -147,9 +147,9 @@ class AWG5200(AWG5200Mixin, AWG):
         offset: float,
         channel: str = "all",
         output_path: Optional[SignalSourceOutputPathsBase] = None,
-        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
-        duty_cycle: float = 50.0,  # noqa: ARG002
-        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
         symmetry: float = 50.0,
     ) -> None:
         """Generate a signal given the following parameters.
@@ -169,6 +169,46 @@ class AWG5200(AWG5200Mixin, AWG):
         predefined_name, needed_sample_rate = self._get_predefined_filename(
             frequency, function, output_path, symmetry
         )
+        self.generate_waveform(
+            needed_sample_rate=needed_sample_rate,
+            waveform_name=predefined_name,
+            amplitude=amplitude,
+            offset=offset,
+            channel=channel,
+            output_path=output_path,
+            termination=termination,
+            duty_cycle=duty_cycle,
+            polarity=polarity,
+            symmetry=symmetry,
+        )
+
+    def generate_waveform(  # noqa: PLR0913
+        self,
+        needed_sample_rate: float,
+        waveform_name: str,
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
+        duty_cycle: float = 50.0,  # noqa: ARG002
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
+        symmetry: float = 50.0,  # noqa: ARG002
+    ) -> None:
+        """Generate a waveform given the following parameters.
+
+        Args:
+            needed_sample_rate: The required sample rate.
+            waveform_name: The name of the waveform to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
         self.ieee_cmds.opc()
         self.ieee_cmds.cls()
         for channel_name in self._validate_channels(channel):
@@ -177,7 +217,7 @@ class AWG5200(AWG5200Mixin, AWG):
             self.set_waveform_properties(
                 source_channel=source_channel,
                 output_path=output_path,
-                waveform_name=predefined_name,
+                waveform_name=waveform_name,
                 needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
                 offset=offset,
