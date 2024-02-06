@@ -189,6 +189,21 @@ class AWG(SignalGenerator, ABC):
         self.write(f'MMEMory:IMPort "{wfm_name}", {waveform_file_path}, {wfm_type}')
         self._ieee_cmds.opc()
 
+    def load_waveform_set(  # pylint: disable=no-self-use
+        self,
+        waveform_file: Optional[str] = None,
+        waveform: Optional[str] = None,
+    ) -> None:
+        """Load in all waveforms or a specific waveform from a waveform file.
+
+        Arguments:
+            waveform_file: The waveform file to load.
+            waveform: The specific waveform to load from the waveform file.
+        """
+        del waveform_file, waveform
+        error_message = "This function can only be used on AWG70k's and AWG5200's"
+        raise NotImplementedError(error_message)
+
     def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
