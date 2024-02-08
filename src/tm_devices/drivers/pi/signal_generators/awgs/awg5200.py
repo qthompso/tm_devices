@@ -15,6 +15,7 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
 )
 from tm_devices.helpers import (
     ReadOnlyCachedProperty,
+    SASSetWaveformFileTypes,
     SignalSourceFunctionsAWG,
     SignalSourceOutputPaths5200,
     SignalSourceOutputPathsBase,
@@ -303,7 +304,7 @@ class AWG5200(AWG5200Mixin, AWG):
         if not waveform_set_file:
             waveform_set_file = self.sample_waveform_set_file
         waveform_file_type = Path(waveform_set_file).suffix.lower()
-        if waveform_file_type not in [".awg", ".awgx", ".mat", ".seqx"]:
+        if waveform_file_type not in SASSetWaveformFileTypes:
             waveform_file_type_error = (
                 f"{waveform_file_type} is an invalid waveform file extension."
             )
@@ -314,3 +315,4 @@ class AWG5200(AWG5200Mixin, AWG):
             self.write(
                 f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_set_file}", "{waveform_name}"', opc=True
             )
+        self.expect_esr(0)
