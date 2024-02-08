@@ -51,7 +51,7 @@ def test_tekscope(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     del scope.hostname
 
     # Assert 5 series device was added and aliased properly (USB)
-    assert scope.hostname == "MSO56"  # pyright: ignore[reportUnknownMemberType]
+    assert scope.hostname == "MSO56"
     assert id(device_manager.get_scope(number_or_alias="mso56")) == id(scope)
     assert id(device_manager.get_scope(number_or_alias=scope.device_number)) == id(scope)
     assert scope.all_channel_names_list == ("CH1", "CH2", "CH3", "CH4", "CH5", "CH6")
@@ -131,7 +131,7 @@ def test_tekscope(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     scope.generate_function(
         10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0, termination="HIGHZ"
     )
-    scope.generate_function(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst=1)
+    scope.setup_burst(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst_count=1)
     with pytest.raises(
         TypeError,
         match="Generate Waveform does not accept functions as non Enums. "
@@ -139,7 +139,7 @@ def test_tekscope(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     ):
         scope.generate_function(
             25e6,
-            scope.source_device_constants.functions.PULSE.value,  # type: ignore
+            scope.source_device_constants.functions.PULSE.value,  # pyright: ignore[reportArgumentType]
             1.0,
             0.0,
             "all",
@@ -439,7 +439,7 @@ def test_long_device_name(device_manager: DeviceManager) -> None:
         assert scope.all_channel_names_list == ()
 
         # noinspection PyUnresolvedReferences
-        assert scope.custom_mso5_method("test-value") == (  # type: ignore
+        assert scope.custom_mso5_method("test-value") == (  # pyright: ignore[reportUnknownMemberType,reportAttributeAccessIssue]
             "This is a custom method for the LONGNAMEINSTRUMENT device. value='test-value'"
         )
 

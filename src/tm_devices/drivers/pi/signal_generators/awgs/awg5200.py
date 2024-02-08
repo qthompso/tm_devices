@@ -1,9 +1,9 @@
 """AWG5200 device driver module."""
 import time
 
-from functools import cached_property
+from pathlib import Path
 from types import MappingProxyType
-from typing import Literal, Optional, Tuple
+from typing import cast, Dict, Literal, Optional, Tuple, Type
 
 from tm_devices.commands import AWG5200Mixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
@@ -12,14 +12,29 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
-from tm_devices.helpers import SignalSourceFunctionsAWG
+from tm_devices.helpers import (
+    ReadOnlyCachedProperty,
+    SignalSourceFunctionsAWG,
+    SignalSourceOutputPaths5200,
+    SignalSourceOutputPathsBase,
+)
 
 
 class AWG5200Channel(AWGChannel):
     """AWG5200 channel driver."""
 
+    def __init__(self, awg: "AWG", channel_name: str) -> None:
+        """Create an AWG5200 channel object.
+
+        Args:
+            awg: An AWG5200 object.
+            channel_name: The channel name for the AWG channel.
+        """
+        super().__init__(awg, channel_name)
+        self._awg = cast(AWG5200, awg)
+
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the frequency on the source.
+        """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
@@ -30,23 +45,50 @@ class AWG5200Channel(AWGChannel):
         """
         # This is an overlapping command for the AWG5200, and will overlap the
         # next command and/or overlap the previous if it is still running.
-        self._pi_device.set_if_needed(
-            "CLOCK:SRATE",
-            round(value, -1),
-            tolerance=tolerance,
-            percentage=percentage,
-        )
+        self._awg.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
         # there is a known issue where setting other parameters while clock rate is being set
         # may lock the AWG5200 software.
 
         # wait a fraction of a second for overlapping command CLOCK:SRATE to proceed
         time.sleep(0.1)
         # wait till overlapping command finishes
-        self._pi_device.ieee_cmds.opc()
+        self._awg.ieee_cmds.opc()
         # clear queue
-        self._pi_device.ieee_cmds.cls()
+        self._awg.ieee_cmds.cls()
         # ensure that the clock rate was actually set
-        self._pi_device.poll_query(30, "CLOCK:SRATE?", value, tolerance=10, percentage=percentage)
+        self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=tolerance, percentage=percentage)
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source channel.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._awg.set_if_needed(
+            f"{self.name}:VOLTAGE:OFFSET",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+        """Set the output signal path on the source channel.
+
+        Args:
+            value: The output signal path.
+        """
+        if not value:
+            value = self._awg.OutputSignalPath.DCHB
+        if value not in self._awg.OutputSignalPath:
+            output_signal_path_error = (
+                f"{value.value} is an invalid output signal path for {self._awg.model}."
+            )
+            raise ValueError(output_signal_path_error)
+        self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
 
 
 class AWG5200(AWG5200Mixin, AWG):
@@ -57,14 +99,22 @@ class AWG5200(AWG5200Mixin, AWG):
         memory_max_record_length=16200000,
         memory_min_record_length=1,
     )
+    sample_waveform_file = (
+        "C:\\Program Files\\Tektronix\\AWG5200\\Samples\\AWG5k7k Predefined Waveforms.awgx"
+    )
 
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
+    @property
+    def OutputSignalPath(self) -> Type[SignalSourceOutputPaths5200]:  # noqa: N802  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Return the output signal path enum."""
+        return SignalSourceOutputPaths5200
+
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
         """Mapping of channel names to AWGChannel objects."""
-        channel_map = {}
+        channel_map: Dict[str, AWG5200Channel] = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWG5200Channel(self, channel_name)
         return MappingProxyType(channel_map)
@@ -72,6 +122,32 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Public Methods
     ################################################################################################
+    def load_waveform_set(
+        self,
+        waveform_file: Optional[str] = None,
+        waveform: Optional[str] = None,
+    ) -> None:
+        """Load in all waveforms or a specific waveform from a waveform file.
+
+        Arguments:
+            waveform_file: The waveform file to load.
+            waveform: The specific waveform to load from the waveform file.
+        """
+        if not waveform_file:
+            waveform_file = self.sample_waveform_file
+        waveform_file_type = Path(waveform_file).suffix.lower()
+        if waveform_file_type not in [".awg", ".awgx", ".mat", ".seqx"]:
+            waveform_file_type_error = (
+                f"{waveform_file_type} is an invalid waveform file extension."
+            )
+            raise ValueError(waveform_file_type_error)
+        if not waveform:
+            self.write(command=f'MMEMORY:OPEN:SASSET "{waveform_file}"', opc=True)
+        else:
+            self.write(
+                command=f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_file}", "{waveform}"', opc=True
+            )
+
     def generate_function(  # noqa: PLR0913
         self,
         frequency: float,
@@ -79,10 +155,10 @@ class AWG5200(AWG5200Mixin, AWG):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        burst: int = 0,
-        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
-        duty_cycle: float = 50.0,  # noqa: ARG002
-        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
         symmetry: float = 50.0,
     ) -> None:
         """Generate a signal given the following parameters.
@@ -93,72 +169,134 @@ class AWG5200(AWG5200Mixin, AWG):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            burst: The number of wavelengths to be generated.
+            output_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_filename(
-            frequency, function, symmetry
+            frequency, function, output_path, symmetry
         )
+        self.generate_waveform(
+            needed_sample_rate=needed_sample_rate,
+            waveform_name=predefined_name,
+            amplitude=amplitude,
+            offset=offset,
+            channel=channel,
+            output_path=output_path,
+            termination=termination,
+            duty_cycle=duty_cycle,
+            polarity=polarity,
+            symmetry=symmetry,
+        )
+
+    def generate_waveform(  # noqa: PLR0913
+        self,
+        needed_sample_rate: float,
+        waveform_name: str,
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
+        duty_cycle: float = 50.0,  # noqa: ARG002
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
+        symmetry: float = 50.0,  # noqa: ARG002
+    ) -> None:
+        """Generate a waveform given the following parameters.
+
+        Args:
+            needed_sample_rate: The required sample rate.
+            waveform_name: The name of the waveform to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
         # wait for operation complete from PI commands before setting up attributes
         # an overlapping command being set while frequency is being set may lock up the source
         self.ieee_cmds.opc()
         # clear queue
         self.ieee_cmds.cls()
         for channel_name in self._validate_channels(channel):
-            source_channel = self.source_channel[channel_name]
+            source_channel = cast(AWG5200Channel, self.source_channel[channel_name])
             # turn channel off
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-            # Settings the frequency is done
-            self._setup_burst_waveform(source_channel.num, predefined_name, burst)
-            # setting amplitude is a blocking command
-            source_channel.set_amplitude(amplitude)
-            # setting offset is a blocking command
-            source_channel.set_offset(offset)
-
-            # wait a fraction of a second for blocking command CLOCK:SRATE to proceed
-            # this fixes the channel from locking up the awg5200 too many blocking commands in a
-            # row may block the next query if the queue is too long
-            time.sleep(0.1)
-            # wait until the blocking command is complete
+            self.set_waveform_properties(
+                source_channel=source_channel,
+                output_path=output_path,
+                waveform_name=waveform_name,
+                needed_sample_rate=needed_sample_rate,
+                amplitude=amplitude,
+                offset=offset,
+            )
+            self.ieee_cmds.wai()
             self.ieee_cmds.opc()
-            # clear queue
             self.ieee_cmds.cls()
-            # turn channel on
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
-        # ensure previous command is finished
+            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "1")
         self.ieee_cmds.opc()
         # this is an overlapping command
         self.write("AWGCONTROL:RUN")
         # wait a fraction of a second for overlapping command AWGCONTROL:RUN to proceed
         time.sleep(0.1)
-        # ensure previous command is finished
         self.ieee_cmds.opc()
-        # clear queue
         self.ieee_cmds.cls()
         # ensure that the control run was actually set
         self.poll_query(30, "AWGControl:RSTate?", 2.0)
         # we expect no errors
         self.expect_esr(0)
 
+    def set_waveform_properties(
+        self,
+        source_channel: AWGChannel,
+        output_path: Optional[SignalSourceOutputPathsBase],
+        waveform_name: str,
+        needed_sample_rate: float,
+        amplitude: float,
+        offset: float,
+    ) -> None:
+        """Set the properties of the waveform.
+
+        Args:
+            source_channel: The source channel class for the requested channel.
+            output_path: The output signal path of the specified channel.
+            waveform_name: The name of the waveform from the waveform list to generate.
+            needed_sample_rate: The required sample rate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+        """
+        if waveform_name not in self.query("WLISt:LIST?").split(","):
+            self.load_waveform_set()
+        source_channel = cast(AWG5200Channel, source_channel)
+        super().set_waveform_properties(
+            source_channel=source_channel,
+            output_path=output_path,
+            waveform_name=waveform_name,
+            needed_sample_rate=needed_sample_rate,
+            amplitude=amplitude,
+            offset=offset,
+        )
+
     ################################################################################################
     # Private Methods
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[str],
+        output_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = "DCHB"
+            output_path = self.OutputSignalPath.DCHB
         # Direct Current High Bandwidth with the DC options has 1.5 V amplitude
-        if "DC" in self.opt_string and output_path == "DCHB":
+        if "DC" in self.opt_string and output_path == self.OutputSignalPath.DCHB:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
         # Direct Current High Voltage path connected has an even higher amplitude, 5 V
-        elif output_path == "DCHV":
+        elif output_path == self.OutputSignalPath.DCHV:
             amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
         # Else, the upper bound is 750 mV
         else:
@@ -171,16 +309,3 @@ class AWG5200(AWG5200Mixin, AWG):
         sample_rate_range = ParameterBounds(lower=300.0, upper=max_sample_rate * 100.0e6)
 
         return amplitude_range, offset_range, sample_rate_range
-
-    def _setup_burst_waveform(self, channel_num: int, filename: str, burst: int) -> None:
-        """Prepare device for burst waveform.
-
-        Args:
-            channel_num: The channel number to output the signal from.
-            filename: The filename for the burst waveform to generate.
-            burst: The number of wavelengths to be generated.
-        """
-        if not burst:
-            # handle the wave info
-            # this is a sequential command
-            self.set_and_check(f"SOURCE{channel_num}:WAVEFORM", f'"{filename}"')

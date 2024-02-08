@@ -20,11 +20,53 @@ Things to be included in the next release go here.
 
 ### Added
 
+- Added a step during a device reboot that will reset all the cached properties in the event that one of them changed.
+- Added command API support for MSO5K, DPO5K, and DPO7K models.
+- Added a custom, read-only implementation of the [`cached_property`](https://docs.python.org/3/library/functools.html#functools.cached_property) decorator.
+
+### Changed
+
+- Switched to ruff's formatter instead of black's formatter for python code.
+- Updated the version of `python-semantic-release` that is used to avoid needing to store a copy of the previous changelog in the repo.
+- Pinned the linters (ruff, pyright, pylint, docformatter) to specific versions to reduce failures when updates are released that add new rules or break existing rules.
+
+______________________________________________________________________
+
+## v1.1.0 (2023-12-07)
+
+### Merged Pull Requests
+
+- feat: Added support for MSO4B device ([#115](https://github.com/tektronix/tm_devices/issues/115))
+- gh-actions(deps): Bump the gh-actions-dependencies group with 1 update ([#112](https://github.com/tektronix/tm_devices/issues/112))
+- test: Update tests to try to eliminate false failures when running tests on macOS. ([#114](https://github.com/tektronix/tm_devices/issues/114))
+- ci: Add the admin team as reviewers to all Pull Requests. ([#113](https://github.com/tektronix/tm_devices/issues/113))
+- Update config docs and release workflow ([#111](https://github.com/tektronix/tm_devices/issues/111))
+
+### Added
+
+- Added support for MSO4B device.
+
+______________________________________________________________________
+
+## v1.0.1 (2023-12-01)
+
+### Merged Pull Requests
+
+- Fix import error on mac with system integrity protection ([#109](https://github.com/tektronix/tm_devices/issues/109))
+- feat(rest_api_device): Enable sending raw data for restful api devices. ([#107](https://github.com/tektronix/tm_devices/issues/107))
+- build: Update package classifiers. ([#106](https://github.com/tektronix/tm_devices/issues/106))
+
+### Added
+
 - Added an option to send raw data for RESTful API devices
 
 ### Changed
 
 - Updated the package classifiers for PyPI
+
+### Fixed
+
+- Fixed a crash observed on macOS when importing `tm_devices`, issue [#108](https://github.com/tektronix/tm_devices/issues/108)
 
 ______________________________________________________________________
 

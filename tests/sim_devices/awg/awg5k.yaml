@@ -16,6 +16,8 @@ devices:
       - q: '*IDN?'
         r: TEKTRONIX,AWG5012,SERIAL1,FV:6.3.0080.0
       - q: '*OPC'
+      - q: '*OPT?'
+        r: '01'
       - q: '*OPC?'
         r: '1'
       - q: '*RST'
@@ -94,38 +96,6 @@ devices:
           min: -2.25
           max: 2.25
           type: float
-      rmode:
-        default: ''
-        getter:
-          q: AWGCONTROL:RMODE?
-          r: '{:s}'
-        setter:
-          q: AWGCONTROL:RMODE {:s}
-      sequence_length:
-        default: 0
-        getter:
-          q: SEQUENCE:LENGTH?
-          r: '{:d}'
-        setter:
-          q: SEQUENCE:LENGTH {:d}
-        specs:
-          type: int
-      element1_waveform1:
-        default: ''
-        getter:
-          q: SEQUENCE:ELEMENT1:WAVEFORM1?
-          r: '{:s}'
-        setter:
-          q: SEQUENCE:ELEMENT1:WAVEFORM1 {:s}
-      element1_loop_count:
-        default: 0
-        getter:
-          q: SEQUENCE:ELEMENT1:LOOP:COUNT?
-          r: '{:d}'
-        setter:
-          q: SEQUENCE:ELEMENT1:LOOP:COUNT {:d}
-        spec:
-          type: int
       memory_import:
         default: ''
         getter:
@@ -133,3 +103,13 @@ devices:
           r: '{:s}'
         setter:
           q: MMEMory:IMPort {:s}
+      awgcontrol_doutput_state:
+        default: 0
+        getter:
+          q: AWGCONTROL:DOUTPUT1:STATE?
+          r: '{:d}'
+        setter:
+          q: AWGCONTROL:DOUTPUT1:STATE {:d}
+        specs:
+          valid: [0, 1]
+          type: int

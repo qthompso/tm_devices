@@ -88,7 +88,7 @@ def prep_jinja_env(jinja_env: JinjaEnvironment) -> None:
     Args:
         jinja_env: The Jinja environment.
     """
-    jinja_env.tests["contains"] = item_in_sequence  # pyright: ignore
+    jinja_env.tests["contains"] = item_in_sequence  # pyright: ignore[reportArgumentType,reportUnknownMemberType]
 
 
 # FUTURE: # autoapi_prepare_jinja_env = prep_jinja_env
@@ -211,8 +211,7 @@ def skip_member(
     if (
         what == "module"  # pylint: disable=too-many-boolean-expressions
         or (
-            what == "package"
-            and obj.short_name not in _package_set  # pyright: ignore [reportUnknownMemberType]
+            what == "package" and obj.short_name not in _package_set  # pyright: ignore [reportUnknownMemberType]
         )
         or f"{os.path.sep}commands{os.path.sep}" in obj.pathname
         or obj.pathname.endswith(f"{os.path.sep}commands")
@@ -229,4 +228,4 @@ def setup(sphinx: Sphinx) -> None:
     Args:
         sphinx: The sphinx object.
     """
-    sphinx.connect("autoapi-skip-member", skip_member)  # pyright: ignore
+    sphinx.connect("autoapi-skip-member", skip_member)  # pyright: ignore[reportUnknownMemberType]

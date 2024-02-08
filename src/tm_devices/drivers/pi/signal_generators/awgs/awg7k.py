@@ -1,13 +1,61 @@
 """AWG7K device driver module."""
-from typing import Literal, Optional, Tuple
+from types import MappingProxyType
+from typing import Dict, Optional, Tuple
 
 from tm_devices.commands import AWG7KMixin
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
+    AWGChannel,
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
-from tm_devices.helpers import SignalSourceFunctionsAWG
+from tm_devices.drivers.pi.signal_generators.awgs.awg5k import AWG5KChannel
+from tm_devices.helpers import (
+    ReadOnlyCachedProperty,
+    SignalSourceOutputPathsBase,
+)
+
+
+class AWG7KChannel(AWG5KChannel):
+    """AWG7K channel driver."""
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source channel.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        output_path = float(self._awg.query(f"AWGCONTROL:DOUTPUT{self.num}:STATE?"))
+        if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string) and not output_path:
+            self._awg.set_if_needed(
+                f"{self.name}:VOLTAGE:OFFSET",
+                value,
+                tolerance=tolerance,
+                percentage=percentage,
+            )
+        elif value:
+            # No error is raised when 0 is the offset value and the output path is in a state where
+            # offset cannot be set.
+            offset_error = (
+                f"The offset can only be set on {self._awg.model} without an 02 or 06 "
+                "option and with an output signal path of "
+                f"{self._awg.OutputSignalPath.DCA.value} "
+                f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)."
+            )
+            raise ValueError(offset_error)
+
+    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+        """Set the output signal path on the source channel.
+
+        Args:
+            value: The output signal path.
+        """
+        if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string):
+            super().set_output_path(value)
 
 
 class AWG7K(AWG7KMixin, AWG):
@@ -20,61 +68,26 @@ class AWG7K(AWG7KMixin, AWG):
     )
 
     ################################################################################################
-    # Public Methods
+    # Properties
     ################################################################################################
-    def generate_function(  # noqa: PLR0913  # pylint: disable=too-many-locals
-        self,
-        frequency: float,
-        function: SignalSourceFunctionsAWG,
-        amplitude: float,
-        offset: float,
-        channel: str = "all",
-        burst: int = 0,
-        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
-        duty_cycle: float = 50.0,  # noqa: ARG002
-        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
-        symmetry: float = 50.0,
-    ) -> None:
-        """Generate a signal given the following parameters.
-
-        Args:
-            frequency: The frequency of the waveform to generate.
-            function: The waveform shape to generate.
-            amplitude: The amplitude of the signal to generate.
-            offset: The offset of the signal to generate.
-            channel: The channel name to output the signal from, or 'all'.
-            burst: The number of wavelengths to be generated.
-            termination: The impedance this device's ``channel`` expects to see at the received end.
-            duty_cycle: The duty cycle percentage within [10.0, 90.0].
-            polarity: The polarity to set the signal to.
-            symmetry: The symmetry to set the signal to, only applicable to certain functions.
-        """
-        predefined_name, needed_sample_rate = self._get_predefined_filename(
-            frequency, function, symmetry
-        )
-        for channel_name in self._validate_channels(channel):
-            source_channel = self.source_channel[channel_name]
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            first_source_channel = self.source_channel["SOURCE1"]
-            first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-            self._setup_burst_waveform(source_channel.num, predefined_name, burst)
-            source_channel.set_amplitude(amplitude)
-            if not ("02" in self.opt_string or "06" in self.opt_string):
-                source_channel.set_offset(offset)
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
-        self.write("AWGCONTROL:RUN")
-        self.expect_esr(0)
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
+        """Mapping of channel names to AWGChannel objects."""
+        channel_map: Dict[str, AWG7KChannel] = {}
+        for channel_name in self.all_channel_names_list:
+            channel_map[channel_name] = AWG7KChannel(self, channel_name)
+        return MappingProxyType(channel_map)
 
     ################################################################################################
     # Private Methods
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[str],
+        output_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_path:
-            output_path = "0"
+            output_path = self.OutputSignalPath.DCA
 
         # if we are using the high bandwidth options
         if "02" in self.opt_string or "06" in self.opt_string:
@@ -83,7 +96,7 @@ class AWG7K(AWG7KMixin, AWG):
         else:
             amplitude_range = ParameterBounds(lower=50e-3, upper=2.0)
             # if the DIR path is disconnected
-            if output_path == "0":
+            if output_path == self.OutputSignalPath.DCA:
                 offset_range = ParameterBounds(lower=-0.5, upper=0.5)
             # if the DIR path is connected
             else:

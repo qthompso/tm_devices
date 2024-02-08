@@ -1,22 +1,28 @@
 """Base AWG device driver module."""
-import os
 import struct
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from functools import cached_property
+from pathlib import Path
 from types import MappingProxyType
-from typing import Dict, Literal, Optional, Tuple, Type
+from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Type
 
+from tm_devices.driver_mixins.class_extension_mixin import ExtendableMixin
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
     ParameterBounds,
     SourceDeviceConstants,
 )
 from tm_devices.drivers.device import family_base_class
-from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
-from tm_devices.helpers import DeviceTypes, LoadImpedanceAFG, SignalSourceFunctionsAWG
+from tm_devices.helpers import (
+    DeviceTypes,
+    LoadImpedanceAFG,
+    ReadOnlyCachedProperty,
+    SignalSourceFunctionsAWG,
+    SignalSourceOutputPathsBase,
+    SignalSourceOutputPathsNon5200,
+)
 
 
 @dataclass(frozen=True)
@@ -26,67 +32,19 @@ class AWGSourceDeviceConstants(SourceDeviceConstants):
     functions: Type[SignalSourceFunctionsAWG] = SignalSourceFunctionsAWG
 
 
-class AWGChannel:
+class AWGChannel(ExtendableMixin):
     """AWG channel driver."""
 
-    def __init__(self, pi_device: PIDevice, channel_name: str) -> None:
+    def __init__(self, awg: "AWG", channel_name: str) -> None:
         """Create an AWG channel object.
 
         Args:
-            pi_device: A PI device object.
+            awg: An AWG object.
             channel_name: The channel name for the AWG channel.
         """
         self._name = channel_name
         self._num = int("".join(filter(str.isdigit, channel_name)))
-        self._pi_device = pi_device
-
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
-
-        Args:
-            value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            f"{self.name}:VOLTAGE:OFFSET",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
-
-    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the amplitude on the source.
-
-        Args:
-            value: The amplitude value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            f"{self.name}:VOLTAGE:AMPLITUDE",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
-
-    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the frequency on the source.
-
-        Args:
-            value: The frequency value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage
-        )
+        self._awg = awg
 
     @property
     def name(self) -> str:
@@ -98,12 +56,90 @@ class AWGChannel:
         """Return the channel number."""
         return self._num
 
+    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the amplitude on the source channel.
+
+        Args:
+            value: The amplitude value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._awg.set_if_needed(
+            f"{self.name}:VOLTAGE:AMPLITUDE",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the frequency on the source channel.
+
+        Args:
+            value: The frequency value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._awg.set_if_needed(
+            f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage
+        )
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the source channel.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        output_path = self._awg.query(f"OUTPUT{self.num}:PATH?")
+        if output_path == self._awg.OutputSignalPath.DCA.value:
+            self._awg.set_if_needed(
+                f"{self.name}:VOLTAGE:OFFSET",
+                value,
+                tolerance=tolerance,
+                percentage=percentage,
+            )
+        elif value:
+            # No error is raised when 0 is the offset value and the output path is in a state where
+            # offset cannot be set.
+            offset_error = (
+                f"The offset can only be set with an output signal path of "
+                f"{self._awg.OutputSignalPath.DCA.value}."
+            )
+            raise ValueError(offset_error)
+
+    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+        """TODO: better? - Set the output signal path on the source channel.
+
+        Args:
+            value: The output signal path.
+        """
+        raise NotImplementedError
+
+    def load_waveform(self, waveform_name: str) -> None:
+        """Load in a waveform from the waveform list to the source channel.
+
+        Args:
+            waveform_name: The name of the waveform to generate.
+        """
+        self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{waveform_name}"', allow_empty=True)
+
 
 @family_base_class
 class AWG(SignalGenerator, ABC):
     """Base AWG device driver."""
 
     _DEVICE_TYPE = DeviceTypes.AWG.value
+    _PRE_MADE_SIGNAL_RECORD_LENGTH_SIN: ClassVar[List[int]] = [3600, 1000, 960, 360, 100, 36, 10]
+    _PRE_MADE_SIGNAL_RECORD_LENGTH_CLOCK: ClassVar[List[int]] = [960]
+    # all waveforms have sample sizes of 10, 100 and 1000
+    _PRE_MADE_SIGNAL_RECORD_LENGTH_DEFAULT: ClassVar[List[int]] = [1000, 960, 100, 10]
 
     ################################################################################################
     # Magic Methods
@@ -112,10 +148,15 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
+    @property
+    def OutputSignalPath(self) -> Type[SignalSourceOutputPathsNon5200]:  # noqa: N802  # pylint: disable=invalid-name
+        """Return the output signal path enum."""
+        return SignalSourceOutputPathsNon5200
+
+    @ReadOnlyCachedProperty
+    def source_channel(self) -> MappingProxyType[str, AWGChannel]:  # pragma: no cover
         """Mapping of channel names to AWGChannel objects."""
-        channel_map = {}
+        channel_map: Dict[str, AWGChannel] = {}
         for channel_name in self.all_channel_names_list:
             channel_map[channel_name] = AWGChannel(self, channel_name)
         return MappingProxyType(channel_map)
@@ -123,9 +164,9 @@ class AWG(SignalGenerator, ABC):
     @property
     def source_device_constants(self) -> AWGSourceDeviceConstants:
         """Return the device constants."""
-        return self._DEVICE_CONSTANTS  # type: ignore
+        return self._DEVICE_CONSTANTS  # type: ignore[attr-defined]
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
         return int(self.query("AWGControl:CONFigure:CNUMber?", verbose=False))
@@ -148,6 +189,21 @@ class AWG(SignalGenerator, ABC):
         self.write(f'MMEMory:IMPort "{wfm_name}", {waveform_file_path}, {wfm_type}')
         self._ieee_cmds.opc()
 
+    def load_waveform_set(  # pylint: disable=no-self-use
+        self,
+        waveform_file: Optional[str] = None,
+        waveform: Optional[str] = None,
+    ) -> None:
+        """Load in all waveforms or a specific waveform from a waveform file.
+
+        Arguments:
+            waveform_file: The waveform file to load.
+            waveform: The specific waveform to load from the waveform file.
+        """
+        del waveform_file, waveform
+        error_message = "This function can only be used on AWG70k's and AWG5200's"
+        raise NotImplementedError(error_message)
+
     def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
@@ -155,10 +211,10 @@ class AWG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        burst: int = 0,
-        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
-        duty_cycle: float = 50.0,  # noqa: ARG002
-        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
         symmetry: float = 50.0,
     ) -> None:
         """Generate a signal given the following parameters.
@@ -169,49 +225,129 @@ class AWG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            burst: The number of wavelengths to be generated.
+            output_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_filename(
-            frequency, function, symmetry
+            frequency, function, output_path, symmetry
         )
+        self.generate_waveform(
+            needed_sample_rate=needed_sample_rate,
+            waveform_name=predefined_name,
+            amplitude=amplitude,
+            offset=offset,
+            channel=channel,
+            output_path=output_path,
+            termination=termination,
+            duty_cycle=duty_cycle,
+            polarity=polarity,
+            symmetry=symmetry,
+        )
+
+    def generate_waveform(  # noqa: PLR0913
+        self,
+        needed_sample_rate: float,
+        waveform_name: str,
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
+        duty_cycle: float = 50.0,  # noqa: ARG002
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
+        symmetry: float = 50.0,  # noqa: ARG002
+    ) -> None:
+        """Generate a waveform given the following parameters.
+
+        Args:
+            needed_sample_rate: The required sample rate.
+            waveform_name: The name of the waveform to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
+            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
-                source_channel, predefined_name, needed_sample_rate, amplitude, offset, burst
+                source_channel=source_channel,
+                output_path=output_path,
+                waveform_name=waveform_name,
+                needed_sample_rate=needed_sample_rate,
+                amplitude=amplitude,
+                offset=offset,
             )
-            self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "1")
+            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "1")
         self.write("AWGCONTROL:RUN")
         self.expect_esr(0)
+
+    def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsAWG,
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        burst_count: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 50.0,
+    ) -> None:
+        """Set up the AWG for sending a burst of waveforms given the following parameters.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The waveform shape to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel name to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            burst_count: The number of wavelengths to be generated.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        raise NotImplementedError
+
+    def generate_burst(self) -> None:
+        """Generate a burst of waveforms by forcing trigger."""
+        raise NotImplementedError
 
     def set_waveform_properties(
         self,
         source_channel: AWGChannel,
-        predefined_name: str,
+        output_path: Optional[SignalSourceOutputPathsBase],
+        waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
         offset: float,
-        burst: int,
     ) -> None:
         """Set the properties of the waveform.
 
         Args:
             source_channel: The source channel class for the requested channel.
-            predefined_name: The name of the function to generate.
-            needed_sample_rate: The required sample
+            output_path: The output signal path of the specified channel.
+            waveform_name: The name of the waveform from the waveform list to generate.
+            needed_sample_rate: The required sample rate.
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
-
-            burst: The number of wavelengths to be generated.
         """
         first_source_channel = self.source_channel["SOURCE1"]
-        first_source_channel.set_frequency(round(needed_sample_rate, ndigits=-1))
-        self._setup_burst_waveform(source_channel.num, predefined_name, burst)
+        first_source_channel.set_frequency(needed_sample_rate, tolerance=2, percentage=True)
+        source_channel.load_waveform(waveform_name)
         source_channel.set_amplitude(amplitude)
+        source_channel.set_output_path(output_path)
         source_channel.set_offset(offset)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -219,7 +355,7 @@ class AWG(SignalGenerator, ABC):
         function: Optional[SignalSourceFunctionsAWG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[str] = None,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -274,33 +410,34 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Private Methods
     ################################################################################################
-    def _get_predefined_filename(
-        self, frequency: float, function: SignalSourceFunctionsAWG, symmetry: Optional[float] = 50.0
+    def _get_predefined_filename(  # TODO: change filename to waveform name
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsAWG,
+        output_path: Optional[SignalSourceOutputPathsBase],
+        symmetry: Optional[float] = 50.0,
     ) -> Tuple[str, float]:
         """Get the predefined file name for the provided function.
 
         Args:
             frequency: The frequency of the waveform to generate.
             function: The waveform shape to generate.
+            output_path: The output signal path of the specified channel.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        predefined_name = ""
-        needed_sample_rate = 0.0
         if function == function.RAMP and symmetry == 50:  # noqa: PLR2004
             function = function.TRIANGLE
         if function != SignalSourceFunctionsAWG.DC and not function.value.startswith("*"):
             device_constraints = self.get_waveform_constraints(
-                function=function, frequency=frequency
+                function=function, frequency=frequency, output_path=output_path
             )
             if function == SignalSourceFunctionsAWG.SIN:
-                premade_signal_rl = [3600, 1000, 960, 360, 100, 36, 10]
+                premade_signal_rl = self._PRE_MADE_SIGNAL_RECORD_LENGTH_SIN
             elif function == SignalSourceFunctionsAWG.CLOCK:
-                premade_signal_rl = [960]
+                premade_signal_rl = self._PRE_MADE_SIGNAL_RECORD_LENGTH_CLOCK
             else:
-                # all waveforms have sample sizes of 10, 100 and 1000
-                premade_signal_rl = [1000, 960, 100, 10]
+                premade_signal_rl = self._PRE_MADE_SIGNAL_RECORD_LENGTH_DEFAULT
             # for each of these three records lengths
-            sample_rate_found = False
             for record_length in premade_signal_rl:  # pragma: no cover
                 needed_sample_rate = frequency * record_length
                 # try for the highest record length that can generate the frequency
@@ -310,10 +447,10 @@ class AWG(SignalGenerator, ABC):
                     <= needed_sample_rate
                     <= device_constraints.sample_rate_range.upper
                 ):
-                    sample_rate_found = True
                     predefined_name = f"*{function.value.title()}{record_length}"
                     break
-            if not sample_rate_found:
+            else:
+                # This clause is skipped if break is called in for loop.
                 error_message = (
                     f"Unable to generate {function.value} waveform with provided frequency of "
                     f"{frequency} Hz."
@@ -328,38 +465,13 @@ class AWG(SignalGenerator, ABC):
     @abstractmethod
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[str],
+        output_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         raise NotImplementedError
 
     def _reboot(self) -> None:
         """Reboot the device."""
         # TODO: overwrite the reboot code here
-
-    def _setup_burst_waveform(self, channel_num: int, filename: str, burst: int) -> None:
-        """Prepare device for burst waveform.
-
-        Args:
-            channel_num: The channel number to output the signal from.
-            filename: The filename for the burst waveform to generate.
-            burst: The number of wavelengths to be generated.
-        """
-        if not burst:
-            self.set_and_check(f"SOURCE{channel_num}:WAVEFORM", f'"{filename}"')
-        elif burst > 0:
-            self.set_and_check("AWGCONTROL:RMODE", "SEQ")
-            self.set_and_check("SEQUENCE:LENGTH", "1")
-            self.set_and_check(
-                f"SEQUENCE:ELEMENT1:WAVEFORM{channel_num}",
-                f'"{filename}"',
-            )
-            self.set_and_check(
-                "SEQUENCE:ELEMENT1:LOOP:COUNT",
-                burst,
-            )
-        else:
-            error_message = f"{burst} is an invalid burst value. Burst must be >= 0."
-            raise ValueError(error_message)
 
     # TODO: add testing for this
     def _send_waveform(self, target_file: str) -> None:  # pragma: no cover
@@ -379,7 +491,7 @@ class AWG(SignalGenerator, ABC):
             bin_waveform = struct.unpack(">" + str(info_len) + "H", waveform_data)
 
             # Turn "path/to/stuff.wfm" into "stuff.wfm".
-            filename_target = os.path.basename(target_file)
+            filename_target = Path(target_file).name
             # Write the waveform data to the AWG memory.
             string_to_send = 'MMEMORY:DATA "' + filename_target + '",'
             self._visa_resource.write_binary_values(

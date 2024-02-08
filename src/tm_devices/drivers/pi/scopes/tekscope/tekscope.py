@@ -1,13 +1,13 @@
 """Base TekScope scope device driver module."""
+# pylint: disable=too-many-lines
 import math
 import os
 import warnings
 
 from abc import ABC
 from dataclasses import dataclass
-from functools import cached_property
 from types import MappingProxyType
-from typing import Any, cast, List, Literal, Optional, Tuple, Type, Union
+from typing import Any, cast, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import pyvisa as visa
 
@@ -40,9 +40,14 @@ from tm_devices.driver_mixins.signal_generator_mixin import (
 )
 from tm_devices.driver_mixins.usb_drives_mixin import USBDrivesMixin
 from tm_devices.drivers.device import family_base_class
-from tm_devices.drivers.pi.pi_device import PIDevice
 from tm_devices.drivers.pi.scopes.scope import Scope
-from tm_devices.helpers import DeviceConfigEntry, LoadImpedanceAFG, SignalSourceFunctionsIAFG
+from tm_devices.helpers import (
+    DeviceConfigEntry,
+    LoadImpedanceAFG,
+    ReadOnlyCachedProperty,
+    SignalSourceFunctionsIAFG,
+    SignalSourceOutputPathsBase,
+)
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
@@ -77,33 +82,16 @@ class TekScopeChannel:
 class InternalAFGChannel:
     """Internal AFG channel driver."""
 
-    def __init__(self, pi_device: PIDevice) -> None:
+    def __init__(self, tekscope: "TekScope") -> None:
         """Create an InternalAFG channel object.
 
         Args:
-            pi_device: A PI device object.
+            tekscope: A TekScope object.
         """
-        self._pi_device = pi_device
-
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the offset on the source.
-
-        Args:
-            value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
-        """
-        self._pi_device.set_if_needed(
-            "AFG:OFFSET",
-            value,
-            tolerance=tolerance,
-            percentage=percentage,
-        )
+        self._tekscope = tekscope
 
     def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the amplitude on the source.
+        """Set the amplitude on the internal AFG.
 
         Args:
             value: The amplitude value to set.
@@ -112,7 +100,7 @@ class InternalAFGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._tekscope.set_if_needed(
             "AFG:AMPLITUDE",
             value,
             tolerance=tolerance,
@@ -120,7 +108,7 @@ class InternalAFGChannel:
         )
 
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
-        """Set the frequency on the source.
+        """Set the frequency on the internal AFG.
 
         Args:
             value: The frequency value to set.
@@ -129,12 +117,47 @@ class InternalAFGChannel:
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
-        self._pi_device.set_if_needed(
+        self._tekscope.set_if_needed(
             "AFG:FREQUENCY",
             value,
             tolerance=tolerance,
             percentage=percentage,
         )
+
+    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+        """Set the offset on the internal AFG.
+
+        Args:
+            value: The offset value to set.
+            tolerance: The acceptable difference between two floating point values.
+            percentage: A boolean indicating what kind of tolerance check to perform.
+                 False means absolute tolerance: +/- tolerance.
+                 True means percent tolerance: +/- (tolerance / 100) * value.
+        """
+        self._tekscope.set_if_needed(
+            "AFG:OFFSET",
+            value,
+            tolerance=tolerance,
+            percentage=percentage,
+        )
+
+    def set_function(self, value: SignalSourceFunctionsIAFG) -> None:
+        """Set the function on the internal AFG.
+
+        Args:
+            value: The function name.
+        """
+        self._tekscope.set_if_needed("AFG:FUNCTION", str(value.value))
+
+    def setup_burst_waveform(self, burst_count: int) -> None:
+        """Prepare the internal AFG for a burst waveform.
+
+        Args:
+            burst_count: The number of wavelengths to be generated.
+        """
+        # set to external as to not burst every millisecond
+        self._tekscope.set_if_needed("AFG:OUTPUT:MODE", "BURST")
+        self._tekscope.set_if_needed("AFG:BURST:CCOUNT", f"{burst_count}")
 
 
 # pylint: disable=too-many-public-methods
@@ -188,11 +211,11 @@ class TekScope(
     ################################################################################################
     # Properties
     ################################################################################################
-    @cached_property
+    @ReadOnlyCachedProperty
     def channel(self) -> "MappingProxyType[str, TekScopeChannel]":
         """Mapping of channel names to any detectable properties, attributes, and settings."""
         # TODO: overwrite in MSO2 driver, would remove need for try-except
-        channel_map = {}
+        channel_map: Dict[str, TekScopeChannel] = {}
 
         with self.temporary_verbose(False) and self.temporary_visa_timeout(
             500 if not bool(os.environ.get("TM_DEVICES_UNIT_TESTS_RUNNING")) else UNIT_TEST_TIMEOUT
@@ -237,7 +260,7 @@ class TekScope(
             self.set_and_check(":VERBose", old_pi_verbosity)
         return MappingProxyType(channel_map)
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def internal_afg(self) -> InternalAFGChannel:
         """The scope's internal AFG."""
         return InternalAFGChannel(self)
@@ -258,12 +281,12 @@ class TekScope(
         """Return the device commands."""
         return self._commands  # pragma: no cover
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def hostname(self) -> str:
         """Return the hostname of the device or an empty string if unable to fetch that."""
         return self.query(":ETHERNET:NAME?", verbose=False, remove_quotes=True)
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def license_list(self) -> Tuple[str, ...]:
         """Return the list of license AppIDs installed on the scope."""
         license_list = self.query(
@@ -282,7 +305,7 @@ class TekScope(
         """Return the device constants."""
         return self._DEVICE_CONSTANTS
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
         try:
@@ -290,7 +313,7 @@ class TekScope(
         except ValueError:
             return 0
 
-    @cached_property
+    @ReadOnlyCachedProperty
     def usb_drives(self) -> Tuple[str, ...]:
         """Return a list of all connected USB drives."""
         # Find all USB drives connected to the device
@@ -455,7 +478,7 @@ class TekScope(
         amplitude: float,
         offset: float,
         channel: str = "all",
-        burst: int = 0,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -469,25 +492,77 @@ class TekScope(
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel number to output the signal from, or 'all'.
-            burst: The number of waveforms to be generated.
+            output_path: The output signal path of the specified channel.
             termination: The impedance to set the channel to.
             duty_cycle: The duty cycle to set the signal to.
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        del polarity, channel  # these aren't used
+        del polarity, channel, output_path  # these aren't used
         self._validate_generated_function(function)
         # Turn off the Internal AFG
-        self.set_and_check("AFG:OUTPUT:STATE", 0)
-
+        self.set_if_needed("AFG:OUTPUT:STATE", 0)
         self.set_waveform_properties(
-            frequency, function, amplitude, offset, burst, termination, duty_cycle, symmetry
+            frequency=frequency,
+            function=function,
+            amplitude=amplitude,
+            offset=offset,
+            burst_count=0,
+            termination=termination,
+            duty_cycle=duty_cycle,
+            symmetry=symmetry,
         )
-
         # Turn on the Internal AFG
-        self.set_and_check("AFG:OUTPUT:STATE", 1)
-        if burst > 0:
-            self.write("AFG:BURST:TRIGGER")
+        self.set_if_needed("AFG:OUTPUT:STATE", 1)
+        # Don't check for errors as any measurement with low amplitude will generate an error
+
+    def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        frequency: float,
+        function: SignalSourceFunctionsIAFG,
+        amplitude: float,
+        offset: float,
+        channel: str = "all",
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        burst_count: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 50.0,
+    ) -> None:
+        """Set up the Internal AFG for sending a burst of waveforms given the following parameters.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The function to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            channel: The channel number to output the signal from, or 'all'.
+            output_path: The output signal path of the specified channel.
+            burst_count: The number of wavelengths to be generated.
+            termination: The impedance to set the channel to.
+            duty_cycle: The duty cycle to set the signal to.
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        del polarity, channel, output_path  # these aren't used
+        self._validate_generated_function(function)
+        self.set_waveform_properties(
+            frequency=frequency,
+            function=function,
+            amplitude=amplitude,
+            offset=offset,
+            burst_count=burst_count,
+            termination=termination,
+            duty_cycle=duty_cycle,
+            symmetry=symmetry,
+        )
+        # Turn on the Internal AFG
+        self.set_if_needed("AFG:OUTPUT:STATE", 1)
+
+    def generate_burst(self) -> None:
+        """Generate a burst of waveforms by forcing trigger."""
+        self.write("AFG:BURST:TRIGGER")
         # Don't check for errors as any measurement with low amplitude will generate an error
 
     def set_waveform_properties(  # noqa: PLR0913
@@ -496,7 +571,7 @@ class TekScope(
         function: SignalSourceFunctionsIAFG,
         amplitude: float,
         offset: float,
-        burst: int = 0,
+        burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         symmetry: float = 50.0,
@@ -508,27 +583,26 @@ class TekScope(
             function: The waveform shape to generate.
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
-            burst: The number of wavelengths to be generated.
+            burst_count: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        if burst > 0:
-            self.set_and_check("AFG:OUTPUT:MODE", "BURST")
-            self.set_and_check("AFG:BURST:CCOUNT", f"{burst}")
+        if burst_count > 0:
+            self.internal_afg.setup_burst_waveform(burst_count)
         # Generate the waveform from the Internal AFG
         # Frequency
-        self.internal_afg.set_frequency(frequency)
+        self.internal_afg.set_frequency(frequency, tolerance=2, percentage=True)
         # Offset
         self.internal_afg.set_offset(offset)
         # Duty Cycle
-        self.set_and_check("AFG:SQUARE:DUTY", duty_cycle)
+        self.set_if_needed("AFG:SQUARE:DUTY", duty_cycle)
         # Function
         if function == SignalSourceFunctionsIAFG.RAMP:
-            self.set_and_check("AFG:RAMP:SYMMETRY", symmetry)
-        self.set_and_check("AFG:FUNCTION", function.value)
+            self.set_if_needed("AFG:RAMP:SYMMETRY", symmetry)
+        self.internal_afg.set_function(function)
         # Termination impedance
-        self.set_and_check("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
+        self.set_if_needed("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
         self.internal_afg.set_amplitude(amplitude)
 
@@ -538,7 +612,7 @@ class TekScope(
         function: Optional[SignalSourceFunctionsIAFG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[str] = None,
+        output_path: Optional[SignalSourceOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
