@@ -151,7 +151,7 @@ class AWG(SignalGenerator, ABC):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> MappingProxyType[str, AWGChannel]:  # pragma: no cover
+    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":  # pragma: no cover
         """Mapping of channel names to AWGChannel objects."""
         channel_map: Dict[str, AWGChannel] = {}
         for channel_name in self.all_channel_names_list:

@@ -135,7 +135,7 @@ class AFG(SignalGenerator, ABC):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> MappingProxyType[str, AFGChannel]:
+    def source_channel(self) -> "MappingProxyType[str, AFGChannel]":
         """Mapping of channel names to AFGChannel objects."""
         channel_map: Dict[str, AFGChannel] = {}
         for channel_name in self.all_channel_names_list:

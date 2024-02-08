@@ -81,7 +81,7 @@ class AWG70KA(AWG70KAMixin, AWG):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
+    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
         """Mapping of channel names to AWGChannel objects."""
         channel_map: Dict[str, AWG70KAChannel] = {}
         for channel_name in self.all_channel_names_list:

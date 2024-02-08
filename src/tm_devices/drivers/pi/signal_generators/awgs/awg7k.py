@@ -73,7 +73,7 @@ class AWG7K(AWG7KMixin, AWG):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
+    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
         """Mapping of channel names to AWGChannel objects."""
         channel_map: Dict[str, AWG7KChannel] = {}
         for channel_name in self.all_channel_names_list:
