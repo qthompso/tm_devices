@@ -45,7 +45,7 @@ class AFGChannel:
 
     @property
     def name(self) -> str:
-        """Return the channel's name."""
+        """Return the channel name."""
         return self._name
 
     @property
