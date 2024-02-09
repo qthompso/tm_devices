@@ -38,6 +38,8 @@ class AWG70KAChannel(AWGChannel):
     def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source channel.
 
+        Can only set the output signal path to DCA when an MDC4500 is connected to the AWG70K.
+
         Args:
             value: The output signal path
                 (The default is to attempt to set output signal path to DCA and falling back to DIR)
