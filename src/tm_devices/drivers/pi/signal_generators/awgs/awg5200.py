@@ -124,15 +124,15 @@ class AWG5200(AWG5200Mixin, AWG):
 
     def load_waveform_from_set(
         self,
+        waveform_name: str,
         waveform_set_file: Optional[str] = None,
-        waveform_name: Optional[str] = None,
     ) -> None:
         """Load in a specific waveform from a waveform set into the memory of the AWG.
 
         Arguments:
+            waveform_name: The waveform name to load from the waveform set file.
             waveform_set_file: The waveform set file to load
                 (The default is defined in the ``sample_wave_file`` attribute).
-            waveform_name: The waveform name to load from the waveform set file.
         """
         self._load_waveform_or_set(waveform_set_file=waveform_set_file, waveform_name=waveform_name)
 
