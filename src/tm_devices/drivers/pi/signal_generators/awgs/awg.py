@@ -49,7 +49,7 @@ class AWGChannel(ExtendableMixin):
 
     @property
     def name(self) -> str:
-        """Return the channel's name."""
+        """Return the channel name."""
         return self._name
 
     @property
@@ -127,7 +127,7 @@ class AWGChannel(ExtendableMixin):
         """Load in a waveform from the waveform list to the source channel.
 
         Args:
-            waveform_name: The name of the waveform to generate.
+            waveform_name: The name of the waveform to load.
         """
         self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{waveform_name}"', allow_empty=True)
 
@@ -138,10 +138,10 @@ class AWG(SignalGenerator, ABC):
     OutputSignalPath = SignalSourceOutputPathsNon5200
 
     _DEVICE_TYPE = DeviceTypes.AWG.value
-    _PRE_MADE_SIGNAL_RECORD_LENGTH_SIN: ClassVar[List[int]] = [3600, 1000, 960, 360, 100, 36, 10]
-    _PRE_MADE_SIGNAL_RECORD_LENGTH_CLOCK: ClassVar[List[int]] = [960]
+    _PRE_DEFINED_SIGNAL_RECORD_LENGTH_SIN: ClassVar[List[int]] = [3600, 1000, 960, 360, 100, 36, 10]
+    _PRE_DEFINED_SIGNAL_RECORD_LENGTH_CLOCK: ClassVar[List[int]] = [960]
     # all waveforms have sample sizes of 10, 100 and 1000
-    _PRE_MADE_SIGNAL_RECORD_LENGTH_DEFAULT: ClassVar[List[int]] = [1000, 960, 100, 10]
+    _PRE_DEFINED_SIGNAL_RECORD_LENGTH_DEFAULT: ClassVar[List[int]] = [1000, 960, 100, 10]
 
     ################################################################################################
     # Magic Methods
@@ -413,11 +413,11 @@ class AWG(SignalGenerator, ABC):
                 function=function, frequency=frequency, output_path=output_path
             )
             if function == SignalSourceFunctionsAWG.SIN:
-                premade_signal_rl = self._PRE_MADE_SIGNAL_RECORD_LENGTH_SIN
+                premade_signal_rl = self._PRE_DEFINED_SIGNAL_RECORD_LENGTH_SIN
             elif function == SignalSourceFunctionsAWG.CLOCK:
-                premade_signal_rl = self._PRE_MADE_SIGNAL_RECORD_LENGTH_CLOCK
+                premade_signal_rl = self._PRE_DEFINED_SIGNAL_RECORD_LENGTH_CLOCK
             else:
-                premade_signal_rl = self._PRE_MADE_SIGNAL_RECORD_LENGTH_DEFAULT
+                premade_signal_rl = self._PRE_DEFINED_SIGNAL_RECORD_LENGTH_DEFAULT
             # for each of these three records lengths
             for record_length in premade_signal_rl:  # pragma: no cover
                 needed_sample_rate = frequency * record_length
