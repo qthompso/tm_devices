@@ -107,15 +107,15 @@ class AWGChannel(ExtendableMixin):
                 percentage=percentage,
             )
         elif value:
-            # No error is raised when 0 is the offset value and the output path is in a state where
-            # offset cannot be set.
+            # No error is raised when 0 is the offset value and the output signal path is
+            # in a state where offset cannot be set.
             offset_error = (
                 f"The offset can only be set with an output signal path of "
                 f"{self._awg.OutputSignalPath.DCA.value}."
             )
             raise ValueError(offset_error)
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -193,7 +193,7 @@ class AWG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -207,14 +207,14 @@ class AWG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_waveform_name(
-            frequency, function, output_path, symmetry
+            frequency, function, output_signal_path, symmetry
         )
         self.generate_waveform(
             needed_sample_rate=needed_sample_rate,
@@ -222,7 +222,7 @@ class AWG(SignalGenerator, ABC):
             amplitude=amplitude,
             offset=offset,
             channel=channel,
-            output_path=output_path,
+            output_signal_path=output_signal_path,
             termination=termination,
             duty_cycle=duty_cycle,
             polarity=polarity,
@@ -236,7 +236,7 @@ class AWG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
@@ -250,7 +250,7 @@ class AWG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
@@ -261,7 +261,7 @@ class AWG(SignalGenerator, ABC):
             self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
                 source_channel=source_channel,
-                output_path=output_path,
+                output_signal_path=output_signal_path,
                 waveform_name=waveform_name,
                 needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
@@ -278,7 +278,7 @@ class AWG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -293,7 +293,7 @@ class AWG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             burst_count: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
@@ -309,7 +309,7 @@ class AWG(SignalGenerator, ABC):
     def set_waveform_properties(
         self,
         source_channel: AWGChannel,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
@@ -319,7 +319,7 @@ class AWG(SignalGenerator, ABC):
 
         Args:
             source_channel: The source channel class for the requested channel.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             waveform_name: The name of the waveform from the waveform list to generate.
             needed_sample_rate: The required sample rate.
             amplitude: The amplitude of the signal to generate.
@@ -329,7 +329,7 @@ class AWG(SignalGenerator, ABC):
         first_source_channel.set_frequency(needed_sample_rate, tolerance=2, percentage=True)
         source_channel.load_waveform(waveform_name)
         source_channel.set_amplitude(amplitude)
-        source_channel.set_output_path(output_path)
+        source_channel.set_output_signal_path(output_signal_path)
         source_channel.set_offset(offset)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -337,7 +337,7 @@ class AWG(SignalGenerator, ABC):
         function: Optional[SignalSourceFunctionsAWG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -346,13 +346,13 @@ class AWG(SignalGenerator, ABC):
             function: The function that needs to be generated.
             waveform_length: The length of the waveform if no function or arbitrary is provided.
             frequency: The frequency of the waveform that needs to be generated.
-            output_path: The output path that was set on the channel.
+            output_signal_path: The output signal path that was set on the channel.
             load_impedance: The suggested impedance on the source.
         """
         del frequency, load_impedance
 
         amplitude_range, offset_range, sample_rate_range = self._get_series_specific_constraints(
-            output_path,
+            output_signal_path,
         )
 
         if function and not waveform_length:
@@ -395,7 +395,7 @@ class AWG(SignalGenerator, ABC):
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
         symmetry: Optional[float] = 50.0,
     ) -> Tuple[str, float]:
         """Get the predefined waveform name for the provided function.
@@ -403,14 +403,14 @@ class AWG(SignalGenerator, ABC):
         Args:
             frequency: The frequency of the waveform to generate.
             function: The waveform shape to generate.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         if function == function.RAMP and symmetry == 50:  # noqa: PLR2004
             function = function.TRIANGLE
         if function != SignalSourceFunctionsAWG.DC and not function.value.startswith("*"):
             device_constraints = self.get_waveform_constraints(
-                function=function, frequency=frequency, output_path=output_path
+                function=function, frequency=frequency, output_signal_path=output_signal_path
             )
             if function == SignalSourceFunctionsAWG.SIN:
                 premade_signal_rl = self._PRE_DEFINED_SIGNAL_RECORD_LENGTH_SIN
@@ -446,7 +446,7 @@ class AWG(SignalGenerator, ABC):
     @abstractmethod
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         raise NotImplementedError
 

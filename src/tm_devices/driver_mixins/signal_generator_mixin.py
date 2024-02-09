@@ -81,7 +81,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -95,7 +95,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
@@ -111,7 +111,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -126,7 +126,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel number to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             burst_count: The number of wavelengths to be generated.
             termination: The impedance to set the channel to.
             duty_cycle: The duty cycle to set the signal to.
@@ -146,7 +146,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         function: Optional[SignalSourceFunctionBase] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: str = "DIR",
+        output_signal_path: str = "DIR",
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -155,7 +155,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
             function: The function that needs to be generated.
             waveform_length: The length of the waveform if no function or arbitrary is provided.
             frequency: The frequency of the waveform that needs to be generated.
-            output_path: The output path that was set on the channel.
+            output_signal_path: The output signal path that was set on the channel.
             load_impedance: The suggested impedance on the source.
         """
         raise NotImplementedError

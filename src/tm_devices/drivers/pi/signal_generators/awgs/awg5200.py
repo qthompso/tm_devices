@@ -68,7 +68,7 @@ class AWG5200Channel(AWGChannel):
             percentage=percentage,
         )
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -143,7 +143,7 @@ class AWG5200(AWG5200Mixin, AWG):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -157,14 +157,14 @@ class AWG5200(AWG5200Mixin, AWG):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         predefined_name, needed_sample_rate = self._get_predefined_waveform_name(
-            frequency, function, output_path, symmetry
+            frequency, function, output_signal_path, symmetry
         )
         self.generate_waveform(
             needed_sample_rate=needed_sample_rate,
@@ -172,7 +172,7 @@ class AWG5200(AWG5200Mixin, AWG):
             amplitude=amplitude,
             offset=offset,
             channel=channel,
-            output_path=output_path,
+            output_signal_path=output_signal_path,
             termination=termination,
             duty_cycle=duty_cycle,
             polarity=polarity,
@@ -186,7 +186,7 @@ class AWG5200(AWG5200Mixin, AWG):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
@@ -200,7 +200,7 @@ class AWG5200(AWG5200Mixin, AWG):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
@@ -213,7 +213,7 @@ class AWG5200(AWG5200Mixin, AWG):
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
                 source_channel=source_channel,
-                output_path=output_path,
+                output_signal_path=output_signal_path,
                 waveform_name=waveform_name,
                 needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
@@ -234,7 +234,7 @@ class AWG5200(AWG5200Mixin, AWG):
     def set_waveform_properties(
         self,
         source_channel: AWGChannel,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
@@ -244,7 +244,7 @@ class AWG5200(AWG5200Mixin, AWG):
 
         Args:
             source_channel: The source channel class for the requested channel.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             waveform_name: The name of the waveform from the waveform list to generate.
             needed_sample_rate: The required sample rate.
             amplitude: The amplitude of the signal to generate.
@@ -255,7 +255,7 @@ class AWG5200(AWG5200Mixin, AWG):
         source_channel = cast(AWG5200Channel, source_channel)
         super().set_waveform_properties(
             source_channel=source_channel,
-            output_path=output_path,
+            output_signal_path=output_signal_path,
             waveform_name=waveform_name,
             needed_sample_rate=needed_sample_rate,
             amplitude=amplitude,
@@ -267,15 +267,15 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
-        if not output_path:
-            output_path = self.OutputSignalPath.DCHB
+        if not output_signal_path:
+            output_signal_path = self.OutputSignalPath.DCHB
 
-        if "DC" in self.opt_string and output_path == self.OutputSignalPath.DCHB:
+        if "DC" in self.opt_string and output_signal_path == self.OutputSignalPath.DCHB:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
-        elif output_path == self.OutputSignalPath.DCHV:
+        elif output_signal_path == self.OutputSignalPath.DCHV:
             amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
         else:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=750.0e-3)
