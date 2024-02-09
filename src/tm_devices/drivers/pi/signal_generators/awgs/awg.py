@@ -213,7 +213,7 @@ class AWG(SignalGenerator, ABC):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        predefined_name, needed_sample_rate = self._get_predefined_filename(
+        predefined_name, needed_sample_rate = self._get_predefined_waveform_name(
             frequency, function, output_path, symmetry
         )
         self.generate_waveform(
@@ -391,14 +391,14 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Private Methods
     ################################################################################################
-    def _get_predefined_filename(  # TODO: change filename to waveform name
+    def _get_predefined_waveform_name(
         self,
         frequency: float,
         function: SignalSourceFunctionsAWG,
         output_path: Optional[SignalSourceOutputPathsBase],
         symmetry: Optional[float] = 50.0,
     ) -> Tuple[str, float]:
-        """Get the predefined file name for the provided function.
+        """Get the predefined waveform name for the provided function.
 
         Args:
             frequency: The frequency of the waveform to generate.

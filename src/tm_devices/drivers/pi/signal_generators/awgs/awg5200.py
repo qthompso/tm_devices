@@ -163,7 +163,7 @@ class AWG5200(AWG5200Mixin, AWG):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        predefined_name, needed_sample_rate = self._get_predefined_filename(
+        predefined_name, needed_sample_rate = self._get_predefined_waveform_name(
             frequency, function, output_path, symmetry
         )
         self.generate_waveform(
