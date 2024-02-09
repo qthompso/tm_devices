@@ -29,6 +29,7 @@ class AWG5KChannel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
+        # Can only set offset when then output state is 0.
         if not float(self._awg.query(f"AWGCONTROL:DOUTPUT{self.num}:STATE?")):
             self._awg.set_if_needed(
                 f"{self.name}:VOLTAGE:OFFSET",
@@ -53,8 +54,10 @@ class AWG5KChannel(AWGChannel):
             value: The output signal path.
         """
         if not value or value == self._awg.OutputSignalPath.DCA:
+            # Translate DCA to output state of 0.
             output_state = 0
         elif value == self._awg.OutputSignalPath.DIR:
+            # Translate DIR to output state of 1.
             output_state = 1
         else:
             output_signal_path_error = (

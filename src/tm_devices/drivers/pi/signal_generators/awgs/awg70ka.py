@@ -39,14 +39,17 @@ class AWG70KAChannel(AWGChannel):
         """Set the output signal path on the source channel.
 
         Args:
-            value: The output signal path.
+            value: The output signal path
+                (The default is to attempt to set output signal path to DCA and falling back to DIR)
         """
         if not value:
+            # Attempt to set the output signal path to DCA.
             try:
                 self._awg.set_and_check(
                     f"OUTPUT{self.num}:PATH", self._awg.OutputSignalPath.DCA.value
                 )
             except AssertionError:  # pragma: no cover
+                # If error, set output signal path to DIR.
                 expected_esr_message = (
                     '-222,"Data out of range;Data Out of Range - '
                     f'OUTPUT{self.num}:PATH DCA\r\n"\n0,"No error"'
