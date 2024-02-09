@@ -49,7 +49,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
             10e9, awg520050.source_device_constants.functions.CLOCK, 1.0, 0.0, channel="SOURCE1"
         )
 
-    # Invalid output path.
+    # Invalid output signal path.
     with pytest.raises(ValueError, match="DIR is an invalid output signal path for AWG5204."):
         awg520050.generate_function(
             10e3,
@@ -57,7 +57,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_path=SignalSourceOutputPathsNon5200.DIR,
+            output_signal_path=SignalSourceOutputPathsNon5200.DIR,
         )
 
 
@@ -79,7 +79,7 @@ def test_awg70k_gen_waveform(
         amplitude=1.0,
         offset=0.1,
         channel="SOURCE1",
-        output_path=awg70ka150.OutputSignalPath.DCA,
+        output_signal_path=awg70ka150.OutputSignalPath.DCA,
     )
     source1_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
     assert float(source1_frequency) == 96000000
@@ -107,7 +107,7 @@ def test_awg70k_gen_waveform(
         amplitude=1.0,
         offset=0.1,
         channel="SOURCE1",
-        output_path=awg70ka150.OutputSignalPath.DCA,
+        output_signal_path=awg70ka150.OutputSignalPath.DCA,
     )
     assert "MMEMORY:OPEN:SASSET" in capsys.readouterr().out
 
@@ -163,7 +163,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_path=awg7k01.OutputSignalPath.DIR,
+            output_signal_path=awg7k01.OutputSignalPath.DIR,
         )
 
     # DCHB is not a valid output signal path for AWG7k's.
@@ -174,7 +174,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_path=SignalSourceOutputPaths5200.DCHB,
+            output_signal_path=SignalSourceOutputPaths5200.DCHB,
         )
 
     assert awg7k01.expect_esr(0)[0]
@@ -187,7 +187,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
         1.0,
         0.0,
         channel="SOURCE1",
-        output_path=awg7k01.OutputSignalPath.DCA,
+        output_signal_path=awg7k01.OutputSignalPath.DCA,
     )
     source1_frequency = awg7k01.query("SOURCE1:FREQUENCY?")
     assert float(source1_frequency) == 96000000
@@ -226,7 +226,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     output1_state = awg5k.query("OUTPUT1:STATE?")
     assert int(output1_state) == 1
 
-    # Cannot set offset with DIR output path.
+    # Cannot set offset with DIR output signal path.
     offset_error = (
         "The offset can only be set on AWG5012 with an output signal path of DCA "
         "\(AWGCONTROL:DOUTPUT1:STATE set to 0\)."  # noqa: W605  # pylint: disable=anomalous-backslash-in-string  # pyright: ignore [reportInvalidStringEscapeSequence]
@@ -238,17 +238,17 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
             2.0,
             2.0,
             channel="SOURCE1",
-            output_path=awg5k.OutputSignalPath.DIR,
+            output_signal_path=awg5k.OutputSignalPath.DIR,
         )
 
-    # Even with an output path of DIR, no error is raised because no offset is requested (0).
+    # Even with an output signal path of DIR, no error is raised because no offset is requested (0).
     awg5k.generate_function(
         10e3,
         awg5k.source_device_constants.functions.SIN,
         2.0,
         0,
         channel="SOURCE1",
-        output_path=awg5k.OutputSignalPath.DIR,
+        output_signal_path=awg5k.OutputSignalPath.DIR,
     )
 
 

@@ -35,7 +35,7 @@ class AWG70KAChannel(AWGChannel):
             f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage, opc=True
         )
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -120,7 +120,7 @@ class AWG70KA(AWG70KAMixin, AWG):
     def set_waveform_properties(
         self,
         source_channel: AWGChannel,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
@@ -130,7 +130,7 @@ class AWG70KA(AWG70KAMixin, AWG):
 
         Args:
             source_channel: The source channel class for the requested channel.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             waveform_name: The name of the waveform from the waveform list to generate.
             needed_sample_rate: The required sample rate.
             amplitude: The amplitude of the signal to generate.
@@ -141,7 +141,7 @@ class AWG70KA(AWG70KAMixin, AWG):
         source_channel = cast(AWG70KAChannel, source_channel)
         super().set_waveform_properties(
             source_channel=source_channel,
-            output_path=output_path,
+            output_signal_path=output_signal_path,
             waveform_name=waveform_name,
             needed_sample_rate=needed_sample_rate,
             amplitude=amplitude,
@@ -153,15 +153,15 @@ class AWG70KA(AWG70KAMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
-        if not output_path:
-            output_path = self.OutputSignalPath.DIR
+        if not output_signal_path:
+            output_signal_path = self.OutputSignalPath.DIR
 
         amplitude_range = ParameterBounds(lower=0.125, upper=0.5)
 
-        if output_path == self.OutputSignalPath.DCA:
+        if output_signal_path == self.OutputSignalPath.DCA:
             offset_range = ParameterBounds(lower=-400.0e-3, upper=800.0e-3)
         else:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
@@ -176,7 +176,7 @@ class AWG70KA(AWG70KAMixin, AWG):
         """Perform the cleanup defined for the device."""
         super()._cleanup()
         for source_channel in self.source_channel.values():
-            source_channel.set_output_path()
+            source_channel.set_output_signal_path()
             source_channel.set_offset(0)
 
     def _load_waveform_or_set(

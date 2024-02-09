@@ -40,8 +40,8 @@ class AWG7KChannel(AWG5KChannel):
                 percentage=percentage,
             )
         elif value:
-            # No error is raised when 0 is the offset value and the output path is in a state where
-            # offset cannot be set.
+            # No error is raised when 0 is the offset value and the output signal path
+            # is in a state where offset cannot be set.
             offset_error = (
                 f"The offset can only be set on {self._awg.model} without an 02 or 06 "
                 "option and with an output signal path of "
@@ -50,7 +50,7 @@ class AWG7KChannel(AWG5KChannel):
             )
             raise ValueError(offset_error)
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -58,7 +58,7 @@ class AWG7KChannel(AWG5KChannel):
         """
         # Can only set the output signal path on AWG7k's without 02 and 06 options.
         if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string):
-            super().set_output_path(value)
+            super().set_output_signal_path(value)
 
 
 @family_base_class
@@ -87,11 +87,11 @@ class AWG7K(AWG7KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
-        if not output_path:
-            output_path = self.OutputSignalPath.DCA
+        if not output_signal_path:
+            output_signal_path = self.OutputSignalPath.DCA
 
         # if we are using the high bandwidth options
         if "02" in self.opt_string or "06" in self.opt_string:
@@ -99,7 +99,7 @@ class AWG7K(AWG7KMixin, AWG):
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         else:
             amplitude_range = ParameterBounds(lower=50e-3, upper=2.0)
-            if output_path == self.OutputSignalPath.DCA:
+            if output_signal_path == self.OutputSignalPath.DCA:
                 offset_range = ParameterBounds(lower=-0.5, upper=0.5)
             else:
                 offset_range = ParameterBounds(lower=-0.0, upper=0.0)

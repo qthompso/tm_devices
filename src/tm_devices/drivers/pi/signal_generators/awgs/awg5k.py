@@ -38,8 +38,8 @@ class AWG5KChannel(AWGChannel):
                 percentage=percentage,
             )
         elif value:
-            # No error is raised when 0 is the offset value and the output path is in a state where
-            # offset cannot be set.
+            # No error is raised when 0 is the offset value and the output signal path
+            # is in a state where offset cannot be set.
             offset_error = (
                 f"The offset can only be set on {self._awg.model} with an output signal path of "
                 f"{self._awg.OutputSignalPath.DCA.value} "
@@ -47,7 +47,7 @@ class AWG5KChannel(AWGChannel):
             )
             raise ValueError(offset_error)
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -93,14 +93,14 @@ class AWG5K(AWG5KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
-        if not output_path:
-            output_path = self.OutputSignalPath.DCA
+        if not output_signal_path:
+            output_signal_path = self.OutputSignalPath.DCA
 
         amplitude_range = ParameterBounds(lower=20.0e-3, upper=4.5)
-        if output_path == self.OutputSignalPath.DCA:
+        if output_signal_path == self.OutputSignalPath.DCA:
             offset_range = ParameterBounds(lower=-2.25, upper=2.25)
         else:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
