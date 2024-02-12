@@ -32,6 +32,34 @@ Things to be included in the next release go here.
 
 ______________________________________________________________________
 
+## v2.0.0 (2024-02-12)
+
+### Merged Pull Requests
+
+- feat: AWG Generate Function and Waveform Constraints
+
+### Added
+
+- Added drivers for AWG and AFG channels
+- Added a property named `source_channel` in AWG's and AFG's.
+- Added drivers for internal AFG in TekScopes.
+- Added a property named `internal_afg` in TekScope.
+- Added implementation of `generate_function` for all AWG models.
+- Added two burst functions to SignalGeneratorMixin: one to set up burst and one to generate the burst by forcing trigger.
+  - NOTE: Only the AFG's and internal AFG have these functions implemented.
+- Added `OutputSignalPath` enum attribute in AWG's representing output signal path options.
+- Added two functions for loading waveform set files in the AWG70k's and AWG5200: one for loading a waveform set file and another for loading a specific waveform from a waveform set file.
+- Added `sample_waveform_set_file` attribute in AWG70k's and AWG5200 to define the default waveform set file.
+
+### Changed
+
+- Changed the term "signal source" to "signal generator".
+- Changed the function name of `generate_waveform` to `generate_function`.
+- Changed the `generate_function` function by removing burst functionality.
+- Updated AWG's such that the `family_base_class` is at the model level.
+
+______________________________________________________________________
+
 ## v1.1.0 (2023-12-07)
 
 ### Merged Pull Requests
