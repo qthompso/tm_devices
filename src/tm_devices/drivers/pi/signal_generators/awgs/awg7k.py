@@ -31,8 +31,9 @@ class AWG7KChannel(AWG5KChannel):
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
         output_path = float(self._awg.query(f"AWGCONTROL:DOUTPUT{self.num}:STATE?"))
-        # Can only set offset on AWG7k's without 02 and 06 options and when then output state is 0.
         if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string) and not output_path:
+            # Can only set offset on AWG7k's without 02 and 06 options and when then
+            # output state is 0.
             self._awg.set_if_needed(
                 f"{self.name}:VOLTAGE:OFFSET",
                 value,
@@ -56,8 +57,8 @@ class AWG7KChannel(AWG5KChannel):
         Args:
             value: The output signal path.
         """
-        # Can only set the output signal path on AWG7k's without 02 and 06 options.
         if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string):
+            # Can only set the output signal path on AWG7k's without 02 and 06 options.
             super().set_output_signal_path(value)
 
 
