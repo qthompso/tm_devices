@@ -311,12 +311,12 @@ class AWG(SignalGenerator, ABC):
         """Generate a burst of waveforms by forcing trigger."""
         raise NotImplementedError
 
-    def send_waveform_points(self, points: List[float], waveform_name: str) -> None:
-        """Send the provided points to the device and store as a waveform.
+    def send_waveform_data_to_memory(self, points: List[float], waveform_name: str) -> None:
+        """Send the provided waveform data to the device and store in memory.
 
         Args:
             points: The list of points that represent the waveform.
-            waveform_name: The waveform name to store the points as.
+            waveform_name: The waveform name to store the data as.
         """
         if not all(-1 <= point <= 1 for point in points):
             invalid_point_message = "All points must be between -1 and 1 (inclusive)."

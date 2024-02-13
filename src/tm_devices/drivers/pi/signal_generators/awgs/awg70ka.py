@@ -127,12 +127,12 @@ class AWG70KA(AWG70KAMixin, AWG):
         """
         self._load_waveform_or_set(waveform_set_file=waveform_set_file, waveform_name=waveform_name)
 
-    def send_waveform_points(self, points: List[float], waveform_name: str) -> None:  # pylint: disable=too-many-locals
-        """Send the provided points to the device and store as a waveform.
+    def send_waveform_data_to_memory(self, points: List[float], waveform_name: str) -> None:  # pylint: disable=too-many-locals
+        """Send the provided waveform data to the device and store in memory.
 
         Args:
             points: The list of points that represent the waveform.
-            waveform_name: The waveform name to store the points as.
+            waveform_name: The waveform name to store the data as.
         """
         if not all(-1 <= point <= 1 for point in points):
             invalid_point_message = "All points must be between -1 and 1 (inclusive)."

@@ -281,8 +281,8 @@ class AFG(SignalGenerator, ABC):
         self.write("*TRG")
         self.expect_esr(0)
 
-    def send_waveform_points(self, points: List[float]) -> None:
-        """Send the provided points to the device and store as a waveform.
+    def send_waveform_data_to_memory(self, points: List[float]) -> None:
+        """Send the provided waveform data to the device and store in memory.
 
         Args:
             points: The list of points that represent the waveform.

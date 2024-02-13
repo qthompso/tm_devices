@@ -237,12 +237,12 @@ class AWG5200(AWG5200Mixin, AWG):
         self.poll_query(30, "AWGControl:RSTate?", 2.0)
         self.expect_esr(0)
 
-    def send_waveform_points(self, points: List[float], waveform_name: str) -> None:  # pylint: disable=too-many-locals
-        """Send the provided points to the device and store as a waveform.
+    def send_waveform_data_to_memory(self, points: List[float], waveform_name: str) -> None:  # pylint: disable=too-many-locals
+        """Send the provided waveform data to the device and store in memory.
 
         Args:
             points: The list of points that represent the waveform.
-            waveform_name: The waveform name to store the points as.
+            waveform_name: The waveform name to store the data as.
         """
         # This function is identical to the one in AWG70K's.
         if not all(-1 <= point <= 1 for point in points):
