@@ -1,7 +1,9 @@
 """AWG70KA device driver module."""
+import math
+
 from pathlib import Path
 from types import MappingProxyType
-from typing import cast, Dict, Optional, Tuple
+from typing import cast, Dict, List, Optional, Tuple
 
 from tm_devices.commands import AWG70KAMixin
 from tm_devices.drivers.device import family_base_class
@@ -73,18 +75,24 @@ class AWG70KAChannel(AWGChannel):
 class AWG70KA(AWG70KAMixin, AWG):
     """AWG70KA device driver."""
 
+    sample_waveform_set_file = (
+        "C:\\Program Files\\Tektronix\\AWG70000\\Samples\\AWG5k7k Predefined Waveforms.awgx"
+    )
+
     _DEVICE_CONSTANTS = AWGSourceDeviceConstants(
         memory_page_size=1,
         memory_max_record_length=2000000000,
         memory_min_record_length=1,
     )
-    sample_waveform_set_file = (
-        "C:\\Program Files\\Tektronix\\AWG70000\\Samples\\AWG5k7k Predefined Waveforms.awgx"
-    )
 
     ################################################################################################
     # Properties
     ################################################################################################
+    @property
+    def point_byte_length(self) -> int:
+        """The number of bytes representing a single waveform point."""
+        return 4
+
     @ReadOnlyCachedProperty
     def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
         """Mapping of channel names to AWGChannel objects."""
@@ -118,6 +126,45 @@ class AWG70KA(AWG70KAMixin, AWG):
                 (The default is defined in the ``sample_wave_file`` attribute).
         """
         self._load_waveform_or_set(waveform_set_file=waveform_set_file, waveform_name=waveform_name)
+
+    def send_waveform_points(self, points: List[float], waveform_name: str) -> None:  # pylint: disable=too-many-locals
+        """Send the provided points to the device and store as a waveform.
+
+        Args:
+            points: The list of points that represent the waveform.
+            waveform_name: The waveform name to store the points as.
+        """
+        if not all(-1 <= point <= 1 for point in points):
+            invalid_point_message = "All points must be between -1 and 1 (inclusive)."
+            raise ValueError(invalid_point_message)
+        num_points = len(points)
+        self.write(f'WLIST:WAVEFORM:NEW "{waveform_name}", {num_points}')
+        buffer = (
+            f"WLIST:WAVEFORM:DATA "
+            f'"{waveform_name}",0,{num_points},'
+            f"#{len(str(num_points * self.point_byte_length))}{num_points * self.point_byte_length}"
+        )
+        self.write(buffer)
+        for point in points:
+            if not point:
+                buffer += "".join([chr(0)] * 4)
+            else:
+                inverse_bit = 2**31 if point < 0 else 0
+                # use log base 2 to find exponent and leftover floating point
+                floating_point, integer = math.modf(-math.log(abs(point), 2))
+                leftover = 2 ** (1 - floating_point) - 1
+                # split at 23rd bit
+                bit_shift = 2**23
+                # bitshift both by 23
+                floating_byte = int(leftover * bit_shift)
+                shifted_integer = int(127 - (integer + 1)) * bit_shift
+                # append all information
+                data = inverse_bit + shifted_integer + floating_byte
+                # extract each 8 bit block and encode as ASCII
+                output_bytes = [chr((data >> (i * 8)) & 0b11111111) for i in range(4)]
+                buffer += "".join(output_bytes)
+        buffer += "\r\n"
+        self.write_raw(buffer.encode("latin-1"))
 
     def set_waveform_properties(
         self,

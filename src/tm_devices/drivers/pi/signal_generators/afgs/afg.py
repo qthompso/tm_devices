@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Dict, Literal, Optional, Tuple, Type
+from typing import Dict, List, Literal, Optional, Tuple, Type
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
@@ -134,6 +134,11 @@ class AFG(SignalGenerator, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
+    @property
+    def point_byte_length(self) -> int:
+        """The number of bytes representing a single waveform point."""
+        return 2
+
     @ReadOnlyCachedProperty
     def source_channel(self) -> "MappingProxyType[str, AFGChannel]":
         """Mapping of channel names to AFGChannel objects."""
@@ -275,6 +280,26 @@ class AFG(SignalGenerator, ABC):
         """Generate a burst of waveforms by forcing trigger."""
         self.write("*TRG")
         self.expect_esr(0)
+
+    def send_waveform_points(self, points: List[float]) -> None:
+        """Send the provided points to the device and store as a waveform.
+
+        Args:
+            points: The list of points that represent the waveform.
+        """
+        if not all(-1 <= point <= 1 for point in points):
+            invalid_point_message = "All points must be between -1 and 1 (inclusive)."
+            raise ValueError(invalid_point_message)
+        num_points = len(points)
+        buffer = (
+            f"DATA:DATA EMEM,"
+            f"#{len(str(num_points * self.point_byte_length))}{num_points * self.point_byte_length}"
+        )
+        self.write(buffer)
+        for point in points:
+            data = int(((point + 1) / 2) * ((2**14) - 2))
+            buffer += chr((data >> 7) & 0b1111111)
+            buffer += chr(data & 0b1111111)
 
     def set_waveform_properties(  # noqa: PLR0913
         self,

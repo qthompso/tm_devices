@@ -150,6 +150,11 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
+    @property
+    def point_byte_length(self) -> int:
+        """The number of bytes representing a single waveform point."""
+        return 2
+
     @ReadOnlyCachedProperty
     def source_channel(self) -> "MappingProxyType[str, AWGChannel]":  # pragma: no cover
         """Mapping of channel names to AWGChannel objects."""
@@ -305,6 +310,30 @@ class AWG(SignalGenerator, ABC):
     def generate_burst(self) -> None:
         """Generate a burst of waveforms by forcing trigger."""
         raise NotImplementedError
+
+    def send_waveform_points(self, points: List[float], waveform_name: str) -> None:
+        """Send the provided points to the device and store as a waveform.
+
+        Args:
+            points: The list of points that represent the waveform.
+            waveform_name: The waveform name to store the points as.
+        """
+        if not all(-1 <= point <= 1 for point in points):
+            invalid_point_message = "All points must be between -1 and 1 (inclusive)."
+            raise ValueError(invalid_point_message)
+        num_points = len(points)
+        self.write(f'WLIST:WAVEFORM:NEW "{waveform_name}",{num_points},INTEGER')
+        buffer = (
+            f"WLIST:WAVEFORM:DATA "
+            f'"{waveform_name}",0,{num_points},'
+            f"#{len(str(num_points * self.point_byte_length))}{num_points * self.point_byte_length}"
+        )
+        self.write(buffer)
+        for point in points:
+            data = int(((point + 1) / 2) * ((2**15) - 1))
+            output_bytes = [chr((data >> (i * 7)) & 0b1111111) for i in range(2)]
+            buffer += "".join(output_bytes)
+        self.write(buffer)
 
     def set_waveform_properties(
         self,
