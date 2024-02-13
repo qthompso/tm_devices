@@ -300,7 +300,7 @@ class AWG5200(AWG5200Mixin, AWG):
                 (The default is defined in the ``sample_wave_file`` attribute).
             waveform_name: The waveform name to load from the waveform set file.
         """
-        # This function is identical to the one in AWG70k's
+        # This function is identical to the one in the AWG70KA.
         if not waveform_set_file:
             waveform_set_file = self.sample_waveform_set_file
         waveform_file_type = Path(waveform_set_file).suffix.lower()
