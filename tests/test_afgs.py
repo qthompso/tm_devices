@@ -17,11 +17,12 @@ from tm_devices.drivers.pi.signal_generators.afgs.afg import (
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
-def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
+def test_afg3k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:  # noqa: PLR0915  # pylint: disable=too-many-locals
     """Test the AFG3KC driver.
 
     Args:
         device_manager: The DeviceManager object.
+        capsys: The pytest capture fixture.
     """
     afg3252c = device_manager.add_afg(
         "afg3252c-hostname", alias="afg3252c", connection_type="SOCKET", port=10001
@@ -184,6 +185,23 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
 
     with pytest.raises(ValueError, match="Output state value must be 0 or 1."):
         afg3252c.source_channel["SOURCE1"].set_state(-1)
+
+    _ = capsys.readouterr().out  # throw away stdout
+    afg3252c.source_channel["SOURCE1"].set_impedance(1)
+    std_out = capsys.readouterr().out
+    assert "OUTPUT1:IMPEDANCE MINIMUM" in std_out
+
+    afg3252c.source_channel["SOURCE1"].set_impedance(10000)
+    impedance_query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
+    assert impedance_query_value == "MAXIMUM"
+
+    afg3252c.source_channel["SOURCE1"].set_impedance(1.0e6)
+    std_out = capsys.readouterr().out
+    assert "OUTPUT1:IMPEDANCE INFINITY" in std_out
+
+    afg3252c.source_channel["SOURCE1"].set_impedance(5000)
+    impedance_query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
+    assert int(impedance_query_value) == 5000
 
 
 def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:

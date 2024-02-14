@@ -252,7 +252,7 @@ def test_awg5k_gen_waveform(device_manager: DeviceManager) -> None:
     )
 
 
-def test_afg3k_gen_waveform(
+def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
     device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Test generate waveform for AWG3k.
@@ -290,7 +290,8 @@ def test_afg3k_gen_waveform(
         termination="HIGHZ",
     )
     afg3kc.generate_burst()
-    assert "OUTPUT1:IMPEDANCE INFINITY" in capsys.readouterr().out
+    impedance_query_value = afg3kc.query("OUTPUT1:IMPEDANCE?")
+    assert impedance_query_value == "INFINITY"
     source1_frequency = afg3kc.query("SOURCE1:FREQUENCY:FIXED?")
     assert float(source1_frequency) == 25e6
     source1_offset = afg3kc.query("SOURCE1:VOLTAGE:OFFSET?")

@@ -95,6 +95,28 @@ class AFGChannel:
         """
         self._afg.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
 
+    def set_impedance(self, value: float) -> None:
+        """Set the impedance on the source channel.
+
+        The PI command ``OUTPut[1|2]:IMPedance`` accepts a float argument or one of the following
+        text arguments: INFinity|MINimum|MAXimum. However, this function only accepts floats.
+        The following is the mapping between the text value to its respective float value.
+
+            INFinity = 1.0e+6 ohms
+            MINimum  = 1 ohm
+            MAXimum  = 10,000 ohms
+
+        Args:
+            value: The impedance value in ohms.
+        """
+        impedance_mapping = {
+            1.0e6: "INFINITY",
+            1: "MINIMUM",
+            10000: "MAXIMUM",
+        }
+        impedance_value = impedance_mapping.get(value, value)
+        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", impedance_value)
+
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the offset on the source channel.
 
@@ -320,9 +342,9 @@ class AFG(SignalGenerator, ABC):
         }
         # Termination
         if termination == "FIFTY":
-            self.set_if_needed(f"OUTPUT{source_channel.num}:IMPEDANCE", 50)
+            source_channel.set_impedance(50)
         elif termination == "HIGHZ":
-            self.write(f"OUTPUT{source_channel.num}:IMPEDANCE INFINITY")
+            source_channel.set_impedance(1.0e6)
         else:  # pragma: no cover
             # if termination is MAXIMUM or MINIMUM or INFINITY
             self.set_if_needed(f"OUTPUT{source_channel.num}:IMPEDANCE", termination)
