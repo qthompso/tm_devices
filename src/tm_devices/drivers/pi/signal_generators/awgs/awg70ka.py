@@ -171,7 +171,7 @@ class AWG70KA(AWG70KAMixin, AWG):
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
 
         rates = ["50", "25", "16", "08"]
-        max_sample_rate = next(rate for rate in rates if rate in self.opt_string)
+        max_sample_rate = [rate for rate in rates if rate in self.opt_string][0]  # noqa: RUF015
         # first digit indicates the number of channels, second and third indicate sample rate (GHz)
         # option 150 would be a one channel source with 50 GHz sample rate
         sample_rate_range = ParameterBounds(lower=1.5e3, upper=int(max_sample_rate) * 1.0e9)
