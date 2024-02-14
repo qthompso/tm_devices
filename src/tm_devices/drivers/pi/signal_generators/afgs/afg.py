@@ -17,8 +17,8 @@ from tm_devices.helpers import (
     DeviceTypes,
     LoadImpedanceAFG,
     ReadOnlyCachedProperty,
-    SignalSourceFunctionsAFG,
-    SignalSourceOutputPathsBase,
+    SignalGeneratorFunctionsAFG,
+    SignalGeneratorOutputPathsBase,
 )
 
 
@@ -26,7 +26,7 @@ from tm_devices.helpers import (
 class AFGSourceDeviceConstants(SourceDeviceConstants):
     """Class to hold source device constants."""
 
-    functions: Type[SignalSourceFunctionsAFG] = SignalSourceFunctionsAFG
+    functions: Type[SignalGeneratorFunctionsAFG] = SignalGeneratorFunctionsAFG
 
 
 class AFGChannel:
@@ -87,7 +87,7 @@ class AFGChannel:
             percentage=percentage,
         )
 
-    def set_function(self, value: SignalSourceFunctionsAFG) -> None:
+    def set_function(self, value: SignalGeneratorFunctionsAFG) -> None:
         """Set the function on the source channel.
 
         Args:
@@ -171,11 +171,11 @@ class AFG(SignalGenerator, ABC):
     def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
-        function: SignalSourceFunctionsAFG,
+        function: SignalGeneratorFunctionsAFG,
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -225,7 +225,7 @@ class AFG(SignalGenerator, ABC):
                     burst_state = True
             if (
                 self.total_channels > 1  # pylint: disable=comparison-with-callable
-                and function.value != SignalSourceFunctionsAFG.DC.value
+                and function.value != SignalGeneratorFunctionsAFG.DC.value
                 and not burst_state
             ):
                 # Initiate a phase sync (between CH 1 and CH 2 output waveforms on two channel AFGs)
@@ -236,11 +236,11 @@ class AFG(SignalGenerator, ABC):
     def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
-        function: SignalSourceFunctionsAFG,
+        function: SignalGeneratorFunctionsAFG,
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -290,7 +290,7 @@ class AFG(SignalGenerator, ABC):
     def set_waveform_properties(  # noqa: PLR0913
         self,
         frequency: float,
-        function: SignalSourceFunctionsAFG,
+        function: SignalGeneratorFunctionsAFG,
         amplitude: float,
         offset: float,
         source_channel: AFGChannel,
@@ -330,13 +330,13 @@ class AFG(SignalGenerator, ABC):
         source_channel.set_frequency(frequency, tolerance=2, percentage=True)
         # Offset
         source_channel.set_offset(offset, tolerance=0.01)
-        if function == SignalSourceFunctionsAFG.PULSE:
+        if function == SignalGeneratorFunctionsAFG.PULSE:
             # Duty cycle is only valid for pulse
             self.set_if_needed(f"{source_channel.name}:PULSE:DCYCLE", duty_cycle)
         # Polarity
         self.set_if_needed(f"OUTPUT{source_channel.num}:POLARITY", polarity_mapping[polarity])
         # Function
-        if function == SignalSourceFunctionsAFG.RAMP:
+        if function == SignalGeneratorFunctionsAFG.RAMP:
             self.set_if_needed(f"{source_channel.name}:FUNCTION:RAMP:SYMMETRY", symmetry)
         source_channel.set_function(function)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
@@ -346,10 +346,10 @@ class AFG(SignalGenerator, ABC):
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
-        function: Optional[SignalSourceFunctionsAFG] = None,
+        function: Optional[SignalGeneratorFunctionsAFG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -400,7 +400,7 @@ class AFG(SignalGenerator, ABC):
     @abstractmethod
     def _get_series_specific_constraints(
         self,
-        function: SignalSourceFunctionsAFG,
+        function: SignalGeneratorFunctionsAFG,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,

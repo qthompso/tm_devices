@@ -20,9 +20,9 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ExtendedSourceDeviceConstants,
     ParameterBounds,
-    SignalSourceFunctionsAWG,
+    SignalGeneratorFunctionsAWG,
 )
-from tm_devices.helpers import SignalSourceOutputPaths5200, SignalSourceOutputPathsNon5200
+from tm_devices.helpers import SignalGeneratorOutputPaths5200, SignalGeneratorOutputPathsNon5200
 
 
 def check_constraints(
@@ -82,7 +82,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         memory_min_record_length=1,
     )
     assert awg520050.opt_string == "50,SEQ"
-    awg520050_constraints = awg520050.get_waveform_constraints(SignalSourceFunctionsAWG.SIN)
+    awg520050_constraints = awg520050.get_waveform_constraints(SignalGeneratorFunctionsAWG.SIN)
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
     assert awg520050_constraints == ExtendedSourceDeviceConstants(
@@ -96,7 +96,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
     )
 
     awg520050_constraints = awg520050.get_waveform_constraints(
-        SignalSourceFunctionsAWG.SIN,
+        SignalGeneratorFunctionsAWG.SIN,
         output_signal_path=awg520050.OutputSignalPath.DCHV,
     )
     min_smaple_50 = 300.0
@@ -182,7 +182,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
     length_range = ParameterBounds(lower=10, upper=1000)
     min_smaple = 1.5e3
     awg_list = [awg70ka150, awg70ka225, awg70ka216, awg70kb208]
-    output_path: Optional[SignalSourceOutputPathsNon5200] = None
+    output_path: Optional[SignalGeneratorOutputPathsNon5200] = None
     for awg in awg_list:
         option = awg.alias[-3:]
         assert awg.opt_string == option
@@ -193,7 +193,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
             offset_range = ParameterBounds(lower=-0.4, upper=0.8)
 
         constraints = awg.get_waveform_constraints(
-            SignalSourceFunctionsAWG.RAMP,
+            SignalGeneratorFunctionsAWG.RAMP,
             output_signal_path=output_path,
         )
 
@@ -211,7 +211,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
     # Invalid output signal path.
     with pytest.raises(ValueError, match="DCHB is an invalid output signal path for AWG70001."):
         awg70ka150.source_channel["SOURCE1"].set_output_signal_path(
-            SignalSourceOutputPaths5200.DCHB
+            SignalGeneratorOutputPaths5200.DCHB
         )
 
     # Set default output signal path (will try DCA and succeed).
@@ -222,7 +222,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
     # Set output signal path to DIR.
     awg70ka150.source_channel["SOURCE1"].set_output_signal_path(awg70ka150.OutputSignalPath.DIR)
     output_path_query = awg70ka150.query("OUTPUT1:PATH?")
-    assert output_path_query == SignalSourceOutputPathsNon5200.DIR.value
+    assert output_path_query == SignalGeneratorOutputPathsNon5200.DIR.value
     # Cannot set offset with output signal path set to DIR.
     with pytest.raises(
         ValueError,
@@ -239,7 +239,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
     # DCA as output signal path.
     awg70ka150.source_channel["SOURCE1"].set_output_signal_path(awg70ka150.OutputSignalPath.DCA)
     output_path_query = awg70ka150.query("OUTPUT1:PATH?")
-    assert output_path_query == SignalSourceOutputPathsNon5200.DCA.value
+    assert output_path_query == SignalGeneratorOutputPathsNon5200.DCA.value
     awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
     offset = float(awg70ka150.query("SOURCE1:VOLTAGE:OFFSET?"))
     assert offset == 0.1
@@ -284,7 +284,7 @@ def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-ma
     length_range = ParameterBounds(lower=10, upper=1000)
     awg_list = [awg7k01, awg7k06, awg7kb02, awg7kb01, awg7kc06, awg7kc01]
 
-    output_path: Optional[SignalSourceOutputPathsNon5200] = None
+    output_path: Optional[SignalGeneratorOutputPathsNon5200] = None
     for awg in awg_list:
         option = awg.alias[-2:]
         assert awg.opt_string == option
@@ -303,7 +303,7 @@ def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-ma
             ampl_range = ParameterBounds(lower=50.0e-3, upper=2.0)
 
         constraints = awg.get_waveform_constraints(
-            SignalSourceFunctionsAWG.TRIANGLE,
+            SignalGeneratorFunctionsAWG.TRIANGLE,
             output_signal_path=output_path,
         )
         output_path = awg.OutputSignalPath.DIR
@@ -333,7 +333,7 @@ def test_awg5k(device_manager: DeviceManager) -> None:
     for awg in awg_list:
         sample_range = ParameterBounds(lower=10.0e6, upper=int(awg.model[5]) * 600.0e6 + 600.0e6)
 
-        constraints = awg.get_waveform_constraints(SignalSourceFunctionsAWG.CLOCK)
+        constraints = awg.get_waveform_constraints(SignalGeneratorFunctionsAWG.CLOCK)
 
         check_constraints(
             constraints,
@@ -345,7 +345,7 @@ def test_awg5k(device_manager: DeviceManager) -> None:
 
     # With DIR output signal path.
     constraints = awg5k.get_waveform_constraints(
-        SignalSourceFunctionsAWG.CLOCK, output_signal_path=awg5k.OutputSignalPath.DIR
+        SignalGeneratorFunctionsAWG.CLOCK, output_signal_path=awg5k.OutputSignalPath.DIR
     )
     sample_range = ParameterBounds(lower=10.0e6, upper=int(awg5k.model[5]) * 600.0e6 + 600.0e6)
     offset_range = ParameterBounds(lower=0, upper=0)

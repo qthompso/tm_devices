@@ -12,7 +12,7 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
 )
 from tm_devices.helpers import (
     ReadOnlyCachedProperty,
-    SignalSourceOutputPathsBase,
+    SignalGeneratorOutputPathsBase,
 )
 
 
@@ -47,7 +47,9 @@ class AWG5KChannel(AWGChannel):
             )
             raise ValueError(offset_error)
 
-    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(
+        self, value: Optional[SignalGeneratorOutputPathsBase] = None
+    ) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -93,7 +95,7 @@ class AWG5K(AWG5KMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_signal_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_signal_path:

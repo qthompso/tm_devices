@@ -6,7 +6,7 @@ from tm_devices.drivers.pi.signal_generators.afgs.afg3k import (
     AFGSourceDeviceConstants,
     LoadImpedanceAFG,
     ParameterBounds,
-    SignalSourceFunctionsAFG,
+    SignalGeneratorFunctionsAFG,
 )
 
 
@@ -54,7 +54,7 @@ class AFG31K(AFG):
     # pylint: disable=too-many-locals
     def _get_series_specific_constraints(
         self,
-        function: SignalSourceFunctionsAFG,
+        function: SignalGeneratorFunctionsAFG,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
@@ -102,13 +102,13 @@ class AFG31K(AFG):
 
         square_mult, other_mult, arb_mult = self._get_driver_specific_multipliers(model_number)
         low_freq_range = 1.0e-6
-        if function.name in {SignalSourceFunctionsAFG.SIN.name}:
+        if function.name in {SignalGeneratorFunctionsAFG.SIN.name}:
             high_freq_range = model_multiplier * freq_base
-        elif function.name == SignalSourceFunctionsAFG.ARBITRARY.name:
+        elif function.name == SignalGeneratorFunctionsAFG.ARBITRARY.name:
             high_freq_range = model_multiplier * arb_mult * freq_base
         elif function.name in {
-            SignalSourceFunctionsAFG.PULSE.name,
-            SignalSourceFunctionsAFG.SQUARE.name,
+            SignalGeneratorFunctionsAFG.PULSE.name,
+            SignalGeneratorFunctionsAFG.SQUARE.name,
         }:
             high_freq_range = model_multiplier * square_mult * freq_base
         else:

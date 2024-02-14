@@ -19,9 +19,9 @@ from tm_devices.helpers import (
     DeviceTypes,
     LoadImpedanceAFG,
     ReadOnlyCachedProperty,
-    SignalSourceFunctionsAWG,
-    SignalSourceOutputPathsBase,
-    SignalSourceOutputPathsNon5200,
+    SignalGeneratorFunctionsAWG,
+    SignalGeneratorOutputPathsBase,
+    SignalGeneratorOutputPathsNon5200,
 )
 
 
@@ -29,7 +29,7 @@ from tm_devices.helpers import (
 class AWGSourceDeviceConstants(SourceDeviceConstants):
     """Class to hold source device constants."""
 
-    functions: Type[SignalSourceFunctionsAWG] = SignalSourceFunctionsAWG
+    functions: Type[SignalGeneratorFunctionsAWG] = SignalGeneratorFunctionsAWG
 
 
 @family_base_class
@@ -126,7 +126,9 @@ class AWGChannel(ExtendableMixin):
             raise ValueError(error_message)
         self._awg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
 
-    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(
+        self, value: Optional[SignalGeneratorOutputPathsBase] = None
+    ) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -146,7 +148,7 @@ class AWGChannel(ExtendableMixin):
 class AWG(SignalGenerator, ABC):
     """Base AWG device driver."""
 
-    OutputSignalPath = SignalSourceOutputPathsNon5200
+    OutputSignalPath = SignalGeneratorOutputPathsNon5200
 
     _DEVICE_TYPE = DeviceTypes.AWG.value
     _PRE_DEFINED_SIGNAL_RECORD_LENGTH_SIN: ClassVar[List[int]] = [3600, 1000, 960, 360, 100, 36, 10]
@@ -200,11 +202,11 @@ class AWG(SignalGenerator, ABC):
     def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
-        function: SignalSourceFunctionsAWG,
+        function: SignalGeneratorFunctionsAWG,
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -247,7 +249,7 @@ class AWG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
@@ -285,11 +287,11 @@ class AWG(SignalGenerator, ABC):
     def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
-        function: SignalSourceFunctionsAWG,
+        function: SignalGeneratorFunctionsAWG,
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -320,7 +322,7 @@ class AWG(SignalGenerator, ABC):
     def set_waveform_properties(
         self,
         source_channel: AWGChannel,
-        output_signal_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
@@ -345,10 +347,10 @@ class AWG(SignalGenerator, ABC):
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
-        function: Optional[SignalSourceFunctionsAWG] = None,
+        function: Optional[SignalGeneratorFunctionsAWG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -368,12 +370,12 @@ class AWG(SignalGenerator, ABC):
 
         if function and not waveform_length:
             func_sample_rate_lookup: Dict[str, ParameterBounds] = {
-                SignalSourceFunctionsAWG.SIN.name: ParameterBounds(lower=10, upper=3600),
-                SignalSourceFunctionsAWG.CLOCK.name: ParameterBounds(lower=960, upper=960),
-                SignalSourceFunctionsAWG.SQUARE.name: ParameterBounds(lower=10, upper=1000),
-                SignalSourceFunctionsAWG.RAMP.name: ParameterBounds(lower=10, upper=1000),
-                SignalSourceFunctionsAWG.TRIANGLE.name: ParameterBounds(lower=10, upper=1000),
-                SignalSourceFunctionsAWG.DC.name: ParameterBounds(lower=1000, upper=1000),
+                SignalGeneratorFunctionsAWG.SIN.name: ParameterBounds(lower=10, upper=3600),
+                SignalGeneratorFunctionsAWG.CLOCK.name: ParameterBounds(lower=960, upper=960),
+                SignalGeneratorFunctionsAWG.SQUARE.name: ParameterBounds(lower=10, upper=1000),
+                SignalGeneratorFunctionsAWG.RAMP.name: ParameterBounds(lower=10, upper=1000),
+                SignalGeneratorFunctionsAWG.TRIANGLE.name: ParameterBounds(lower=10, upper=1000),
+                SignalGeneratorFunctionsAWG.DC.name: ParameterBounds(lower=1000, upper=1000),
             }
             slowest_frequency = (
                 sample_rate_range.lower / func_sample_rate_lookup[function.name].upper
@@ -405,8 +407,8 @@ class AWG(SignalGenerator, ABC):
     def _get_predefined_waveform_name(
         self,
         frequency: float,
-        function: SignalSourceFunctionsAWG,
-        output_signal_path: Optional[SignalSourceOutputPathsBase],
+        function: SignalGeneratorFunctionsAWG,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
         symmetry: Optional[float] = 50.0,
     ) -> Tuple[str, float]:
         """Get the predefined waveform name for the provided function.
@@ -419,13 +421,13 @@ class AWG(SignalGenerator, ABC):
         """
         if function == function.RAMP and symmetry == 50:  # noqa: PLR2004
             function = function.TRIANGLE
-        if function != SignalSourceFunctionsAWG.DC and not function.value.startswith("*"):
+        if function != SignalGeneratorFunctionsAWG.DC and not function.value.startswith("*"):
             device_constraints = self.get_waveform_constraints(
                 function=function, frequency=frequency, output_signal_path=output_signal_path
             )
-            if function == SignalSourceFunctionsAWG.SIN:
+            if function == SignalGeneratorFunctionsAWG.SIN:
                 premade_signal_rl = self._PRE_DEFINED_SIGNAL_RECORD_LENGTH_SIN
-            elif function == SignalSourceFunctionsAWG.CLOCK:
+            elif function == SignalGeneratorFunctionsAWG.CLOCK:
                 premade_signal_rl = self._PRE_DEFINED_SIGNAL_RECORD_LENGTH_CLOCK
             else:
                 premade_signal_rl = self._PRE_DEFINED_SIGNAL_RECORD_LENGTH_DEFAULT
@@ -457,7 +459,7 @@ class AWG(SignalGenerator, ABC):
     @abstractmethod
     def _get_series_specific_constraints(
         self,
-        output_signal_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         raise NotImplementedError
 
