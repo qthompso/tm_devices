@@ -16,9 +16,9 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
 from tm_devices.helpers import (
     ReadOnlyCachedProperty,
     SASSetWaveformFileTypes,
-    SignalSourceFunctionsAWG,
-    SignalSourceOutputPaths5200,
-    SignalSourceOutputPathsBase,
+    SignalGeneratorFunctionsAWG,
+    SignalGeneratorOutputPaths5200,
+    SignalGeneratorOutputPathsBase,
 )
 
 
@@ -68,7 +68,9 @@ class AWG5200Channel(AWGChannel):
             percentage=percentage,
         )
 
-    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(
+        self, value: Optional[SignalGeneratorOutputPathsBase] = None
+    ) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -88,7 +90,7 @@ class AWG5200Channel(AWGChannel):
 class AWG5200(AWG5200Mixin, AWG):
     """AWG5200 device driver."""
 
-    OutputSignalPath = SignalSourceOutputPaths5200
+    OutputSignalPath = SignalGeneratorOutputPaths5200
 
     _DEVICE_CONSTANTS = AWGSourceDeviceConstants(
         memory_page_size=1,
@@ -139,11 +141,11 @@ class AWG5200(AWG5200Mixin, AWG):
     def generate_function(  # noqa: PLR0913
         self,
         frequency: float,
-        function: SignalSourceFunctionsAWG,
+        function: SignalGeneratorFunctionsAWG,
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -186,7 +188,7 @@ class AWG5200(AWG5200Mixin, AWG):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
@@ -234,7 +236,7 @@ class AWG5200(AWG5200Mixin, AWG):
     def set_waveform_properties(
         self,
         source_channel: AWGChannel,
-        output_signal_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
@@ -267,7 +269,7 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_signal_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_signal_path:

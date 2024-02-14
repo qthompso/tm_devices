@@ -7,12 +7,12 @@ from typing import Literal, NamedTuple, Optional, Type, TypeVar
 from tm_devices.driver_mixins.class_extension_mixin import ExtendableMixin
 from tm_devices.helpers.enums import (
     LoadImpedanceAFG,
-    SignalSourceFunctionBase,
-    SignalSourceOutputPathsBase,
+    SignalGeneratorFunctionBase,
+    SignalGeneratorOutputPathsBase,
 )
 
 _SourceDeviceTypeVar = TypeVar("_SourceDeviceTypeVar", bound="SourceDeviceConstants")
-_SignalSourceTypeVar = TypeVar("_SignalSourceTypeVar", bound=SignalSourceFunctionBase)
+_SignalSourceTypeVar = TypeVar("_SignalSourceTypeVar", bound=SignalGeneratorFunctionBase)
 
 
 class ParameterBounds(NamedTuple):
@@ -42,7 +42,7 @@ class SourceDeviceConstants:
     memory_page_size: int
     memory_max_record_length: int
     memory_min_record_length: int
-    functions: Type[SignalSourceFunctionBase]
+    functions: Type[SignalGeneratorFunctionBase]
 
 
 class SignalGeneratorMixin(ExtendableMixin, ABC):
@@ -58,7 +58,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         Raises:
             TypeError: Tells the user that they are using an incorrect function type.
         """
-        if not issubclass(type(function), SignalSourceFunctionBase):
+        if not issubclass(type(function), SignalGeneratorFunctionBase):
             msg = (
                 "Generate Waveform does not accept functions as non Enums. "
                 "Please use 'source_device_constants.functions'."
@@ -81,7 +81,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -111,7 +111,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -143,7 +143,7 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
     @abstractmethod
     def get_waveform_constraints(
         self,
-        function: Optional[SignalSourceFunctionBase] = None,
+        function: Optional[SignalGeneratorFunctionBase] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
         output_signal_path: str = "DIR",

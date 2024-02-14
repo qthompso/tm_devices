@@ -45,8 +45,8 @@ from tm_devices.helpers import (
     DeviceConfigEntry,
     LoadImpedanceAFG,
     ReadOnlyCachedProperty,
-    SignalSourceFunctionsIAFG,
-    SignalSourceOutputPathsBase,
+    SignalGeneratorFunctionsIAFG,
+    SignalGeneratorOutputPathsBase,
 )
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
@@ -55,7 +55,7 @@ from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 class TekScopeSourceDeviceConstants(SourceDeviceConstants):
     """Class to hold source device constants."""
 
-    functions: Type[SignalSourceFunctionsIAFG] = SignalSourceFunctionsIAFG
+    functions: Type[SignalGeneratorFunctionsIAFG] = SignalGeneratorFunctionsIAFG
 
 
 @dataclass(frozen=True)
@@ -152,7 +152,7 @@ class InternalAFGChannel:
             raise ValueError(error_message)
         self._tekscope.set_if_needed("AFG:OUTPUT:STATE", value)
 
-    def set_function(self, value: SignalSourceFunctionsIAFG) -> None:
+    def set_function(self, value: SignalGeneratorFunctionsIAFG) -> None:
         """Set the function on the internal AFG.
 
         Args:
@@ -485,11 +485,11 @@ class TekScope(
     def generate_function(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
-        function: SignalSourceFunctionsIAFG,
+        function: SignalGeneratorFunctionsIAFG,
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -530,11 +530,11 @@ class TekScope(
     def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         frequency: float,
-        function: SignalSourceFunctionsIAFG,
+        function: SignalGeneratorFunctionsIAFG,
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -579,7 +579,7 @@ class TekScope(
     def set_waveform_properties(  # noqa: PLR0913
         self,
         frequency: float,
-        function: SignalSourceFunctionsIAFG,
+        function: SignalGeneratorFunctionsIAFG,
         amplitude: float,
         offset: float,
         burst_count: int = 0,
@@ -609,7 +609,7 @@ class TekScope(
         # Duty Cycle
         self.set_if_needed("AFG:SQUARE:DUTY", duty_cycle)
         # Function
-        if function == SignalSourceFunctionsIAFG.RAMP:
+        if function == SignalGeneratorFunctionsIAFG.RAMP:
             self.set_if_needed("AFG:RAMP:SYMMETRY", symmetry)
         self.internal_afg.set_function(function)
         # Termination impedance
@@ -620,10 +620,10 @@ class TekScope(
     # pylint: disable=too-many-locals
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
-        function: Optional[SignalSourceFunctionsIAFG] = None,
+        function: Optional[SignalGeneratorFunctionsIAFG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -681,25 +681,25 @@ class TekScope(
             )
         amplitude_multiplier = 1
 
-        if function in {SignalSourceFunctionsIAFG.SIN}:
+        if function in {SignalGeneratorFunctionsIAFG.SIN}:
             frequency_multiplier = 1
         elif function in {
-            SignalSourceFunctionsIAFG.SQUARE,
-            SignalSourceFunctionsIAFG.PULSE,
-            SignalSourceFunctionsIAFG.ARBITRARY,
+            SignalGeneratorFunctionsIAFG.SQUARE,
+            SignalGeneratorFunctionsIAFG.PULSE,
+            SignalGeneratorFunctionsIAFG.ARBITRARY,
         }:
             frequency_multiplier = 0.5
-        elif function in {SignalSourceFunctionsIAFG.SINC}:
+        elif function in {SignalGeneratorFunctionsIAFG.SINC}:
             frequency_multiplier = 0.04
             amplitude_multiplier = 0.6
         elif function in {
-            SignalSourceFunctionsIAFG.RAMP,
-            SignalSourceFunctionsIAFG.CARDIAC,
+            SignalGeneratorFunctionsIAFG.RAMP,
+            SignalGeneratorFunctionsIAFG.CARDIAC,
         }:
             frequency_multiplier = 0.01
         else:
             frequency_multiplier = 0.1
-            amplitude_multiplier = 0.5 if function != SignalSourceFunctionsIAFG.LORENTZ else 0.48
+            amplitude_multiplier = 0.5 if function != SignalGeneratorFunctionsIAFG.LORENTZ else 0.48
 
         frequency_range = ParameterBounds(
             lower=base_frequency_low, upper=base_frequency_high * frequency_multiplier

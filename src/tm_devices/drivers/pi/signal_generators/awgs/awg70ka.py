@@ -14,7 +14,7 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
 from tm_devices.helpers import (
     ReadOnlyCachedProperty,
     SASSetWaveformFileTypes,
-    SignalSourceOutputPathsBase,
+    SignalGeneratorOutputPathsBase,
 )
 
 
@@ -35,7 +35,9 @@ class AWG70KAChannel(AWGChannel):
             f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage, opc=True
         )
 
-    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(
+        self, value: Optional[SignalGeneratorOutputPathsBase] = None
+    ) -> None:
         """Set the output signal path on the source channel.
 
         Can only set the output signal path to DCA when an MDC4500 is connected to the AWG70K.
@@ -122,7 +124,7 @@ class AWG70KA(AWG70KAMixin, AWG):
     def set_waveform_properties(
         self,
         source_channel: AWGChannel,
-        output_signal_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
@@ -155,7 +157,7 @@ class AWG70KA(AWG70KAMixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_signal_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
         if not output_signal_path:

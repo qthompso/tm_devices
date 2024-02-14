@@ -12,7 +12,7 @@ from tm_devices.drivers.pi.signal_generators.afgs.afg import (
     AFGSourceDeviceConstants,
     ExtendedSourceDeviceConstants,
     ParameterBounds,
-    SignalSourceFunctionsAFG,
+    SignalGeneratorFunctionsAFG,
 )
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
@@ -83,7 +83,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
 
     afg3051 = device_manager.add_afg("afg3051-hostname", alias="afg3051")
 
-    afg3051_constraints = afg3051.get_waveform_constraints(SignalSourceFunctionsAFG.RAMP)
+    afg3051_constraints = afg3051.get_waveform_constraints(SignalGeneratorFunctionsAFG.RAMP)
 
     assert afg3051_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
@@ -97,7 +97,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
 
     afg3011c = device_manager.add_afg("afg3011c-hostname", alias="afg3011c")
 
-    afg3011c_constraints = afg3011c.get_waveform_constraints(SignalSourceFunctionsAFG.SIN)
+    afg3011c_constraints = afg3011c.get_waveform_constraints(SignalGeneratorFunctionsAFG.SIN)
 
     assert afg3011c_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=40.0e-3, upper=40.0),
@@ -111,7 +111,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
 
     afg3021c = device_manager.add_afg("afg3021c-hostname", alias="afg3021c")
 
-    afg3021c_constraints = afg3021c.get_waveform_constraints(SignalSourceFunctionsAFG.SQUARE)
+    afg3021c_constraints = afg3021c.get_waveform_constraints(SignalGeneratorFunctionsAFG.SQUARE)
 
     assert afg3021c_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
@@ -125,7 +125,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
 
     afg3052c = device_manager.add_afg("afg3052c-hostname", alias="afg3052c")
 
-    afg3052c_constraints = afg3052c.get_waveform_constraints(SignalSourceFunctionsAFG.RAMP)
+    afg3052c_constraints = afg3052c.get_waveform_constraints(SignalGeneratorFunctionsAFG.RAMP)
 
     assert afg3052c_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=20.0e-3, upper=20.0),
@@ -140,7 +140,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     afg3101c = device_manager.add_afg("afg3101c-hostname", alias="afg3101c")
 
     afg3101c_constraints = afg3101c.get_waveform_constraints(
-        SignalSourceFunctionsAFG.ARBITRARY, waveform_length=5_000
+        SignalGeneratorFunctionsAFG.ARBITRARY, waveform_length=5_000
     )
 
     assert afg3101c_constraints == ExtendedSourceDeviceConstants(
@@ -155,7 +155,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
 
     afg3151c = device_manager.add_afg("afg3151c-hostname", alias="afg3151c")
 
-    afg3151c_constraints = afg3151c.get_waveform_constraints(SignalSourceFunctionsAFG.LORENTZ)
+    afg3151c_constraints = afg3151c.get_waveform_constraints(SignalGeneratorFunctionsAFG.LORENTZ)
 
     assert afg3151c_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=40.0e-3, upper=16.0),
@@ -167,7 +167,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
         ramp_symmetry_range=None,
     )
 
-    afg3252c_constraints = afg3252c.get_waveform_constraints(SignalSourceFunctionsAFG.SIN)
+    afg3252c_constraints = afg3252c.get_waveform_constraints(SignalGeneratorFunctionsAFG.SIN)
 
     assert afg3252c_constraints == ExtendedSourceDeviceConstants(
         amplitude_range=ParameterBounds(lower=100.0e-3, upper=8.0),
@@ -209,7 +209,7 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
     assert not afg31021.has_errors()
 
     afg31021_constraints = afg31021.get_waveform_constraints(
-        SignalSourceFunctionsAFG.SIN,
+        SignalGeneratorFunctionsAFG.SIN,
         waveform_length=16383,
         frequency=20.0e6,
     )
@@ -226,7 +226,7 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
 
     afg31051 = device_manager.add_afg("afg31051-hostname")
     afg31051_constraints = afg31051.get_waveform_constraints(
-        SignalSourceFunctionsAFG.SQUARE,
+        SignalGeneratorFunctionsAFG.SQUARE,
         waveform_length=16383,
         frequency=70.0e6,
     )
@@ -243,7 +243,7 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
 
     afg31101 = device_manager.add_afg("afg31101-hostname")
     afg31101_constraints = afg31101.get_waveform_constraints(
-        SignalSourceFunctionsAFG.RAMP,
+        SignalGeneratorFunctionsAFG.RAMP,
         frequency=90.0e6,
     )
 
@@ -259,7 +259,7 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
 
     afg31152 = device_manager.add_afg("afg31152-hostname")
     afg31152_constraints = afg31152.get_waveform_constraints(
-        SignalSourceFunctionsAFG.ARBITRARY,
+        SignalGeneratorFunctionsAFG.ARBITRARY,
         waveform_length=16383,
         frequency=0.5e6,
     )
@@ -276,7 +276,7 @@ def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str
 
     afg31251 = device_manager.add_afg("afg31251-hostname")
     afg31251_constraints = afg31251.get_waveform_constraints(
-        SignalSourceFunctionsAFG.SIN,
+        SignalGeneratorFunctionsAFG.SIN,
         frequency=210.0e6,
     )
 

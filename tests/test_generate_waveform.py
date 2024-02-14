@@ -6,7 +6,7 @@ import pytest
 
 from tm_devices import DeviceManager
 from tm_devices.drivers import AWG5K, AWG7K, AWG70KA, AWG5200, MSO5
-from tm_devices.helpers import SignalSourceOutputPaths5200, SignalSourceOutputPathsNon5200
+from tm_devices.helpers import SignalGeneratorOutputPaths5200, SignalGeneratorOutputPathsNon5200
 
 
 def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
@@ -57,7 +57,7 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_signal_path=SignalSourceOutputPathsNon5200.DIR,
+            output_signal_path=SignalGeneratorOutputPathsNon5200.DIR,
         )
 
 
@@ -174,7 +174,7 @@ def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
             1.2,
             0.2,
             channel="SOURCE1",
-            output_signal_path=SignalSourceOutputPaths5200.DCHB,
+            output_signal_path=SignalGeneratorOutputPaths5200.DCHB,
         )
 
     assert awg7k01.expect_esr(0)[0]

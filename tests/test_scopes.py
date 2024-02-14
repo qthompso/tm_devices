@@ -17,7 +17,7 @@ from tm_devices.drivers import MSO2, MSO5, MSO5B, MSO6, MSO70KDX, TekScopeSW
 from tm_devices.drivers.pi.scopes.tekscope.tekscope import (
     ExtendedSourceDeviceConstants,
     ParameterBounds,
-    SignalSourceFunctionsIAFG,
+    SignalGeneratorFunctionsIAFG,
     TekProbeData,
     TekScope,
     TekScopeChannel,
@@ -256,7 +256,7 @@ def test_iafg(device_manager: DeviceManager) -> None:
     """
     mso64: MSO6 = cast(MSO6, device_manager.add_scope("MSO64-HOSTNAME", alias="mso64"))
     mso64_constraints = mso64.get_waveform_constraints(
-        SignalSourceFunctionsIAFG.SIN,
+        SignalGeneratorFunctionsIAFG.SIN,
         frequency=25.0e6,
     )
 
@@ -271,7 +271,7 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     mso64_constraints = mso64.get_waveform_constraints(
-        SignalSourceFunctionsIAFG.SQUARE,
+        SignalGeneratorFunctionsIAFG.SQUARE,
         frequency=5.0e6,
     )
 
@@ -286,7 +286,7 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     mso64_constraints = mso64.get_waveform_constraints(
-        SignalSourceFunctionsIAFG.RAMP,
+        SignalGeneratorFunctionsIAFG.RAMP,
     )
 
     assert mso64_constraints == ExtendedSourceDeviceConstants(
@@ -300,7 +300,7 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     mso64_constraints = mso64.get_waveform_constraints(
-        SignalSourceFunctionsIAFG.SINC,
+        SignalGeneratorFunctionsIAFG.SINC,
     )
 
     assert mso64_constraints == ExtendedSourceDeviceConstants(
@@ -314,7 +314,7 @@ def test_iafg(device_manager: DeviceManager) -> None:
     )
 
     mso64_constraints = mso64.get_waveform_constraints(
-        SignalSourceFunctionsIAFG.HAVERSINE,
+        SignalGeneratorFunctionsIAFG.HAVERSINE,
     )
 
     assert mso64_constraints == ExtendedSourceDeviceConstants(
@@ -329,7 +329,7 @@ def test_iafg(device_manager: DeviceManager) -> None:
 
     mso56b: MSO5 = cast(MSO5B, device_manager.add_scope("MSO58B-HOSTNAME", alias="mso56b"))
     mso56b_constraints = mso56b.get_waveform_constraints(
-        SignalSourceFunctionsIAFG.SIN,
+        SignalGeneratorFunctionsIAFG.SIN,
     )
 
     assert mso56b_constraints == ExtendedSourceDeviceConstants(

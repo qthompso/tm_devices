@@ -209,11 +209,11 @@ class SupportedRequestTypes(CustomStrEnum):
     PATCH = "PATCH"
 
 
-class SignalSourceFunctionBase(Enum):
+class SignalGeneratorFunctionBase(Enum):
     """Base Enum function names."""
 
 
-class SignalSourceFunctionsAWG(SignalSourceFunctionBase):
+class SignalGeneratorFunctionsAWG(SignalGeneratorFunctionBase):
     """AWG function names."""
 
     SIN = "Sine"
@@ -224,7 +224,7 @@ class SignalSourceFunctionsAWG(SignalSourceFunctionBase):
     DC = "DC"
 
 
-class SignalSourceFunctionsAFG(SignalSourceFunctionBase):
+class SignalGeneratorFunctionsAFG(SignalGeneratorFunctionBase):
     """AFG function names."""
 
     SIN = "SIN"
@@ -242,7 +242,7 @@ class SignalSourceFunctionsAFG(SignalSourceFunctionBase):
     ARBITRARY = "ARB"
 
 
-class SignalSourceFunctionsIAFG(SignalSourceFunctionBase):
+class SignalGeneratorFunctionsIAFG(SignalGeneratorFunctionBase):
     """IAFG function names."""
 
     SIN = "SINE"
@@ -261,18 +261,18 @@ class SignalSourceFunctionsIAFG(SignalSourceFunctionBase):
     ARBITRARY = "ARBITRARY"
 
 
-class SignalSourceOutputPathsBase(CustomStrEnum):
+class SignalGeneratorOutputPathsBase(CustomStrEnum):
     """Base output signal path names."""
 
 
-class SignalSourceOutputPathsNon5200(SignalSourceOutputPathsBase):
+class SignalGeneratorOutputPathsNon5200(SignalGeneratorOutputPathsBase):
     """Output signal path names for non-AWG5200's."""
 
     DCA = "DCA"
     DIR = "DIR"
 
 
-class SignalSourceOutputPaths5200(SignalSourceOutputPathsBase):
+class SignalGeneratorOutputPaths5200(SignalGeneratorOutputPathsBase):
     """Output signal path names for AWG5200's."""
 
     DCHB = "DCHB"
