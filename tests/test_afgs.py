@@ -182,6 +182,9 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915
     with pytest.raises(ValueError, match="AFGs must have a waveform defined."):
         afg3252c.get_waveform_constraints()
 
+    with pytest.raises(ValueError, match="Output state value must be 0 or 1."):
+        afg3252c.source_channel["SOURCE1"].set_state(-1)
+
 
 def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
     """Test the AFG31K driver.
