@@ -97,7 +97,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
 
     awg520050_constraints = awg520050.get_waveform_constraints(
         SignalSourceFunctionsAWG.SIN,
-        output_path=awg520050.OutputSignalPath.DCHV,
+        output_signal_path=awg520050.OutputSignalPath.DCHV,
     )
     min_smaple_50 = 300.0
     max_sample_50 = 5.0e9
@@ -111,16 +111,16 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         ramp_symmetry_range=None,
     )
 
-    # Set output path as default.
+    # Set output signal path as default.
     default_path = awg520050.OutputSignalPath.DCHB
-    awg520050.source_channel["SOURCE1"].set_output_path()
+    awg520050.source_channel["SOURCE1"].set_output_signal_path()
     output_path = awg520050.query("OUTPUT1:PATH?")
     assert output_path == default_path.value
 
     _ = capsys.readouterr().out  # throw away stdout
-    awg520050.load_waveform_set(
-        awg520050.sample_waveform_file,
+    awg520050.load_waveform_from_set(
         "*SINE100",
+        awg520050.sample_waveform_set_file,
     )
     sasset_waveform_cmd = (
         "MMEMORY:OPEN:SASSET:WAVEFORM "
@@ -130,10 +130,10 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
     stdout = capsys.readouterr().out
     assert sasset_waveform_cmd in stdout
 
+    # Invalid file type for waveform file.
     with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
         awg520050.load_waveform_set(
             "unittest.txt",
-            "*SINE100",
         )
 
     assert awg520025.opt_string == "25,DC"
@@ -192,7 +192,7 @@ def test_awg70k(  # pylint: disable=too-many-locals
 
         constraints = awg.get_waveform_constraints(
             SignalSourceFunctionsAWG.RAMP,
-            output_path=output_path,
+            output_signal_path=output_path,
         )
 
         output_path = awg.OutputSignalPath.DCA
@@ -206,34 +206,36 @@ def test_awg70k(  # pylint: disable=too-many-locals
             length_range,
         )
 
-    # Invalid output path.
+    # Invalid output signal path.
     with pytest.raises(ValueError, match="DCHB is an invalid output signal path for AWG70001."):
-        awg70ka150.source_channel["SOURCE1"].set_output_path(SignalSourceOutputPaths5200.DCHB)
+        awg70ka150.source_channel["SOURCE1"].set_output_signal_path(
+            SignalSourceOutputPaths5200.DCHB
+        )
 
-    # Set default output path (will try DCA and succeed).
-    awg70ka150.source_channel["SOURCE1"].set_output_path()
+    # Set default output signal path (will try DCA and succeed).
+    awg70ka150.source_channel["SOURCE1"].set_output_signal_path()
     output_path_query = awg70ka150.query("OUTPUT1:PATH?")
     assert output_path_query == awg70ka150.OutputSignalPath.DCA.value
 
-    # Set output path to DIR.
-    awg70ka150.source_channel["SOURCE1"].set_output_path(awg70ka150.OutputSignalPath.DIR)
+    # Set output signal path to DIR.
+    awg70ka150.source_channel["SOURCE1"].set_output_signal_path(awg70ka150.OutputSignalPath.DIR)
     output_path_query = awg70ka150.query("OUTPUT1:PATH?")
     assert output_path_query == SignalSourceOutputPathsNon5200.DIR.value
-    # Cannot set offset with output path set to DIR.
+    # Cannot set offset with output signal path set to DIR.
     with pytest.raises(
         ValueError,
         match="The offset can only be set with an output signal path of DCA.",
     ):
         awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
 
-    # Even with output path set to DIR, no errors raised because offset is being set to 0.
+    # Even with output signal path set to DIR, no errors raised because offset is being set to 0.
     _ = capsys.readouterr().out  # throw away stdout
     awg70ka150.source_channel["SOURCE1"].set_offset(0)
     stdout = capsys.readouterr().out
     assert "SOURCE1:VOLTAGE:OFFSET" not in stdout
 
-    # DCA as output path.
-    awg70ka150.source_channel["SOURCE1"].set_output_path(awg70ka150.OutputSignalPath.DCA)
+    # DCA as output signal path.
+    awg70ka150.source_channel["SOURCE1"].set_output_signal_path(awg70ka150.OutputSignalPath.DCA)
     output_path_query = awg70ka150.query("OUTPUT1:PATH?")
     assert output_path_query == SignalSourceOutputPathsNon5200.DCA.value
     awg70ka150.source_channel["SOURCE1"].set_offset(0.1)
@@ -246,9 +248,9 @@ def test_awg70k(  # pylint: disable=too-many-locals
 
     # Load specific waveform.
     _ = capsys.readouterr().out  # throw away stdout
-    awg70ka150.load_waveform_set(
-        awg70ka150.sample_waveform_file,
+    awg70ka150.load_waveform_from_set(
         "*SINE100",
+        awg70ka150.sample_waveform_set_file,
     )
     sasset_waveform_cmd = (
         "MMEMORY:OPEN:SASSET:WAVEFORM "
@@ -262,7 +264,6 @@ def test_awg70k(  # pylint: disable=too-many-locals
     with pytest.raises(ValueError, match=".txt is an invalid waveform file extension."):
         awg70ka150.load_waveform_set(
             "unittest.txt",
-            "*SINE100",
         )
 
 
@@ -301,7 +302,7 @@ def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-ma
 
         constraints = awg.get_waveform_constraints(
             SignalSourceFunctionsAWG.TRIANGLE,
-            output_path=output_path,
+            output_signal_path=output_path,
         )
         output_path = awg.OutputSignalPath.DIR
         check_constraints(
@@ -340,9 +341,9 @@ def test_awg5k(device_manager: DeviceManager) -> None:
             length_range,
         )
 
-    # With DIR output path.
+    # With DIR output signal path.
     constraints = awg5k.get_waveform_constraints(
-        SignalSourceFunctionsAWG.CLOCK, output_path=awg5k.OutputSignalPath.DIR
+        SignalSourceFunctionsAWG.CLOCK, output_signal_path=awg5k.OutputSignalPath.DIR
     )
     sample_range = ParameterBounds(lower=10.0e6, upper=int(awg5k.model[5]) * 600.0e6 + 600.0e6)
     offset_range = ParameterBounds(lower=0, upper=0)
@@ -353,6 +354,3 @@ def test_awg5k(device_manager: DeviceManager) -> None:
         offset_range,
         length_range,
     )
-    error_message = "This function can only be used on AWG70k's and AWG5200's"
-    with pytest.raises(NotImplementedError, match=error_message):
-        awg5k.load_waveform_set("unittest")

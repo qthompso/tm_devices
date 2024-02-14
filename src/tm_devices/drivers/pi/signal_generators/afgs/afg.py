@@ -45,7 +45,7 @@ class AFGChannel:
 
     @property
     def name(self) -> str:
-        """Return the channel's name."""
+        """Return the channel name."""
         return self._name
 
     @property
@@ -135,7 +135,7 @@ class AFG(SignalGenerator, ABC):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> MappingProxyType[str, AFGChannel]:
+    def source_channel(self) -> "MappingProxyType[str, AFGChannel]":
         """Mapping of channel names to AFGChannel objects."""
         channel_map: Dict[str, AFGChannel] = {}
         for channel_name in self.all_channel_names_list:
@@ -164,7 +164,7 @@ class AFG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -178,13 +178,13 @@ class AFG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        del output_path  # Not used in AFGs.
+        del output_signal_path  # Not used in AFGs.
         self._validate_generated_function(function)
 
         # Generate the waveform on the given channel
@@ -229,7 +229,7 @@ class AFG(SignalGenerator, ABC):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -244,14 +244,14 @@ class AFG(SignalGenerator, ABC):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             burst_count: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        del output_path  # Not used in AFGs.
+        del output_signal_path  # Not used in AFGs.
         self._validate_generated_function(function)
         # Generate the waveform on the given channel
         for channel_name in self._validate_channels(channel):
@@ -289,7 +289,7 @@ class AFG(SignalGenerator, ABC):
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
         symmetry: float = 100.0,
     ) -> None:
-        """Set the properties of the waveform.
+        """Set the given parameters on the provided source channel.
 
         Args:
             frequency: The frequency of the waveform to generate.
@@ -338,7 +338,7 @@ class AFG(SignalGenerator, ABC):
         function: Optional[SignalSourceFunctionsAFG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -347,10 +347,10 @@ class AFG(SignalGenerator, ABC):
             function: The function that needs to be generated.
             waveform_length: The length of the waveform if no function or arbitrary is provided.
             frequency: The frequency of the waveform that needs to be generated.
-            output_path: The output path that was set on the channel.
+            output_signal_path: The output signal path that was set on the channel.
             load_impedance: The suggested impedance on the source.
         """
-        del output_path
+        del output_signal_path
 
         if not function:
             msg = "AFGs must have a waveform defined."

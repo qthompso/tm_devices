@@ -279,6 +279,15 @@ class SignalSourceOutputPaths5200(SignalSourceOutputPathsBase):
     DCHV = "DCHV"
 
 
+class SASSetWaveformFileTypes(Enum):
+    """File types for the command ``MMEMory:OPEN:SASSet[:WAVeform]``."""
+
+    AWG = ".awg"
+    AWGX = ".awgx"
+    MAT = ".mat"
+    SEQX = ".seqx"
+
+
 class LoadImpedanceAFG(Enum):
     """AFG/IAFG Impedance Values."""
 

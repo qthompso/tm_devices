@@ -478,7 +478,7 @@ class TekScope(
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -492,13 +492,13 @@ class TekScope(
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel number to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance to set the channel to.
             duty_cycle: The duty cycle to set the signal to.
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        del polarity, channel, output_path  # these aren't used
+        del polarity, channel, output_signal_path  # these aren't used
         self._validate_generated_function(function)
         # Turn off the Internal AFG
         self.set_if_needed("AFG:OUTPUT:STATE", 0)
@@ -523,7 +523,7 @@ class TekScope(
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
@@ -538,14 +538,14 @@ class TekScope(
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel number to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             burst_count: The number of wavelengths to be generated.
             termination: The impedance to set the channel to.
             duty_cycle: The duty cycle to set the signal to.
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        del polarity, channel, output_path  # these aren't used
+        del polarity, channel, output_signal_path  # these aren't used
         self._validate_generated_function(function)
         self.set_waveform_properties(
             frequency=frequency,
@@ -576,7 +576,7 @@ class TekScope(
         duty_cycle: float = 50.0,
         symmetry: float = 50.0,
     ) -> None:
-        """Set the properties of the waveform.
+        """Set the given parameters on the internal AFG.
 
         Args:
             frequency: The frequency of the waveform to generate.
@@ -612,7 +612,7 @@ class TekScope(
         function: Optional[SignalSourceFunctionsIAFG] = None,
         waveform_length: Optional[int] = None,
         frequency: Optional[float] = None,
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         load_impedance: LoadImpedanceAFG = LoadImpedanceAFG.HIGHZ,
     ) -> ExtendedSourceDeviceConstants:
         """Get the constraints that restrict the waveform to certain parameter ranges.
@@ -621,10 +621,10 @@ class TekScope(
             function: The function that needs to be generated.
             waveform_length: The length of the waveform if no function or arbitrary is provided.
             frequency: The frequency of the waveform that needs to be generated.
-            output_path: The output path that was set on the channel.
+            output_signal_path: The output signal path that was set on the channel.
             load_impedance: The suggested impedance on the source.
         """
-        del output_path
+        del output_signal_path
 
         if not function:
             msg = "IAFGs must have a waveform defined."

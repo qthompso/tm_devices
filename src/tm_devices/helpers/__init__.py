@@ -17,6 +17,7 @@ from tm_devices.helpers.enums import (
     ConnectionTypes,
     DeviceTypes,
     LoadImpedanceAFG,
+    SASSetWaveformFileTypes,
     SignalSourceFunctionBase,
     SignalSourceFunctionsAFG,
     SignalSourceFunctionsAWG,
@@ -86,5 +87,6 @@ __all__ = [
     "SignalSourceOutputPathsBase",
     "SignalSourceOutputPaths5200",
     "SignalSourceOutputPathsNon5200",
+    "SASSetWaveformFileTypes",
     "LoadImpedanceAFG",
 ]

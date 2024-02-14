@@ -3,9 +3,10 @@ import time
 
 from pathlib import Path
 from types import MappingProxyType
-from typing import cast, Dict, Literal, Optional, Tuple, Type
+from typing import cast, Dict, Literal, Optional, Tuple
 
 from tm_devices.commands import AWG5200Mixin
+from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
     AWGChannel,
@@ -14,6 +15,7 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
 )
 from tm_devices.helpers import (
     ReadOnlyCachedProperty,
+    SASSetWaveformFileTypes,
     SignalSourceFunctionsAWG,
     SignalSourceOutputPaths5200,
     SignalSourceOutputPathsBase,
@@ -53,7 +55,6 @@ class AWG5200Channel(AWGChannel):
         time.sleep(0.1)
         # wait till overlapping command finishes
         self._awg.ieee_cmds.opc()
-        # clear queue
         self._awg.ieee_cmds.cls()
         # ensure that the clock rate was actually set
         self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=tolerance, percentage=percentage)
@@ -75,7 +76,7 @@ class AWG5200Channel(AWGChannel):
             percentage=percentage,
         )
 
-    def set_output_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
+    def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source channel.
 
         Args:
@@ -91,28 +92,26 @@ class AWG5200Channel(AWGChannel):
         self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
 
 
+@family_base_class
 class AWG5200(AWG5200Mixin, AWG):
     """AWG5200 device driver."""
+
+    OutputSignalPath = SignalSourceOutputPaths5200
 
     _DEVICE_CONSTANTS = AWGSourceDeviceConstants(
         memory_page_size=1,
         memory_max_record_length=16200000,
         memory_min_record_length=1,
     )
-    sample_waveform_file = (
+    sample_waveform_set_file = (
         "C:\\Program Files\\Tektronix\\AWG5200\\Samples\\AWG5k7k Predefined Waveforms.awgx"
     )
 
     ################################################################################################
     # Properties
     ################################################################################################
-    @property
-    def OutputSignalPath(self) -> Type[SignalSourceOutputPaths5200]:  # noqa: N802  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Return the output signal path enum."""
-        return SignalSourceOutputPaths5200
-
     @ReadOnlyCachedProperty
-    def source_channel(self) -> MappingProxyType[str, AWGChannel]:
+    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
         """Mapping of channel names to AWGChannel objects."""
         channel_map: Dict[str, AWG5200Channel] = {}
         for channel_name in self.all_channel_names_list:
@@ -122,31 +121,28 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Public Methods
     ################################################################################################
-    def load_waveform_set(
-        self,
-        waveform_file: Optional[str] = None,
-        waveform: Optional[str] = None,
-    ) -> None:
-        """Load in all waveforms or a specific waveform from a waveform file.
+    def load_waveform_set(self, waveform_set_file: Optional[str] = None) -> None:
+        """Load a waveform set into the memory of the AWG.
 
         Arguments:
-            waveform_file: The waveform file to load.
-            waveform: The specific waveform to load from the waveform file.
+            waveform_set_file: The waveform set file to load
+                (The default is defined in the ``sample_wave_file`` attribute).
         """
-        if not waveform_file:
-            waveform_file = self.sample_waveform_file
-        waveform_file_type = Path(waveform_file).suffix.lower()
-        if waveform_file_type not in [".awg", ".awgx", ".mat", ".seqx"]:
-            waveform_file_type_error = (
-                f"{waveform_file_type} is an invalid waveform file extension."
-            )
-            raise ValueError(waveform_file_type_error)
-        if not waveform:
-            self.write(command=f'MMEMORY:OPEN:SASSET "{waveform_file}"', opc=True)
-        else:
-            self.write(
-                command=f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_file}", "{waveform}"', opc=True
-            )
+        self._load_waveform_or_set(waveform_set_file=waveform_set_file, waveform_name=None)
+
+    def load_waveform_from_set(
+        self,
+        waveform_name: str,
+        waveform_set_file: Optional[str] = None,
+    ) -> None:
+        """Load in a specific waveform from a waveform set into the memory of the AWG.
+
+        Arguments:
+            waveform_name: The waveform name to load from the waveform set file.
+            waveform_set_file: The waveform set file to load
+                (The default is defined in the ``sample_wave_file`` attribute).
+        """
+        self._load_waveform_or_set(waveform_set_file=waveform_set_file, waveform_name=waveform_name)
 
     def generate_function(  # noqa: PLR0913
         self,
@@ -155,7 +151,7 @@ class AWG5200(AWG5200Mixin, AWG):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -169,14 +165,14 @@ class AWG5200(AWG5200Mixin, AWG):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        predefined_name, needed_sample_rate = self._get_predefined_filename(
-            frequency, function, output_path, symmetry
+        predefined_name, needed_sample_rate = self._get_predefined_waveform_name(
+            frequency, function, output_signal_path, symmetry
         )
         self.generate_waveform(
             needed_sample_rate=needed_sample_rate,
@@ -184,7 +180,7 @@ class AWG5200(AWG5200Mixin, AWG):
             amplitude=amplitude,
             offset=offset,
             channel=channel,
-            output_path=output_path,
+            output_signal_path=output_signal_path,
             termination=termination,
             duty_cycle=duty_cycle,
             polarity=polarity,
@@ -198,7 +194,7 @@ class AWG5200(AWG5200Mixin, AWG):
         amplitude: float,
         offset: float,
         channel: str = "all",
-        output_path: Optional[SignalSourceOutputPathsBase] = None,
+        output_signal_path: Optional[SignalSourceOutputPathsBase] = None,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
         duty_cycle: float = 50.0,  # noqa: ARG002
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",  # noqa: ARG002
@@ -212,7 +208,7 @@ class AWG5200(AWG5200Mixin, AWG):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
             channel: The channel name to output the signal from, or 'all'.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
             duty_cycle: The duty cycle percentage within [10.0, 90.0].
             polarity: The polarity to set the signal to.
@@ -229,7 +225,7 @@ class AWG5200(AWG5200Mixin, AWG):
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
                 source_channel=source_channel,
-                output_path=output_path,
+                output_signal_path=output_signal_path,
                 waveform_name=waveform_name,
                 needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
@@ -254,17 +250,17 @@ class AWG5200(AWG5200Mixin, AWG):
     def set_waveform_properties(
         self,
         source_channel: AWGChannel,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
         amplitude: float,
         offset: float,
     ) -> None:
-        """Set the properties of the waveform.
+        """Set the given parameters on the provided source channel.
 
         Args:
             source_channel: The source channel class for the requested channel.
-            output_path: The output signal path of the specified channel.
+            output_signal_path: The output signal path of the specified channel.
             waveform_name: The name of the waveform from the waveform list to generate.
             needed_sample_rate: The required sample rate.
             amplitude: The amplitude of the signal to generate.
@@ -275,7 +271,7 @@ class AWG5200(AWG5200Mixin, AWG):
         source_channel = cast(AWG5200Channel, source_channel)
         super().set_waveform_properties(
             source_channel=source_channel,
-            output_path=output_path,
+            output_signal_path=output_signal_path,
             waveform_name=waveform_name,
             needed_sample_rate=needed_sample_rate,
             amplitude=amplitude,
@@ -287,16 +283,16 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     def _get_series_specific_constraints(
         self,
-        output_path: Optional[SignalSourceOutputPathsBase],
+        output_signal_path: Optional[SignalSourceOutputPathsBase],
     ) -> Tuple[ParameterBounds, ParameterBounds, ParameterBounds]:
         """Get constraints which are dependent on the model series."""
-        if not output_path:
-            output_path = self.OutputSignalPath.DCHB
+        if not output_signal_path:
+            output_signal_path = self.OutputSignalPath.DCHB
         # Direct Current High Bandwidth with the DC options has 1.5 V amplitude
-        if "DC" in self.opt_string and output_path == self.OutputSignalPath.DCHB:
+        if "DC" in self.opt_string and output_signal_path == self.OutputSignalPath.DCHB:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
         # Direct Current High Voltage path connected has an even higher amplitude, 5 V
-        elif output_path == self.OutputSignalPath.DCHV:
+        elif output_signal_path == self.OutputSignalPath.DCHV:
             amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
         # Else, the upper bound is 750 mV
         else:
@@ -309,3 +305,32 @@ class AWG5200(AWG5200Mixin, AWG):
         sample_rate_range = ParameterBounds(lower=300.0, upper=max_sample_rate * 100.0e6)
 
         return amplitude_range, offset_range, sample_rate_range
+
+    def _load_waveform_or_set(
+        self,
+        waveform_set_file: Optional[str] = None,
+        waveform_name: Optional[str] = None,
+    ) -> None:
+        """Load in a waveform set or a specific waveform from a waveform set into memory.
+
+        Arguments:
+            waveform_set_file: The waveform set file to load.
+                (The default is defined in the ``sample_wave_file`` attribute).
+            waveform_name: The waveform name to load from the waveform set file.
+        """
+        # This function is identical to the one in the AWG70KA.
+        if not waveform_set_file:
+            waveform_set_file = self.sample_waveform_set_file
+        waveform_file_type = Path(waveform_set_file).suffix.lower()
+        if waveform_file_type not in SASSetWaveformFileTypes:
+            waveform_file_type_error = (
+                f"{waveform_file_type} is an invalid waveform file extension."
+            )
+            raise ValueError(waveform_file_type_error)
+        if not waveform_name:
+            self.write(f'MMEMORY:OPEN:SASSET "{waveform_set_file}"', opc=True)
+        else:
+            self.write(
+                f'MMEMORY:OPEN:SASSET:WAVEFORM "{waveform_set_file}", "{waveform_name}"', opc=True
+            )
+        self.expect_esr(0)

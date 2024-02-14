@@ -100,6 +100,7 @@ the filepath would be `tm_devices/drivers/pi/power_supplies/psu2200/new_psu.py`
 
 ```python
 """NewPSU device driver."""
+
 from tm_devices.drivers.pi.power_supplies.psu2200.psu2200 import PSU2200
 
 
