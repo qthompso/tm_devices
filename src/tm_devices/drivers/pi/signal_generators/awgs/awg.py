@@ -369,6 +369,7 @@ class AWG(SignalGenerator, ABC):
         )
 
         if function and not waveform_length:
+            # use the min and max waveform length dependent on the predefined files
             func_sample_rate_lookup: Dict[str, ParameterBounds] = {
                 SignalGeneratorFunctionsAWG.SIN.name: ParameterBounds(lower=10, upper=3600),
                 SignalGeneratorFunctionsAWG.CLOCK.name: ParameterBounds(lower=960, upper=960),

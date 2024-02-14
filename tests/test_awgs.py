@@ -157,7 +157,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         awg520025.source_channel["SOURCE1"].set_state(-1)
 
 
-def test_awg70k(  # pylint: disable=too-many-locals
+def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
     device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Test the AWG70K driver.
@@ -166,7 +166,6 @@ def test_awg70k(  # pylint: disable=too-many-locals
         device_manager: The DeviceManager object.
         capsys: The captured stdout and stderr.
     """
-    ampl_range = ParameterBounds(lower=0.125, upper=0.5)
     awg70ka150 = cast(
         AWG70KA, device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
     )
@@ -189,8 +188,10 @@ def test_awg70k(  # pylint: disable=too-many-locals
 
         if not output_path:
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+            ampl_range = ParameterBounds(lower=0.125, upper=0.5)
         else:
             offset_range = ParameterBounds(lower=-0.4, upper=0.8)
+            ampl_range = ParameterBounds(lower=31.0e-3, upper=1.2)
 
         constraints = awg.get_waveform_constraints(
             SignalGeneratorFunctionsAWG.RAMP,

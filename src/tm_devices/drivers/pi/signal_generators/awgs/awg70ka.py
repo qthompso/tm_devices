@@ -163,16 +163,17 @@ class AWG70KA(AWG70KAMixin, AWG):
         if not output_signal_path:
             output_signal_path = self.OutputSignalPath.DIR
 
-        amplitude_range = ParameterBounds(lower=0.125, upper=0.5)
-
         if output_signal_path == self.OutputSignalPath.DCA:
+            amplitude_range = ParameterBounds(lower=31.0e-3, upper=1.2)
             offset_range = ParameterBounds(lower=-400.0e-3, upper=800.0e-3)
         else:
+            amplitude_range = ParameterBounds(lower=0.125, upper=0.5)
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
 
         rates = ["50", "25", "16", "08"]
-        max_sample_rate = [rate for rate in rates if rate in self.opt_string][0]  # noqa: RUF015
+        max_sample_rate = next(rate for rate in rates if rate in self.opt_string)
         # first digit indicates the number of channels, second and third indicate sample rate (GHz)
+        # option 150 would be a one channel source with 50 GHz sample rate
         sample_rate_range = ParameterBounds(lower=1.5e3, upper=int(max_sample_rate) * 1.0e9)
         return amplitude_range, offset_range, sample_rate_range
 

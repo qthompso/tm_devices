@@ -45,10 +45,18 @@ class AWG5200Channel(AWGChannel):
                  False means absolute tolerance: +/- tolerance.
                  True means percent tolerance: +/- (tolerance / 100) * value.
         """
+        # This is an overlapping command for the AWG5200, and will overlap the
+        # next command and/or overlap the previous if it is still running.
         self._awg.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
+        # there is a known issue where setting other parameters while clock rate is being set
+        # may lock the AWG5200 software.
+
+        # wait a fraction of a second for overlapping command CLOCK:SRATE to proceed
         time.sleep(0.1)
+        # wait till overlapping command finishes
         self._awg.ieee_cmds.opc()
         self._awg.ieee_cmds.cls()
+        # ensure that the clock rate was actually set
         self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=tolerance, percentage=percentage)
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
@@ -208,10 +216,14 @@ class AWG5200(AWG5200Mixin, AWG):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
+        # wait for operation complete from PI commands before setting up attributes
+        # an overlapping command being set while frequency is being set may lock up the source
         self.ieee_cmds.opc()
+        # clear queue
         self.ieee_cmds.cls()
         for channel_name in self._validate_channels(channel):
             source_channel = cast(AWG5200Channel, self.source_channel[channel_name])
+            # turn channel off
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
                 source_channel=source_channel,
@@ -226,11 +238,15 @@ class AWG5200(AWG5200Mixin, AWG):
             self.ieee_cmds.cls()
             self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "1")
         self.ieee_cmds.opc()
+        # this is an overlapping command
         self.write("AWGCONTROL:RUN")
+        # wait a fraction of a second for overlapping command AWGCONTROL:RUN to proceed
         time.sleep(0.1)
         self.ieee_cmds.opc()
         self.ieee_cmds.cls()
+        # ensure that the control run was actually set
         self.poll_query(30, "AWGControl:RSTate?", 2.0)
+        # we expect no errors
         self.expect_esr(0)
 
     def set_waveform_properties(
@@ -274,18 +290,20 @@ class AWG5200(AWG5200Mixin, AWG):
         """Get constraints which are dependent on the model series."""
         if not output_signal_path:
             output_signal_path = self.OutputSignalPath.DCHB
-
+        # Direct Current High Bandwidth with the DC options has 1.5 V amplitude
         if "DC" in self.opt_string and output_signal_path == self.OutputSignalPath.DCHB:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=1.5)
+        # Direct Current High Voltage path connected has an even higher amplitude, 5 V
         elif output_signal_path == self.OutputSignalPath.DCHV:
             amplitude_range = ParameterBounds(lower=10.0e-3, upper=5.0)
+        # Else, the upper bound is 750 mV
         else:
             amplitude_range = ParameterBounds(lower=25.0e-3, upper=750.0e-3)
 
         offset_range = ParameterBounds(lower=-2.0, upper=2.0)
-
-        max_sample_rate = 25.0 if "25" in self.opt_string else 50.0
         # option is the sample rate in hundreds of Mega Hertz
+        max_sample_rate = 25.0 if "25" in self.opt_string else 50.0
+        # option 50 would have 5.0 GHz, option 2.5 would have 2.5 GHz
         sample_rate_range = ParameterBounds(lower=300.0, upper=max_sample_rate * 100.0e6)
 
         return amplitude_range, offset_range, sample_rate_range
