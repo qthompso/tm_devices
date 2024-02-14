@@ -345,6 +345,9 @@ def test_iafg(device_manager: DeviceManager) -> None:
     with pytest.raises(ValueError, match="IAFGs must have a waveform defined."):
         mso64.get_waveform_constraints()
 
+    with pytest.raises(ValueError, match="Output state value must be 0 or 1."):
+        mso64.internal_afg.set_state(-1)
+
 
 def test_exceptions(device_manager: DeviceManager) -> None:
     """Test visa error handling within tekscope.
