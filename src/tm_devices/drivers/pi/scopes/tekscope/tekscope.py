@@ -141,6 +141,17 @@ class InternalAFGChannel:
             percentage=percentage,
         )
 
+    def set_state(self, value: int) -> None:
+        """Set the output state to ON/OFF (1/0) on the source channel.
+
+        Args:
+            value: The output state.
+        """
+        if value not in [0, 1]:
+            error_message = "Output state value must be 0 or 1."
+            raise ValueError(error_message)
+        self._tekscope.set_if_needed("AFG:OUTPUT:STATE", value)
+
     def set_function(self, value: SignalSourceFunctionsIAFG) -> None:
         """Set the function on the internal AFG.
 
@@ -501,7 +512,7 @@ class TekScope(
         del polarity, channel, output_signal_path  # these aren't used
         self._validate_generated_function(function)
         # Turn off the Internal AFG
-        self.set_if_needed("AFG:OUTPUT:STATE", 0)
+        self.internal_afg.set_state(0)
         self.set_waveform_properties(
             frequency=frequency,
             function=function,
@@ -513,7 +524,7 @@ class TekScope(
             symmetry=symmetry,
         )
         # Turn on the Internal AFG
-        self.set_if_needed("AFG:OUTPUT:STATE", 1)
+        self.internal_afg.set_state(1)
         # Don't check for errors as any measurement with low amplitude will generate an error
 
     def setup_burst(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -558,7 +569,7 @@ class TekScope(
             symmetry=symmetry,
         )
         # Turn on the Internal AFG
-        self.set_if_needed("AFG:OUTPUT:STATE", 1)
+        self.internal_afg.set_state(1)
 
     def generate_burst(self) -> None:
         """Generate a burst of waveforms by forcing trigger."""

@@ -115,6 +115,17 @@ class AWGChannel(ExtendableMixin):
             )
             raise ValueError(offset_error)
 
+    def set_state(self, value: int) -> None:
+        """Set the output state to ON/OFF (1/0) on the source channel.
+
+        Args:
+            value: The output state.
+        """
+        if value not in [0, 1]:
+            error_message = "Output state value must be 0 or 1."
+            raise ValueError(error_message)
+        self._awg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
+
     def set_output_signal_path(self, value: Optional[SignalSourceOutputPathsBase] = None) -> None:
         """Set the output signal path on the source channel.
 
@@ -258,7 +269,7 @@ class AWG(SignalGenerator, ABC):
         """
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
-            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "0")
+            source_channel.set_state(0)
             self.set_waveform_properties(
                 source_channel=source_channel,
                 output_signal_path=output_signal_path,
@@ -267,7 +278,7 @@ class AWG(SignalGenerator, ABC):
                 amplitude=amplitude,
                 offset=offset,
             )
-            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "1")
+            source_channel.set_state(1)
         self.write("AWGCONTROL:RUN")
         self.expect_esr(0)
 
