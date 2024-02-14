@@ -112,6 +112,17 @@ class AFGChannel:
             percentage=percentage,
         )
 
+    def set_state(self, value: int) -> None:
+        """Set the output state to ON/OFF (1/0) on the source channel.
+
+        Args:
+            value: The output state.
+        """
+        if value not in [0, 1]:
+            error_message = "Output state value must be 0 or 1."
+            raise ValueError(error_message)
+        self._afg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
+
     def setup_burst_waveform(self, burst_count: int) -> None:
         """Prepare source channel for a burst waveform.
 
@@ -191,7 +202,7 @@ class AFG(SignalGenerator, ABC):
         for channel_name in self._validate_channels(channel):
             source_channel = self.source_channel[channel_name]
             # Temporarily turn off this channel
-            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 0)
+            source_channel.set_state(0)
             self.set_waveform_properties(
                 frequency=frequency,
                 function=function,
@@ -205,7 +216,7 @@ class AFG(SignalGenerator, ABC):
                 symmetry=symmetry,
             )
             # Turn on the channel
-            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 1)
+            source_channel.set_state(1)
 
             # Check if burst is enabled on any channel of the AFG
             burst_state = False
@@ -269,7 +280,7 @@ class AFG(SignalGenerator, ABC):
                 symmetry=symmetry,
             )
             # Turn on the channel
-            self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", 1)
+            source_channel.set_state(1)
 
     def generate_burst(self) -> None:
         """Generate a burst of waveforms by forcing trigger."""
