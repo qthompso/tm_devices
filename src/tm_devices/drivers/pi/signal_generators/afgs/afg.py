@@ -146,6 +146,19 @@ class AFGChannel:
         verify_value = not isinstance(value, str)
         self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", value, verify_value=verify_value)
 
+    def set_ramp_symmetry(self, value: Union[float, Literal["MINIMUM", "MAXIMUM"]]) -> None:
+        """Set the symmetry of the ramp waveform on the source channel.
+
+        Args:
+            value: The symmetry value to set.
+        """
+        # The device will translate the text argument into a float value, which will cause
+        # verification to fail.
+        verify_value = not isinstance(value, str)
+        self._afg.set_if_needed(
+            f"{self.name}:FUNCTION:RAMP:SYMMETRY", value, verify_value=verify_value
+        )
+
     def set_state(self, value: int) -> None:
         """Set the output state to ON/OFF (1/0) on the source channel.
 
@@ -367,7 +380,7 @@ class AFG(SignalGenerator, ABC):
         source_channel.set_polarity(polarity)
         # Function
         if function == SignalGeneratorFunctionsAFG.RAMP:
-            self.set_if_needed(f"{source_channel.name}:FUNCTION:RAMP:SYMMETRY", symmetry)
+            source_channel.set_ramp_symmetry(symmetry)
         source_channel.set_function(function)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
         source_channel.set_amplitude(amplitude, tolerance=0.01)
