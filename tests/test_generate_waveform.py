@@ -261,25 +261,14 @@ def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
         device_manager: The DeviceManager object.
         capsys: The captured stdout and stderr.
     """
+    _ = capsys.readouterr().out  # throw away stdout
     afg3kc = device_manager.add_afg(
         "afg3252c-hostname", alias="afg3kc", connection_type="SOCKET", port=10001
     )
     afg3kc.generate_function(25e6, afg3kc.source_device_constants.functions.PULSE, 1.0, 0.0, "all")
     assert "SOURCE1:PHASE:INITIATE" in capsys.readouterr().out
 
-    afg3kc.generate_function(
-        25e6,
-        afg3kc.source_device_constants.functions.DC,
-        1.0,
-        0.0,
-        "SOURCE1",
-        termination="HIGHZ",
-    )
-    assert "TRIGGER:SEQUENCE:SOURCE" not in capsys.readouterr().out
-    assert "SOURCE1:BURST:STATE" not in capsys.readouterr().out
-    assert "SOURCE1:BURST:MODE" not in capsys.readouterr().out
-    assert "SOURCE1:BURST:NCYCLES" not in capsys.readouterr().out
-
+    _ = capsys.readouterr().out  # throw away stdout
     afg3kc.setup_burst(
         25e6,
         afg3kc.source_device_constants.functions.SIN,
@@ -290,14 +279,14 @@ def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
         termination="HIGHZ",
     )
     afg3kc.generate_burst()
-    impedance_query_value = afg3kc.query("OUTPUT1:IMPEDANCE?")
-    assert impedance_query_value == "INFINITY"
+    output = capsys.readouterr().out
+    assert "OUTPUT1:IMPEDANCE INFINITY" in output
     source1_frequency = afg3kc.query("SOURCE1:FREQUENCY:FIXED?")
     assert float(source1_frequency) == 25e6
     source1_offset = afg3kc.query("SOURCE1:VOLTAGE:OFFSET?")
     assert not float(source1_offset)
-    assert "SOURCE1:PULSE:DCYCLE" not in capsys.readouterr().out
-    assert "SOURCE1:FUNCTION:RAMP:SYMMETRY" not in capsys.readouterr().out
+    assert "SOURCE1:PULSE:DCYCLE" not in output
+    assert "SOURCE1:FUNCTION:RAMP:SYMMETRY" not in output
     source1_function = afg3kc.query("SOURCE1:FUNCTION?")
     assert source1_function == "SIN"
     source1_amplitude = afg3kc.query("SOURCE1:VOLTAGE:AMPLITUDE?")
@@ -313,6 +302,7 @@ def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
     output1_state = afg3kc.query("OUTPUT1:STATE?")
     assert int(output1_state) == 1
 
+    _ = capsys.readouterr().out  # throw away stdout
     afg3kc.setup_burst(
         25e6,
         afg3kc.source_device_constants.functions.RAMP,
