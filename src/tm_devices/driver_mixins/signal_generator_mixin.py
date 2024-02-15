@@ -110,9 +110,9 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
         function: _SignalSourceTypeVar,  # pyright: ignore[reportInvalidTypeVarUse]
         amplitude: float,
         offset: float,
+        burst_count: int,
         channel: str = "all",
         output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
-        burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -125,9 +125,9 @@ class SignalGeneratorMixin(ExtendableMixin, ABC):
             function: The function to generate.
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
+            burst_count: The number of wavelengths to be generated.
             channel: The channel number to output the signal from, or 'all'.
             output_signal_path: The output signal path of the specified channel.
-            burst_count: The number of wavelengths to be generated.
             termination: The impedance to set the channel to.
             duty_cycle: The duty cycle to set the signal to.
             polarity: The polarity to set the signal to.

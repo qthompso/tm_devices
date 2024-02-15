@@ -274,12 +274,12 @@ def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
 
     _ = capsys.readouterr().out  # throw away stdout
     afg3kc.setup_burst(
-        25e6,
-        afg3kc.source_device_constants.functions.SIN,
-        1.0,
-        0.0,
-        "SOURCE1",
+        frequency=25e6,
+        function=afg3kc.source_device_constants.functions.SIN,
+        amplitude=1.0,
+        offset=0.0,
         burst_count=1,
+        channel="SOURCE1",
         termination="HIGHZ",
     )
     afg3kc.generate_burst()
@@ -308,12 +308,12 @@ def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
 
     _ = capsys.readouterr().out  # throw away stdout
     afg3kc.setup_burst(
-        25e6,
-        afg3kc.source_device_constants.functions.RAMP,
-        1.0,
-        0.0,
-        "SOURCE1",
+        frequency=25e6,
+        function=afg3kc.source_device_constants.functions.RAMP,
+        amplitude=1.0,
+        offset=0.0,
         burst_count=1,
+        channel="SOURCE1",
         termination="FIFTY",
     )
     afg3kc.generate_burst()
