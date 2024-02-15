@@ -99,9 +99,12 @@ class AFGChannel:
         """Set the impedance on the source channel.
 
         Args:
-            value: The impedance value in ohms.
+            value: The impedance value.
         """
-        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", value)
+        # The device will translate the text argument into a float value, which will cause
+        # verification to fail.
+        verify_value = not isinstance(value, str)
+        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", value, verify_value=verify_value)
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the offset on the source channel.
@@ -119,6 +122,17 @@ class AFGChannel:
             tolerance=tolerance,
             percentage=percentage,
         )
+
+    def set_pulse_duty_cycle(self, value: Union[float, Literal["MINIMUM", "MAXIMUM"]]) -> None:
+        """Set the duty cycle of the pulse waveform on the source channel.
+
+        Args:
+            value: The duty cycle percentage within [10.0, 90.0].
+        """
+        # The device will translate the text argument into a float value, which will cause
+        # verification to fail.
+        verify_value = not isinstance(value, str)
+        self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", value, verify_value=verify_value)
 
     def set_state(self, value: int) -> None:
         """Set the output state to ON/OFF (1/0) on the source channel.
@@ -340,7 +354,7 @@ class AFG(SignalGenerator, ABC):
         source_channel.set_offset(offset, tolerance=0.01)
         if function == SignalGeneratorFunctionsAFG.PULSE:
             # Duty cycle is only valid for pulse
-            self.set_if_needed(f"{source_channel.name}:PULSE:DCYCLE", duty_cycle)
+            source_channel.set_pulse_duty_cycle(duty_cycle)
         # Polarity
         self.set_if_needed(f"OUTPUT{source_channel.num}:POLARITY", polarity_mapping[polarity])
         # Function

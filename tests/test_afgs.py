@@ -193,10 +193,20 @@ def test_afg3k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
     afg3252c.source_channel["SOURCE1"].set_impedance(5000)
     impedance_query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
     assert int(impedance_query_value) == 5000
-    output = capsys.readouterr().out
-    assert "OUTPUT1:IMPEDANCE MINIMUM" in output
-    assert "OUTPUT1:IMPEDANCE MAXIMUM" in output
-    assert "OUTPUT1:IMPEDANCE INFINITY" in output
+    stdout = capsys.readouterr().out
+    assert "OUTPUT1:IMPEDANCE MINIMUM" in stdout
+    assert "OUTPUT1:IMPEDANCE MAXIMUM" in stdout
+    assert "OUTPUT1:IMPEDANCE INFINITY" in stdout
+
+    _ = capsys.readouterr().out  # throw away stdout
+    afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle("MINIMUM")
+    afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle("MAXIMUM")
+    afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle(5000)
+    dcycle_query_value = afg3252c.query("SOURCE1:PULSE:DCYCLE?")
+    stdout = capsys.readouterr().out
+    assert int(dcycle_query_value) == 5000
+    assert "SOURCE1:PULSE:DCYCLE MINIMUM" in stdout
+    assert "SOURCE1:PULSE:DCYCLE MAXIMUM" in stdout
 
 
 def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
