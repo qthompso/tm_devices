@@ -348,6 +348,10 @@ def test_iafg(device_manager: DeviceManager) -> None:
     with pytest.raises(ValueError, match="Output state value must be 0 or 1."):
         mso64.internal_afg.set_state(-1)
 
+    error_message = r"Duty cycle for square waveforms must be between 10 and 90 \(inclusive\)\."
+    with pytest.raises(ValueError, match=error_message):
+        mso64.internal_afg.set_square_duty_cycle(1)
+
 
 def test_exceptions(device_manager: DeviceManager) -> None:
     """Test visa error handling within tekscope.

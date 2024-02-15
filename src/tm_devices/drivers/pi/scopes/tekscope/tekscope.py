@@ -82,6 +82,8 @@ class TekScopeChannel:
 class InternalAFGChannel:
     """Internal AFG channel driver."""
 
+    _BOUNDS_SQUARE_DUTY_CYCLE = ParameterBounds(lower=10, upper=90)
+
     def __init__(self, tekscope: "TekScope") -> None:
         """Create an InternalAFG channel object.
 
@@ -107,6 +109,14 @@ class InternalAFGChannel:
             percentage=percentage,
         )
 
+    def set_burst_cycle_count(self, value: int) -> None:
+        """Set the cycle count on the internal AFG for ``BURST`` output mode.
+
+        Args:
+            value: The cycle count to set.
+        """
+        self._tekscope.set_if_needed("AFG:BURST:CCOUNT", f"{value}")
+
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the frequency on the internal AFG.
 
@@ -123,6 +133,22 @@ class InternalAFGChannel:
             tolerance=tolerance,
             percentage=percentage,
         )
+
+    def set_function(self, value: SignalGeneratorFunctionsIAFG) -> None:
+        """Set the function on the internal AFG.
+
+        Args:
+            value: The function name.
+        """
+        self._tekscope.set_if_needed("AFG:FUNCTION", str(value.value))
+
+    def set_impedance(self, value: Literal["FIFTY", "HIGHZ"]) -> None:
+        """Set the impedance on the internal AFG.
+
+        Args:
+            value: The impedance value to set.
+        """
+        self._tekscope.set_if_needed("AFG:OUTPUT:LOAD:IMPEDANCE", value)
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the offset on the internal AFG.
@@ -141,8 +167,24 @@ class InternalAFGChannel:
             percentage=percentage,
         )
 
+    def set_output_mode(self, value: Literal["OFF", "CONTINUOUS", "BURST"]) -> None:
+        """Set the output mode on the internal AFG.
+
+        Args:
+            value: The output mode to set.
+        """
+        self._tekscope.set_if_needed("AFG:OUTPUT:MODE", value)
+
+    def set_ramp_symmetry(self, value: float) -> None:
+        """Set the symmetry of the ramp waveform on the internal AFG.
+
+        Args:
+            value: The symmetry percentage.
+        """
+        self._tekscope.set_if_needed("AFG:RAMP:SYMMETRY", round(value, 1))
+
     def set_state(self, value: int) -> None:
-        """Set the output state to ON/OFF (1/0) on the source channel.
+        """Set the output state to ON/OFF (1/0) on the internal AFG.
 
         Args:
             value: The output state.
@@ -152,13 +194,18 @@ class InternalAFGChannel:
             raise ValueError(error_message)
         self._tekscope.set_if_needed("AFG:OUTPUT:STATE", value)
 
-    def set_function(self, value: SignalGeneratorFunctionsIAFG) -> None:
-        """Set the function on the internal AFG.
+    def set_square_duty_cycle(self, value: float) -> None:
+        """Set the duty cycle of the square waveform on the internal AFG.
 
         Args:
-            value: The function name.
+            value: The duty cycle percentage within [10.0, 90.0].
         """
-        self._tekscope.set_if_needed("AFG:FUNCTION", str(value.value))
+        if not (
+            self._BOUNDS_SQUARE_DUTY_CYCLE.lower <= value <= self._BOUNDS_SQUARE_DUTY_CYCLE.upper
+        ):
+            error_message = "Duty cycle for square waveforms must be between 10 and 90 (inclusive)."
+            raise ValueError(error_message)
+        self._tekscope.set_if_needed("AFG:SQUARE:DUTY", value)
 
     def setup_burst_waveform(self, burst_count: int) -> None:
         """Prepare the internal AFG for a burst waveform.
@@ -167,8 +214,12 @@ class InternalAFGChannel:
             burst_count: The number of wavelengths to be generated.
         """
         # set to external as to not burst every millisecond
-        self._tekscope.set_if_needed("AFG:OUTPUT:MODE", "BURST")
-        self._tekscope.set_if_needed("AFG:BURST:CCOUNT", f"{burst_count}")
+        self.set_output_mode("BURST")
+        self.set_burst_cycle_count(burst_count)
+
+    def trigger_burst(self) -> None:
+        """Trigger a burst on the internal AFG."""
+        self._tekscope.write("AFG:BURST:TRIGGER")
 
 
 # pylint: disable=too-many-public-methods
@@ -533,9 +584,9 @@ class TekScope(
         function: SignalGeneratorFunctionsIAFG,
         amplitude: float,
         offset: float,
+        burst_count: int,
         channel: str = "all",
         output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
-        burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
@@ -548,9 +599,9 @@ class TekScope(
             function: The function to generate.
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
+            burst_count: The number of wavelengths to be generated.
             channel: The channel number to output the signal from, or 'all'.
             output_signal_path: The output signal path of the specified channel.
-            burst_count: The number of wavelengths to be generated.
             termination: The impedance to set the channel to.
             duty_cycle: The duty cycle to set the signal to.
             polarity: The polarity to set the signal to.
@@ -573,7 +624,7 @@ class TekScope(
 
     def generate_burst(self) -> None:
         """Generate a burst of waveforms by forcing trigger."""
-        self.write("AFG:BURST:TRIGGER")
+        self.internal_afg.trigger_burst()
         # Don't check for errors as any measurement with low amplitude will generate an error
 
     def set_waveform_properties(  # noqa: PLR0913
@@ -607,13 +658,13 @@ class TekScope(
         # Offset
         self.internal_afg.set_offset(offset)
         # Duty Cycle
-        self.set_if_needed("AFG:SQUARE:DUTY", duty_cycle)
+        self.internal_afg.set_square_duty_cycle(duty_cycle)
         # Function
         if function == SignalGeneratorFunctionsIAFG.RAMP:
-            self.set_if_needed("AFG:RAMP:SYMMETRY", symmetry)
+            self.internal_afg.set_ramp_symmetry(symmetry)
         self.internal_afg.set_function(function)
         # Termination impedance
-        self.set_if_needed("AFG:OUTPUT:LOAD:IMPEDANCE", termination)
+        self.internal_afg.set_impedance(termination)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
         self.internal_afg.set_amplitude(amplitude)
 
