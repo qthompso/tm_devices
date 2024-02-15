@@ -53,6 +53,13 @@ class AFGChannel:
         """Return the channel number."""
         return self._num
 
+    def initiate_phase_sync(self) -> None:
+        """Initialize a phase sync between SOURCE1 and SOURCE2 on the device.
+
+        Does the same operation if called on SOURCE1 or SOURCE2.
+        """
+        self._afg.write(f"{self.name}:PHASE:INITIATE")
+
     def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the amplitude on the source channel.
 
@@ -276,7 +283,7 @@ class AFG(SignalGenerator, ABC):
                 and not burst_state
             ):
                 # Initiate a phase sync (between CH 1 and CH 2 output waveforms on two channel AFGs)
-                self.write("SOURCE1:PHASE:INITIATE")
+                self.source_channel["SOURCE1"].initiate_phase_sync()
             # Check for system errors
             self.expect_esr(0)
 
