@@ -73,6 +73,7 @@ def test_awg70k_gen_waveform(
     awg70ka150 = cast(
         AWG70KA, device_manager.add_awg("awg70001aopt150-hostname", alias="awg70ka150")
     )
+    _ = capsys.readouterr().out
     awg70ka150.generate_function(
         frequency=10e4,
         function=awg70ka150.source_device_constants.functions.CLOCK,
@@ -81,6 +82,7 @@ def test_awg70k_gen_waveform(
         channel="SOURCE1",
         output_signal_path=awg70ka150.OutputSignalPath.DCA,
     )
+    stdout = capsys.readouterr().out
     source1_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
     assert float(source1_frequency) == 96000000
     source1_waveform_file = awg70ka150.query("SOURCE1:WAVEFORM?")
@@ -94,7 +96,7 @@ def test_awg70k_gen_waveform(
 
     assert awg70ka150.expect_esr(0)[0]
     assert awg70ka150.get_eventlog_status() == (True, '0,"No error"')
-    assert "MMEMORY:OPEN:SASSET" not in capsys.readouterr().out
+    assert "MMEMORY:OPEN:SASSET" not in stdout
 
     # call generate_function with only *DC in the waveform list.
     awg70ka225 = cast(
@@ -109,7 +111,8 @@ def test_awg70k_gen_waveform(
         channel="SOURCE1",
         output_signal_path=awg70ka150.OutputSignalPath.DCA,
     )
-    assert "MMEMORY:OPEN:SASSET" in capsys.readouterr().out
+    stdout = capsys.readouterr().out
+    assert "MMEMORY:OPEN:SASSET" in stdout
 
 
 def test_awg7k_gen_waveform(device_manager: DeviceManager) -> None:
@@ -266,7 +269,8 @@ def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
         "afg3252c-hostname", alias="afg3kc", connection_type="SOCKET", port=10001
     )
     afg3kc.generate_function(25e6, afg3kc.source_device_constants.functions.PULSE, 1.0, 0.0, "all")
-    assert "SOURCE1:PHASE:INITIATE" in capsys.readouterr().out
+    stdout = capsys.readouterr().out
+    assert "SOURCE1:PHASE:INITIATE" in stdout
 
     _ = capsys.readouterr().out  # throw away stdout
     afg3kc.setup_burst(
@@ -279,14 +283,14 @@ def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
         termination="HIGHZ",
     )
     afg3kc.generate_burst()
-    output = capsys.readouterr().out
-    assert "OUTPUT1:IMPEDANCE INFINITY" in output
+    stdout = capsys.readouterr().out
+    assert "OUTPUT1:IMPEDANCE INFINITY" in stdout
     source1_frequency = afg3kc.query("SOURCE1:FREQUENCY:FIXED?")
     assert float(source1_frequency) == 25e6
     source1_offset = afg3kc.query("SOURCE1:VOLTAGE:OFFSET?")
     assert not float(source1_offset)
-    assert "SOURCE1:PULSE:DCYCLE" not in output
-    assert "SOURCE1:FUNCTION:RAMP:SYMMETRY" not in output
+    assert "SOURCE1:PULSE:DCYCLE" not in stdout
+    assert "SOURCE1:FUNCTION:RAMP:SYMMETRY" not in stdout
     source1_function = afg3kc.query("SOURCE1:FUNCTION?")
     assert source1_function == "SIN"
     source1_amplitude = afg3kc.query("SOURCE1:VOLTAGE:AMPLITUDE?")
@@ -348,16 +352,18 @@ def test_internal_afg_gen_waveform(
         MSO5, device_manager.add_scope("MSO56-SERIAL1", alias="mso56", connection_type="USB")
     )
 
+    _ = capsys.readouterr().out
     scope.generate_function(10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0)
-    assert "AFG:OUTPUT:MODE" not in capsys.readouterr().out
-    assert "AFG:BURST:CCOUNT" not in capsys.readouterr().out
+    stdout = capsys.readouterr().out
+    assert "AFG:OUTPUT:MODE" not in stdout
+    assert "AFG:BURST:CCOUNT" not in stdout
     frequency = scope.query("AFG:FREQUENCY?")
     assert float(frequency) == 10e3
     offset = scope.query("AFG:OFFSET?")
     assert not float(offset)
     square_duty = scope.query("AFG:SQUARE:DUTY?")
     assert float(square_duty) == 50
-    assert "AFG:RAMP:SYMMETRY" not in capsys.readouterr().out
+    assert "AFG:RAMP:SYMMETRY" not in stdout
     function = scope.query("AFG:FUNCTION?")
     assert function == "SINE"
     impedance = scope.query("AFG:OUTPUT:LOAD:IMPEDANCE?")
@@ -366,7 +372,7 @@ def test_internal_afg_gen_waveform(
     assert float(amplitude) == 0.5
     output_state = scope.query("AFG:OUTPUT:STATE?")
     assert int(output_state) == 1
-    assert "AFG:BURST:TRIGGER" not in capsys.readouterr().out
+    assert "AFG:BURST:TRIGGER" not in stdout
 
     scope.generate_function(
         10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0, termination="HIGHZ"
@@ -374,15 +380,17 @@ def test_internal_afg_gen_waveform(
     impedance = scope.query("AFG:OUTPUT:LOAD:IMPEDANCE?")
     assert impedance == "HIGHZ"
 
+    _ = capsys.readouterr().out
     scope.setup_burst(10e3, scope.source_device_constants.functions.RAMP, 0.5, 0.0, burst_count=1)
     scope.generate_burst()
+    stdout = capsys.readouterr().out
     output_mode = scope.query("AFG:OUTPUT:MODE?")
     assert output_mode == "BURST"
     burst_ccount = scope.query("AFG:BURST:CCOUNT?")
     assert int(burst_ccount) == 1
     ramp_symmetry = scope.query("AFG:RAMP:SYMMETRY?")
     assert float(ramp_symmetry) == 50
-    assert "AFG:BURST:TRIGGER" in capsys.readouterr().out
+    assert "AFG:BURST:TRIGGER" in stdout
     assert scope.expect_esr(0)[0]
     assert scope.get_eventlog_status() == (True, '0,"No events to report - queue empty"')
 

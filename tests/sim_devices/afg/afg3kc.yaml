@@ -151,11 +151,9 @@ devices:
         default: 50.0
         getter:
           q: SOURCE1:PULSE:DCYCLE?
-          r: '{:f}'
+          r: '{:s}'
         setter:
-          q: SOURCE1:PULSE:DCYCLE {:f}
-        specs:
-          type: float
+          q: SOURCE1:PULSE:DCYCLE {:s}
       output_1_polarity:
         default: NORM
         getter:

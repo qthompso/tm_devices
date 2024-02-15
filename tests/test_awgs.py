@@ -72,6 +72,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
     awg520050.expect_esr(32, '1, "Command error"\n0,"No error"')
     with pytest.raises(AssertionError):
         awg520050.expect_esr(32, '1, Command error\n0,"No error"')
+    _ = capsys.readouterr().out  # throw away stdout
     awg520050.load_waveform("test", "file_path.txt", "TXT")
     assert 'MMEMory:IMPort "test", "file_path.txt", TXT' in capsys.readouterr().out
     awg520050.load_waveform("test", '"file_path.txt"', "TXT")
