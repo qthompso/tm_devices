@@ -91,7 +91,7 @@ class AFGChannel:
         """Set the function on the source channel.
 
         Args:
-            value: The function name.
+            value: The function name to set.
         """
         self._afg.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
 
@@ -99,7 +99,7 @@ class AFGChannel:
         """Set the impedance on the source channel.
 
         Args:
-            value: The impedance value.
+            value: The impedance value to set.
         """
         # The device will translate the text argument into a float value, which will cause
         # verification to fail.
@@ -122,6 +122,18 @@ class AFGChannel:
             tolerance=tolerance,
             percentage=percentage,
         )
+
+    def set_polarity(self, value: Literal["NORMAL", "INVERTED"]) -> None:
+        """Set the polarity on the source channel.
+
+        Args:
+            value: The polarity value to set.
+        """
+        polarity_mapping = {
+            "NORMAL": "NORM",
+            "INVERTED": "INV",
+        }
+        self._afg.set_if_needed(f"OUTPUT{self.num}:POLARITY", polarity_mapping[value])
 
     def set_pulse_duty_cycle(self, value: Union[float, Literal["MINIMUM", "MAXIMUM"]]) -> None:
         """Set the duty cycle of the pulse waveform on the source channel.
@@ -336,10 +348,6 @@ class AFG(SignalGenerator, ABC):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        polarity_mapping = {
-            "NORMAL": "NORM",
-            "INVERTED": "INV",
-        }
         # Termination
         if termination == "FIFTY":
             source_channel.set_impedance(50)
@@ -356,7 +364,7 @@ class AFG(SignalGenerator, ABC):
             # Duty cycle is only valid for pulse
             source_channel.set_pulse_duty_cycle(duty_cycle)
         # Polarity
-        self.set_if_needed(f"OUTPUT{source_channel.num}:POLARITY", polarity_mapping[polarity])
+        source_channel.set_polarity(polarity)
         # Function
         if function == SignalGeneratorFunctionsAFG.RAMP:
             self.set_if_needed(f"{source_channel.name}:FUNCTION:RAMP:SYMMETRY", symmetry)
