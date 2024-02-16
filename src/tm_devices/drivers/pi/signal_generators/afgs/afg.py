@@ -34,6 +34,7 @@ class AFGChannel:
 
     _BOUNDS_PULSE_DUTY_CYCLE = ParameterBounds(lower=0.4, upper=99.6)
     _BOUNDS_RAMP_SYMMETRY = ParameterBounds(lower=0, upper=100)
+    _BOUND_BURST_COUNT = ParameterBounds(lower=1, upper=1000000)
 
     def __init__(self, afg: "AFG", channel_name: str) -> None:
         """Create an AFG channel object.
@@ -79,6 +80,44 @@ class AFGChannel:
             tolerance=tolerance,
             percentage=percentage,
         )
+
+    def set_burst_state(self, value: int) -> None:
+        """Set the burst state to ON/OFF (1/0) on the source channel.
+
+        Args:
+            value: The burst state.
+        """
+        if value not in [0, 1]:
+            error_message = "Burst state value must be 0 or 1."
+            raise ValueError(error_message)
+        self._afg.set_if_needed(f"{self.name}:BURST:STATE", value)
+
+    def set_burst_mode(self, value: Literal["TRIGGERED", "GATED"]) -> None:
+        """Set the burst mode on the source channel.
+
+        Args:
+            value: The burst mode.
+        """
+        burst_mode_mapping = {
+            "TRIGGERED": "TRIG",
+            "GATED": "GAT",
+        }
+        self._afg.set_if_needed(f"{self.name}:BURST:MODE", burst_mode_mapping[value])
+
+    def set_burst_count(self, value: int) -> None:
+        """Set the number of wavelengths to be generated when the source channel is set to burst.
+
+        Args:
+            value: The number of wavelengths to be generated.
+        """
+        if not self._BOUND_BURST_COUNT.lower <= value <= self._BOUND_BURST_COUNT.upper:
+            error_message = (
+                "Burst count must be between "
+                f"{self._BOUND_BURST_COUNT.lower} and "
+                f"{self._BOUND_BURST_COUNT.upper} (inclusive)."
+            )
+            raise ValueError(error_message)
+        self._afg.set_if_needed(f"{self.name}:BURST:NCYCLES", value)
 
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the frequency on the source channel.
@@ -213,9 +252,9 @@ class AFGChannel:
         """
         # set to external as to not burst every millisecond
         self._afg.set_if_needed("TRIGGER:SEQUENCE:SOURCE", "EXT")
-        self._afg.set_if_needed(f"{self.name}:BURST:STATE", 1)
-        self._afg.set_if_needed(f"{self.name}:BURST:MODE", "TRIG")
-        self._afg.set_if_needed(f"{self.name}:BURST:NCYCLES", burst_count)
+        self.set_burst_state(1)
+        self.set_burst_mode("TRIGGERED")
+        self.set_burst_count(burst_count)
 
 
 @family_base_class

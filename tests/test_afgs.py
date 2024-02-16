@@ -224,6 +224,20 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylin
     with pytest.raises(ValueError, match=error_message):
         afg3252c.source_channel["SOURCE1"].set_ramp_symmetry(150)
 
+    afg3252c.source_channel["SOURCE1"].set_burst_state(1)
+    query_value = afg3252c.query("SOURCE1:BURST:STATE?")
+    assert float(query_value) == 1
+    error_message = r"Burst state value must be 0 or 1\."
+    with pytest.raises(ValueError, match=error_message):
+        afg3252c.source_channel["SOURCE1"].set_burst_state(5)
+
+    afg3252c.source_channel["SOURCE1"].set_burst_count(10)
+    query_value = afg3252c.query("SOURCE1:BURST:NCYCLES?")
+    assert float(query_value) == 10
+    error_message = r"Burst count must be between 1 and 1000000 \(inclusive\)\."
+    with pytest.raises(ValueError, match=error_message):
+        afg3252c.source_channel["SOURCE1"].set_burst_count(1000001)
+
 
 def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
     """Test the AFG31K driver.
