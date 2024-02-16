@@ -623,8 +623,6 @@ class TekScope(
             duty_cycle=duty_cycle,
             symmetry=symmetry,
         )
-        # Turn on the Internal AFG
-        self.internal_afg.set_state(1)
 
     def generate_burst(self) -> None:
         """Generate a burst of waveforms by forcing trigger."""
