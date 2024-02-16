@@ -109,11 +109,11 @@ class InternalAFGChannel:
             percentage=percentage,
         )
 
-    def set_burst_cycle_count(self, value: int) -> None:
-        """Set the cycle count on the internal AFG for ``BURST`` output mode.
+    def set_burst_count(self, value: int) -> None:
+        """Set the burst count on the internal AFG.
 
         Args:
-            value: The cycle count to set.
+            value: The burst count to set.
         """
         self._tekscope.set_if_needed("AFG:BURST:CCOUNT", f"{value}")
 
@@ -219,7 +219,7 @@ class InternalAFGChannel:
         """
         # set to external as to not burst every millisecond
         self.set_output_mode("BURST")
-        self.set_burst_cycle_count(burst_count)
+        self.set_burst_count(burst_count)
 
     def trigger_burst(self) -> None:
         """Trigger a burst on the internal AFG."""
