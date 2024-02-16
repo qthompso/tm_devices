@@ -32,6 +32,9 @@ class AFGSourceDeviceConstants(SourceDeviceConstants):
 class AFGChannel:
     """AFG channel driver."""
 
+    _BOUNDS_PULSE_DUTY_CYCLE = ParameterBounds(lower=0.4, upper=99.6)
+    _BOUNDS_RAMP_SYMMETRY = ParameterBounds(lower=0, upper=100)
+
     def __init__(self, afg: "AFG", channel_name: str) -> None:
         """Create an AFG channel object.
 
@@ -155,8 +158,19 @@ class AFGChannel:
             "MINIMUM": 0.4,
             "MAXIMUM": 99.6,
         }
-        duty_cycle_value = duty_cycle_map.get(value) if value in duty_cycle_map else value
-        self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", duty_cycle_value)  # pyright: ignore [reportArgumentType]
+        duty_cycle_value: float = duty_cycle_map.get(value) if value in duty_cycle_map else value  # pyright: ignore [reportAssignmentType]
+        if not (
+            self._BOUNDS_PULSE_DUTY_CYCLE.lower
+            <= duty_cycle_value
+            <= self._BOUNDS_PULSE_DUTY_CYCLE.upper
+        ):
+            error_message = (
+                "Duty cycle for PULSE waveforms must be between "
+                f"{self._BOUNDS_PULSE_DUTY_CYCLE.lower} and "
+                f"{self._BOUNDS_PULSE_DUTY_CYCLE.upper} (inclusive)."
+            )
+            raise ValueError(error_message)
+        self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", duty_cycle_value)
 
     def set_ramp_symmetry(self, value: Union[float, Literal["MINIMUM", "MAXIMUM"]]) -> None:
         """Set the symmetry of the ramp waveform on the source channel.
@@ -168,8 +182,17 @@ class AFGChannel:
             "MINIMUM": 0.0,
             "MAXIMUM": 100,
         }
-        symmetry_value = symmetry_map.get(value) if value in symmetry_map else value
-        self._afg.set_if_needed(f"{self.name}:FUNCTION:RAMP:SYMMETRY", symmetry_value)  # pyright: ignore [reportArgumentType]
+        symmetry_value: float = symmetry_map.get(value) if value in symmetry_map else value  # pyright: ignore [reportAssignmentType]
+        if not (
+            self._BOUNDS_RAMP_SYMMETRY.lower <= symmetry_value <= self._BOUNDS_RAMP_SYMMETRY.upper
+        ):
+            error_message = (
+                "Symmetry for RAMP waveforms must be between "
+                f"{self._BOUNDS_RAMP_SYMMETRY.lower} and "
+                f"{self._BOUNDS_RAMP_SYMMETRY.upper} (inclusive)."
+            )
+            raise ValueError(error_message)
+        self._afg.set_if_needed(f"{self.name}:FUNCTION:RAMP:SYMMETRY", symmetry_value)
 
     def set_state(self, value: int) -> None:
         """Set the output state to ON/OFF (1/0) on the source channel.

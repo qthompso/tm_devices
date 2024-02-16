@@ -204,9 +204,12 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylin
     afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle("MAXIMUM")
     query_value = afg3252c.query("SOURCE1:PULSE:DCYCLE?")
     assert float(query_value) == 99.6
-    afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle(5001)
+    afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle(75)
     query_value = afg3252c.query("SOURCE1:PULSE:DCYCLE?")
-    assert float(query_value) == 5001
+    assert float(query_value) == 75
+    error_message = r"Duty cycle for PULSE waveforms must be between 0\.4 and 99\.6 \(inclusive\)\."
+    with pytest.raises(ValueError, match=error_message):
+        afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle(100)
 
     afg3252c.source_channel["SOURCE1"].set_ramp_symmetry("MINIMUM")
     query_value = afg3252c.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
@@ -214,9 +217,12 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylin
     afg3252c.source_channel["SOURCE1"].set_ramp_symmetry("MAXIMUM")
     query_value = afg3252c.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
     assert float(query_value) == 100
-    afg3252c.source_channel["SOURCE1"].set_ramp_symmetry(5002)
+    afg3252c.source_channel["SOURCE1"].set_ramp_symmetry(25)
     query_value = afg3252c.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
-    assert float(query_value) == 5002
+    assert float(query_value) == 25
+    error_message = r"Symmetry for RAMP waveforms must be between 0 and 100 \(inclusive\)\."
+    with pytest.raises(ValueError, match=error_message):
+        afg3252c.source_channel["SOURCE1"].set_ramp_symmetry(150)
 
 
 def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
