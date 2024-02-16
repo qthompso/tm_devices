@@ -149,7 +149,7 @@ class AFGChannel:
         """Set the duty cycle of the pulse waveform on the source channel.
 
         Args:
-            value: The duty cycle percentage within [10.0, 90.0].
+            value: The duty cycle percentage within [0.4, 99.6].
         """
         duty_cycle_map = {
             "MINIMUM": 0.4,
@@ -250,7 +250,7 @@ class AFG(SignalGenerator, ABC):
             channel: The channel name to output the signal from, or 'all'.
             output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
-            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            duty_cycle: The duty cycle percentage within [0.4, 99.6].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
@@ -317,7 +317,7 @@ class AFG(SignalGenerator, ABC):
             channel: The channel name to output the signal from, or 'all'.
             output_signal_path: The output signal path of the specified channel.
             termination: The impedance this device's ``channel`` expects to see at the received end.
-            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            duty_cycle: The duty cycle percentage within [0.4, 99.6].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
@@ -369,7 +369,7 @@ class AFG(SignalGenerator, ABC):
             source_channel: The source channel class for the requested channel.
             burst_count: The number of wavelengths to be generated.
             termination: The impedance this device's ``channel`` expects to see at the received end.
-            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            duty_cycle: The duty cycle percentage within [0.4, 99.6].
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
