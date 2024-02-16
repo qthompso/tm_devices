@@ -22,8 +22,8 @@ from tm_devices import DeviceManager
 from tm_devices.drivers import AFG3K, AFG3KC
 from tm_devices.drivers.device import Device
 from tm_devices.drivers.pi.scopes.scope import Scope
-from tm_devices.drivers.pi.signal_sources.afgs.afg import AFG
-from tm_devices.drivers.pi.signal_sources.signal_source import SignalSource
+from tm_devices.drivers.pi.signal_generators.afgs.afg import AFG
+from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGenerator
 from tm_devices.helpers import ConnectionTypes, DeviceTypes, PYVISA_PY_BACKEND, SerialConfig
 
 
@@ -41,7 +41,7 @@ def _remove_added_methods() -> Iterator[None]:
         (Device, "already_exists"),
         (Scope, "custom_model_getter_scope"),
         (Scope, "custom_return"),
-        (SignalSource, "custom_model_getter_ss"),
+        (SignalGenerator, "custom_model_getter_ss"),
         (AFG, "custom_model_getter_afg"),
         (AFG3K, "custom_model_getter_afg3k"),
         (AFG3KC, "custom_model_getter_afg3kc"),
@@ -328,10 +328,10 @@ class Device(ABC, metaclass=abc.ABCMeta):
             """Return the model."""
             return f"Scope {device.model} {value}"
 
-        @SignalSource.add_method
-        def custom_model_getter_ss(device: SignalSource, value: str) -> str:
+        @SignalGenerator.add_method
+        def custom_model_getter_ss(device: SignalGenerator, value: str) -> str:
             """Return the model."""
-            return f"SignalSource {device.model} {value}"
+            return f"SignalGenerator {device.model} {value}"
 
         @AFG.add_method
         def custom_model_getter_afg(device: AFG, value: str) -> str:
@@ -383,7 +383,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         assert generated_contents == golden_contents
 
         # Test the custom added properties
-        afg = device_manager.add_afg("afg3kc-hostname", alias="testing")
+        afg = device_manager.add_afg("afg3252c-hostname", alias="testing")
         # noinspection PyUnresolvedReferences
         assert afg.class_name == "AFG3KC"
         # noinspection PyUnresolvedReferences
@@ -399,7 +399,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         # noinspection PyUnresolvedReferences
         assert afg.custom_model_getter("a", "b", "c", 0.1) == "Device AFG3252C a b c 0.1"
         # noinspection PyUnresolvedReferences
-        assert afg.custom_model_getter_ss("hello") == "SignalSource AFG3252C hello"
+        assert afg.custom_model_getter_ss("hello") == "SignalGenerator AFG3252C hello"
         # noinspection PyUnresolvedReferences
         assert afg.custom_model_getter_afg("hello") == "AFG AFG3252C hello"
         # noinspection PyUnresolvedReferences
@@ -467,7 +467,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         device_manager.remove_all_devices()
 
         # Test getting a device type that was not the specified type
-        device_manager.add_afg("afg3kc-hostname", alias="my-device")
+        device_manager.add_afg("afg3252c-hostname", alias="my-device")
         with pytest.raises(TypeError):
             device_manager.get_scope("my-device")
         device_manager.remove_all_devices()
@@ -485,10 +485,10 @@ class Device(ABC, metaclass=abc.ABCMeta):
             mock.MagicMock(return_value="data"),
         ):
             with pytest.warns(UserWarning), pytest.raises(SystemError) as error:
-                device_manager.add_afg("afg3kc-hostname")
+                device_manager.add_afg("afg3252c-hostname")
             assert str(error.value) == (
                 "Unable to read *IDN? response.\n"
-                "\tThe device `TCPIP0::AFG3KC-HOSTNAME::inst0::INSTR` likely has data sitting "
+                "\tThe device `TCPIP0::AFG3252C-HOSTNAME::inst0::INSTR` likely has data sitting "
                 "in the VISA Output Buffer that survived device_clear()."
             )
 
@@ -505,7 +505,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         ):
             # patched the stb to return 16 (message available)
             with pytest.warns(UserWarning), pytest.raises(SystemError) as error:
-                device_manager.add_afg("afg3kc-hostname")
+                device_manager.add_afg("afg3252c-hostname")
             assert str(error.value) == (
                 "VI_ERROR_TMO (-1073807339): Timeout expired before operation completed.\n"
                 "\tUnable to read data after 2s.\n"
@@ -522,7 +522,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
             mock.MagicMock(return_value="bad IDN"),
         ):
             with pytest.raises(SystemError) as error:
-                device_manager.add_afg("afg3kc-hostname")
+                device_manager.add_afg("afg3252c-hostname")
             assert (
                 str(error.value)
                 == "Unable to determine which device driver to use. *IDN? returned 'bad IDN'"
@@ -556,7 +556,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
             device_manager.get_available_devices()
 
         with pytest.raises(TypeError):
-            device_manager.add_awg("afg3kc-hostname", alias="mismatch")
+            device_manager.add_awg("afg3252c-hostname", alias="mismatch")
 
         device_manager.close()
         with pytest.raises(AttributeError):
@@ -589,7 +589,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         local_rm.close()
 
         device_manager.remove_all_devices()
-        afg = device_manager.add_afg("afg3kc-hostname")
+        afg = device_manager.add_afg("afg3252c-hostname")
         assert afg.query("*IDN?") == "TEKTRONIX,AFG3252C,SERIAL1,SCPI:99.0 FV:3.2.3"
 
         available_devices = device_manager.get_available_devices(
@@ -607,7 +607,7 @@ class Device(ABC, metaclass=abc.ABCMeta):
         assert afg.query("*IDN?") == "TEKTRONIX,AFG3252C,SERIAL1,SCPI:99.0 FV:3.2.3"
         assert available_devices["local"] == device_tuple
         assert available_devices["configured"] == (
-            "address=AFG3KC-HOSTNAME,connection_type=TCPIP,device_type=AFG",
+            "address=AFG3252C-HOSTNAME,connection_type=TCPIP,device_type=AFG",
         )
 
     def test_deleting_device_manager(self) -> None:
