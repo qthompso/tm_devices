@@ -284,7 +284,8 @@ def test_afg3k_gen_waveform(  # pylint: disable=too-many-locals
     )
     afg3kc.generate_burst()
     stdout = capsys.readouterr().out
-    assert "OUTPUT1:IMPEDANCE INFINITY" in stdout
+    query_value = afg3kc.query("OUTPUT1:IMPEDANCE?")
+    assert float(query_value) == 99e36
     source1_frequency = afg3kc.query("SOURCE1:FREQUENCY:FIXED?")
     assert float(source1_frequency) == 25e6
     source1_offset = afg3kc.query("SOURCE1:VOLTAGE:OFFSET?")

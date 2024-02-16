@@ -108,10 +108,13 @@ class AFGChannel:
         Args:
             value: The impedance value to set.
         """
-        # The device will translate the text argument into a float value, which will cause
-        # verification to fail.
-        verify_value = not isinstance(value, str)
-        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", value, verify_value=verify_value)
+        impedance_map = {
+            "MINIMUM": 1.0,
+            "MAXIMUM": 10e3,
+            "INFINITY": 99e36,
+        }
+        impedance_value = impedance_map.get(value) if value in impedance_map else value
+        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", impedance_value)  # pyright: ignore [reportArgumentType]
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the offset on the source channel.
@@ -148,10 +151,12 @@ class AFGChannel:
         Args:
             value: The duty cycle percentage within [10.0, 90.0].
         """
-        # The device will translate the text argument into a float value, which will cause
-        # verification to fail.
-        verify_value = not isinstance(value, str)
-        self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", value, verify_value=verify_value)
+        duty_cycle_map = {
+            "MINIMUM": 0.4,
+            "MAXIMUM": 99.6,
+        }
+        duty_cycle_value = duty_cycle_map.get(value) if value in duty_cycle_map else value
+        self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", duty_cycle_value)  # pyright: ignore [reportArgumentType]
 
     def set_ramp_symmetry(self, value: Union[float, Literal["MINIMUM", "MAXIMUM"]]) -> None:
         """Set the symmetry of the ramp waveform on the source channel.
@@ -159,12 +164,12 @@ class AFGChannel:
         Args:
             value: The symmetry value to set.
         """
-        # The device will translate the text argument into a float value, which will cause
-        # verification to fail.
-        verify_value = not isinstance(value, str)
-        self._afg.set_if_needed(
-            f"{self.name}:FUNCTION:RAMP:SYMMETRY", value, verify_value=verify_value
-        )
+        symmetry_map = {
+            "MINIMUM": 0.0,
+            "MAXIMUM": 100,
+        }
+        symmetry_value = symmetry_map.get(value) if value in symmetry_map else value
+        self._afg.set_if_needed(f"{self.name}:FUNCTION:RAMP:SYMMETRY", symmetry_value)  # pyright: ignore [reportArgumentType]
 
     def set_state(self, value: int) -> None:
         """Set the output state to ON/OFF (1/0) on the source channel.

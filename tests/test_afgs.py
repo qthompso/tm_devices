@@ -17,12 +17,11 @@ from tm_devices.drivers.pi.signal_generators.afgs.afg import (
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
-def test_afg3k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:  # noqa: PLR0915  # pylint: disable=too-many-locals
+def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylint: disable=too-many-locals
     """Test the AFG3KC driver.
 
     Args:
         device_manager: The DeviceManager object.
-        capsys: The pytest capture fixture.
     """
     afg3252c = device_manager.add_afg(
         "afg3252c-hostname", alias="afg3252c", connection_type="SOCKET", port=10001
@@ -186,27 +185,38 @@ def test_afg3k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
     with pytest.raises(ValueError, match="Output state value must be 0 or 1."):
         afg3252c.source_channel["SOURCE1"].set_state(-1)
 
-    _ = capsys.readouterr().out  # throw away stdout
     afg3252c.source_channel["SOURCE1"].set_impedance("MINIMUM")
+    query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
+    assert float(query_value) == 1
     afg3252c.source_channel["SOURCE1"].set_impedance("MAXIMUM")
+    query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
+    assert float(query_value) == 10e3
     afg3252c.source_channel["SOURCE1"].set_impedance("INFINITY")
+    query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
+    assert float(query_value) == 99e36
     afg3252c.source_channel["SOURCE1"].set_impedance(5000)
     impedance_query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
-    assert int(impedance_query_value) == 5000
-    stdout = capsys.readouterr().out
-    assert "OUTPUT1:IMPEDANCE MINIMUM" in stdout
-    assert "OUTPUT1:IMPEDANCE MAXIMUM" in stdout
-    assert "OUTPUT1:IMPEDANCE INFINITY" in stdout
+    assert float(impedance_query_value) == 5000
 
-    _ = capsys.readouterr().out  # throw away stdout
     afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle("MINIMUM")
+    query_value = afg3252c.query("SOURCE1:PULSE:DCYCLE?")
+    assert float(query_value) == 0.4
     afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle("MAXIMUM")
-    afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle(5000)
-    dcycle_query_value = afg3252c.query("SOURCE1:PULSE:DCYCLE?")
-    stdout = capsys.readouterr().out
-    assert int(dcycle_query_value) == 5000
-    assert "SOURCE1:PULSE:DCYCLE MINIMUM" in stdout
-    assert "SOURCE1:PULSE:DCYCLE MAXIMUM" in stdout
+    query_value = afg3252c.query("SOURCE1:PULSE:DCYCLE?")
+    assert float(query_value) == 99.6
+    afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle(5001)
+    query_value = afg3252c.query("SOURCE1:PULSE:DCYCLE?")
+    assert float(query_value) == 5001
+
+    afg3252c.source_channel["SOURCE1"].set_ramp_symmetry("MINIMUM")
+    query_value = afg3252c.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
+    assert not float(query_value)
+    afg3252c.source_channel["SOURCE1"].set_ramp_symmetry("MAXIMUM")
+    query_value = afg3252c.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
+    assert float(query_value) == 100
+    afg3252c.source_channel["SOURCE1"].set_ramp_symmetry(5002)
+    query_value = afg3252c.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
+    assert float(query_value) == 5002
 
 
 def test_afg31k(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
