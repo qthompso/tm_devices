@@ -203,7 +203,11 @@ class InternalAFGChannel:
         if not (
             self._BOUNDS_SQUARE_DUTY_CYCLE.lower <= value <= self._BOUNDS_SQUARE_DUTY_CYCLE.upper
         ):
-            error_message = "Duty cycle for square waveforms must be between 10 and 90 (inclusive)."
+            error_message = (
+                "Duty cycle for SQUARE waveforms must be between "
+                f"{self._BOUNDS_SQUARE_DUTY_CYCLE.lower} and "
+                f"{self._BOUNDS_SQUARE_DUTY_CYCLE.upper} (inclusive)."
+            )
             raise ValueError(error_message)
         self._tekscope.set_if_needed("AFG:SQUARE:DUTY", value)
 
