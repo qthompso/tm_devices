@@ -110,10 +110,10 @@ class InternalAFGChannel:
         )
 
     def set_burst_count(self, value: int) -> None:
-        """Set the burst count on the internal AFG.
+        """Set the number of wavelengths to be generated when the internal AFG is set to burst.
 
         Args:
-            value: The burst count to set.
+            value: The number of wavelengths to be generated.
         """
         self._tekscope.set_if_needed("AFG:BURST:CCOUNT", f"{value}")
 
