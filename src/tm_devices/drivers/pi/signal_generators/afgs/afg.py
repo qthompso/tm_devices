@@ -33,8 +33,8 @@ class AFGChannel:
     """AFG channel driver."""
 
     _BOUNDS_PULSE_DUTY_CYCLE = ParameterBounds(lower=0.4, upper=99.6)
-    _BOUNDS_RAMP_SYMMETRY = ParameterBounds(lower=0, upper=100)
-    _BOUND_BURST_COUNT = ParameterBounds(lower=1, upper=1000000)
+    _BOUNDS_RAMP_SYMMETRY = ParameterBounds(lower=0.0, upper=100.0)
+    _BOUND_BURST_COUNT = ParameterBounds(lower=1.0, upper=1000000.0)
 
     def __init__(self, afg: "AFG", channel_name: str) -> None:
         """Create an AFG channel object.
@@ -196,8 +196,8 @@ class AFGChannel:
             value: The duty cycle percentage within [0.4, 99.6].
         """
         duty_cycle_map = {
-            "MINIMUM": 0.4,
-            "MAXIMUM": 99.6,
+            "MINIMUM": self._BOUNDS_PULSE_DUTY_CYCLE.lower,
+            "MAXIMUM": self._BOUNDS_PULSE_DUTY_CYCLE.upper,
         }
         duty_cycle_value: float = duty_cycle_map.get(value) if value in duty_cycle_map else value  # pyright: ignore [reportAssignmentType]
         if not (
@@ -220,8 +220,8 @@ class AFGChannel:
             value: The symmetry value to set.
         """
         symmetry_map = {
-            "MINIMUM": 0.0,
-            "MAXIMUM": 100,
+            "MINIMUM": self._BOUNDS_RAMP_SYMMETRY.lower,
+            "MAXIMUM": self._BOUNDS_RAMP_SYMMETRY.upper,
         }
         symmetry_value: float = symmetry_map.get(value) if value in symmetry_map else value  # pyright: ignore [reportAssignmentType]
         if not (

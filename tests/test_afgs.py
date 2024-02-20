@@ -220,7 +220,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylin
     afg3252c.source_channel["SOURCE1"].set_ramp_symmetry(25)
     query_value = afg3252c.query("SOURCE1:FUNCTION:RAMP:SYMMETRY?")
     assert float(query_value) == 25
-    error_message = r"Symmetry for RAMP waveforms must be between 0 and 100 \(inclusive\)\."
+    error_message = r"Symmetry for RAMP waveforms must be between 0\.0 and 100\.0 \(inclusive\)\."
     with pytest.raises(ValueError, match=error_message):
         afg3252c.source_channel["SOURCE1"].set_ramp_symmetry(150)
 
@@ -234,7 +234,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylin
     afg3252c.source_channel["SOURCE1"].set_burst_count(10)
     query_value = afg3252c.query("SOURCE1:BURST:NCYCLES?")
     assert float(query_value) == 10
-    error_message = r"Burst count must be between 1 and 1000000 \(inclusive\)\."
+    error_message = r"Burst count must be between 1\.0 and 1000000\.0 \(inclusive\)\."
     with pytest.raises(ValueError, match=error_message):
         afg3252c.source_channel["SOURCE1"].set_burst_count(1000001)
 
