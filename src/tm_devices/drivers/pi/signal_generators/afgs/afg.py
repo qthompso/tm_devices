@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Dict, Literal, Optional, Tuple, Type, Union
+from typing import Dict, Literal, Optional, Tuple, Type
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
@@ -31,10 +31,6 @@ class AFGSourceDeviceConstants(SourceDeviceConstants):
 
 class AFGChannel:
     """AFG channel driver."""
-
-    _BOUNDS_PULSE_DUTY_CYCLE = ParameterBounds(lower=0.4, upper=99.6)
-    _BOUNDS_RAMP_SYMMETRY = ParameterBounds(lower=0.0, upper=100.0)
-    _BOUND_BURST_COUNT = ParameterBounds(lower=1.0, upper=1000000.0)
 
     def __init__(self, afg: "AFG", channel_name: str) -> None:
         """Create an AFG channel object.
@@ -96,7 +92,7 @@ class AFGChannel:
         """Set the burst mode on the source channel.
 
         Args:
-            value: The burst mode.
+            value: The burst mode (Options: "TRIGGERED", "GATED").
         """
         burst_mode_mapping = {
             "TRIGGERED": "TRIG",
@@ -108,15 +104,8 @@ class AFGChannel:
         """Set the number of wavelengths to be generated when the source channel is set to burst.
 
         Args:
-            value: The number of wavelengths to be generated.
+            value: The number of wavelengths to be generated within [1, 1000000].
         """
-        if not self._BOUND_BURST_COUNT.lower <= value <= self._BOUND_BURST_COUNT.upper:
-            error_message = (
-                "Burst count must be between "
-                f"{self._BOUND_BURST_COUNT.lower} and "
-                f"{self._BOUND_BURST_COUNT.upper} (inclusive)."
-            )
-            raise ValueError(error_message)
         self._afg.set_if_needed(f"{self.name}:BURST:NCYCLES", value)
 
     def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
@@ -144,19 +133,13 @@ class AFGChannel:
         """
         self._afg.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
 
-    def set_impedance(self, value: Union[float, Literal["MINIMUM", "MAXIMUM", "INFINITY"]]) -> None:
+    def set_impedance(self, value: float) -> None:
         """Set the output load impedance on the internal AFG.
 
         Args:
-            value: The impedance value to set.
+            value: The impedance value to set within [1, 10e3] or 99e36.
         """
-        impedance_map = {
-            "MINIMUM": 1.0,
-            "MAXIMUM": 10e3,
-            "INFINITY": 99e36,
-        }
-        impedance_value = impedance_map.get(value) if value in impedance_map else value
-        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", impedance_value)  # pyright: ignore [reportArgumentType]
+        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", value)
 
     def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
         """Set the offset on the source channel.
@@ -181,7 +164,7 @@ class AFGChannel:
         An "INVERTED" polarity inverts the specific output waveform relative to the offset level.
 
         Args:
-            value: The polarity value to set.
+            value: The polarity value to set (Options: "NORMAL", "INVERTED").
         """
         polarity_mapping = {
             "NORMAL": "NORM",
@@ -189,51 +172,21 @@ class AFGChannel:
         }
         self._afg.set_if_needed(f"OUTPUT{self.num}:POLARITY", polarity_mapping[value])
 
-    def set_pulse_duty_cycle(self, value: Union[float, Literal["MINIMUM", "MAXIMUM"]]) -> None:
+    def set_pulse_duty_cycle(self, value: float) -> None:
         """Set the duty cycle of the pulse waveform on the source channel.
 
         Args:
             value: The duty cycle percentage within [0.4, 99.6].
         """
-        duty_cycle_map = {
-            "MINIMUM": self._BOUNDS_PULSE_DUTY_CYCLE.lower,
-            "MAXIMUM": self._BOUNDS_PULSE_DUTY_CYCLE.upper,
-        }
-        duty_cycle_value: float = duty_cycle_map.get(value) if value in duty_cycle_map else value  # pyright: ignore [reportAssignmentType]
-        if not (
-            self._BOUNDS_PULSE_DUTY_CYCLE.lower
-            <= duty_cycle_value
-            <= self._BOUNDS_PULSE_DUTY_CYCLE.upper
-        ):
-            error_message = (
-                "Duty cycle for PULSE waveforms must be between "
-                f"{self._BOUNDS_PULSE_DUTY_CYCLE.lower} and "
-                f"{self._BOUNDS_PULSE_DUTY_CYCLE.upper} (inclusive)."
-            )
-            raise ValueError(error_message)
-        self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", duty_cycle_value)
+        self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", value)
 
-    def set_ramp_symmetry(self, value: Union[float, Literal["MINIMUM", "MAXIMUM"]]) -> None:
+    def set_ramp_symmetry(self, value: float) -> None:
         """Set the symmetry of the ramp waveform on the source channel.
 
         Args:
-            value: The symmetry value to set.
+            value: The symmetry value to set within [0, 100].
         """
-        symmetry_map = {
-            "MINIMUM": self._BOUNDS_RAMP_SYMMETRY.lower,
-            "MAXIMUM": self._BOUNDS_RAMP_SYMMETRY.upper,
-        }
-        symmetry_value: float = symmetry_map.get(value) if value in symmetry_map else value  # pyright: ignore [reportAssignmentType]
-        if not (
-            self._BOUNDS_RAMP_SYMMETRY.lower <= symmetry_value <= self._BOUNDS_RAMP_SYMMETRY.upper
-        ):
-            error_message = (
-                "Symmetry for RAMP waveforms must be between "
-                f"{self._BOUNDS_RAMP_SYMMETRY.lower} and "
-                f"{self._BOUNDS_RAMP_SYMMETRY.upper} (inclusive)."
-            )
-            raise ValueError(error_message)
-        self._afg.set_if_needed(f"{self.name}:FUNCTION:RAMP:SYMMETRY", symmetry_value)
+        self._afg.set_if_needed(f"{self.name}:FUNCTION:RAMP:SYMMETRY", value)
 
     def set_state(self, value: int) -> None:
         """Set the output state to ON/OFF (1/0) on the source channel.
@@ -439,7 +392,7 @@ class AFG(SignalGenerator, ABC):
         if termination == "FIFTY":
             source_channel.set_impedance(50)
         elif termination == "HIGHZ":
-            source_channel.set_impedance("INFINITY")
+            source_channel.set_impedance(99e36)
         else:  # pragma: no cover
             # if termination is MAXIMUM or MINIMUM or INFINITY
             self.set_if_needed(f"OUTPUT{source_channel.num}:IMPEDANCE", termination)
