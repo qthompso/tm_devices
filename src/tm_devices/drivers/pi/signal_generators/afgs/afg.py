@@ -82,13 +82,13 @@ class AFGChannel:
         )
 
     def set_burst_state(self, value: int) -> None:
-        """Set the burst state to ON/OFF (1/0) on the source channel.
+        """Set the burst mode to ON/OFF (1/0) on the source channel.
 
         Args:
             value: The burst state.
         """
         if value not in [0, 1]:
-            error_message = "Burst state value must be 0 or 1."
+            error_message = "Burst state value must be 1 (ON) or 0 (OFF)."
             raise ValueError(error_message)
         self._afg.set_if_needed(f"{self.name}:BURST:STATE", value)
 
@@ -137,15 +137,15 @@ class AFGChannel:
         )
 
     def set_function(self, value: SignalGeneratorFunctionsAFG) -> None:
-        """Set the function on the source channel.
+        """Set the function to output on the source channel.
 
         Args:
-            value: The function name to set.
+            value: The name of the function to output.
         """
         self._afg.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
 
     def set_impedance(self, value: Union[float, Literal["MINIMUM", "MAXIMUM", "INFINITY"]]) -> None:
-        """Set the impedance on the source channel.
+        """Set the output load impedance on the internal AFG.
 
         Args:
             value: The impedance value to set.
@@ -177,6 +177,8 @@ class AFGChannel:
 
     def set_polarity(self, value: Literal["NORMAL", "INVERTED"]) -> None:
         """Set the polarity on the source channel.
+
+        An "INVERTED" polarity inverts the specific output waveform relative to the offset level.
 
         Args:
             value: The polarity value to set.
@@ -240,12 +242,12 @@ class AFGChannel:
             value: The output state.
         """
         if value not in [0, 1]:
-            error_message = "Output state value must be 0 or 1."
+            error_message = "Output state value must be 1 (ON) or 0 (OFF)."
             raise ValueError(error_message)
         self._afg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
 
     def setup_burst_waveform(self, burst_count: int) -> None:
-        """Prepare source channel for a burst waveform.
+        """Prepare the source channel for a burst waveform.
 
         Args:
             burst_count: The number of wavelengths to be generated.

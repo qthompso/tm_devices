@@ -135,15 +135,15 @@ class InternalAFGChannel:
         )
 
     def set_function(self, value: SignalGeneratorFunctionsIAFG) -> None:
-        """Set the function on the internal AFG.
+        """Set the function to output on the internal AFG.
 
         Args:
-            value: The function name.
+            value: The name of the function to output.
         """
         self._tekscope.set_if_needed("AFG:FUNCTION", str(value.value))
 
     def set_impedance(self, value: Literal["FIFTY", "HIGHZ"]) -> None:
-        """Set the impedance on the internal AFG.
+        """Set the output load impedance on the internal AFG.
 
         Args:
             value: The impedance value to set.
@@ -190,7 +190,7 @@ class InternalAFGChannel:
             value: The output state.
         """
         if value not in [0, 1]:
-            error_message = "Output state value must be 0 or 1."
+            error_message = "Output state value must be 1 (ON) or 0 (OFF)."
             raise ValueError(error_message)
         self._tekscope.set_if_needed("AFG:OUTPUT:STATE", value)
 

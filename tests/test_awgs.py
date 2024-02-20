@@ -154,7 +154,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
     with pytest.raises(ValueError, match=error):
         awg520025.get_waveform_constraints()
 
-    with pytest.raises(ValueError, match="Output state value must be 0 or 1."):
+    with pytest.raises(ValueError, match=r"Output state value must be 1 \(ON\) or 0 \(OFF\)\."):
         awg520025.source_channel["SOURCE1"].set_state(-1)
 
 

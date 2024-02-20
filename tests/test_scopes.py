@@ -345,7 +345,7 @@ def test_iafg(device_manager: DeviceManager) -> None:
     with pytest.raises(ValueError, match="IAFGs must have a waveform defined."):
         mso64.get_waveform_constraints()
 
-    with pytest.raises(ValueError, match="Output state value must be 0 or 1."):
+    with pytest.raises(ValueError, match=r"Output state value must be 1 \(ON\) or 0 \(OFF\)\."):
         mso64.internal_afg.set_state(-1)
 
     error_message = r"Duty cycle for SQUARE waveforms must be between 10 and 90 \(inclusive\)\."

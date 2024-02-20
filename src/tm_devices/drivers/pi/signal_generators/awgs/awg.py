@@ -122,7 +122,7 @@ class AWGChannel(ExtendableMixin):
             value: The output state.
         """
         if value not in [0, 1]:
-            error_message = "Output state value must be 0 or 1."
+            error_message = "Output state value must be 1 (ON) or 0 (OFF)."
             raise ValueError(error_message)
         self._awg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
 

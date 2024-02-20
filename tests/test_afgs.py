@@ -182,7 +182,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylin
     with pytest.raises(ValueError, match="AFGs must have a waveform defined."):
         afg3252c.get_waveform_constraints()
 
-    with pytest.raises(ValueError, match="Output state value must be 0 or 1."):
+    with pytest.raises(ValueError, match=r"Output state value must be 1 \(ON\) or 0 \(OFF\)\."):
         afg3252c.source_channel["SOURCE1"].set_state(-1)
 
     afg3252c.source_channel["SOURCE1"].set_impedance("MINIMUM")
@@ -227,7 +227,7 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylin
     afg3252c.source_channel["SOURCE1"].set_burst_state(1)
     query_value = afg3252c.query("SOURCE1:BURST:STATE?")
     assert float(query_value) == 1
-    error_message = r"Burst state value must be 0 or 1\."
+    error_message = r"Burst state value must be 1 \(ON\) or 0 \(OFF\)\."
     with pytest.raises(ValueError, match=error_message):
         afg3252c.source_channel["SOURCE1"].set_burst_state(5)
 
