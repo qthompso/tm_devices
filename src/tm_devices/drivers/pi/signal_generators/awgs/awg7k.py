@@ -20,15 +20,12 @@ from tm_devices.helpers import (
 class AWG7KChannel(AWG5KChannel):
     """AWG7K channel driver."""
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
 
         Args:
             value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         output_path = float(self._awg.query(f"AWGCONTROL:DOUTPUT{self.num}:STATE?"))
         if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string) and not output_path:
@@ -37,8 +34,7 @@ class AWG7KChannel(AWG5KChannel):
             self._awg.set_if_needed(
                 f"{self.name}:VOLTAGE:OFFSET",
                 value,
-                tolerance=tolerance,
-                percentage=percentage,
+                tolerance=absolute_tolerance,
             )
         elif value:
             # No error is raised when 0 is the offset value and the output signal path

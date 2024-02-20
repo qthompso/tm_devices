@@ -90,21 +90,17 @@ class InternalAFGChannel:
         """
         self._tekscope = tekscope
 
-    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the internal AFG.
 
         Args:
             value: The amplitude value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._tekscope.set_if_needed(
             "AFG:AMPLITUDE",
             value,
-            tolerance=tolerance,
-            percentage=percentage,
+            tolerance=absolute_tolerance,
         )
 
     def set_burst_count(self, value: int) -> None:
@@ -115,21 +111,17 @@ class InternalAFGChannel:
         """
         self._tekscope.set_if_needed("AFG:BURST:CCOUNT", f"{value}")
 
-    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the internal AFG.
 
         Args:
             value: The frequency value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._tekscope.set_if_needed(
             "AFG:FREQUENCY",
             value,
-            tolerance=tolerance,
-            percentage=percentage,
+            tolerance=absolute_tolerance,
         )
 
     def set_function(self, value: SignalGeneratorFunctionsIAFG) -> None:
@@ -148,21 +140,17 @@ class InternalAFGChannel:
         """
         self._tekscope.set_if_needed("AFG:OUTPUT:LOAD:IMPEDANCE", value)
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the internal AFG.
 
         Args:
             value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._tekscope.set_if_needed(
             "AFG:OFFSET",
             value,
-            tolerance=tolerance,
-            percentage=percentage,
+            tolerance=absolute_tolerance,
         )
 
     def set_output_mode(self, value: Literal["OFF", "CONTINUOUS", "BURST"]) -> None:
@@ -645,7 +633,7 @@ class TekScope(
             self.internal_afg.setup_burst_waveform(burst_count)
         # Generate the waveform from the Internal AFG
         # Frequency
-        self.internal_afg.set_frequency(frequency, tolerance=2, percentage=True)
+        self.internal_afg.set_frequency(frequency)
         # Offset
         self.internal_afg.set_offset(offset)
         # Duty Cycle

@@ -60,21 +60,17 @@ class AFGChannel:
         """
         self._afg.write(f"{self.name}:PHASE:INITIATE")
 
-    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the source channel.
 
         Args:
             value: The amplitude value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._afg.set_if_needed(
             f"{self._name}:VOLTAGE:AMPLITUDE",
             value,
-            tolerance=tolerance,
-            percentage=percentage,
+            tolerance=absolute_tolerance,
         )
 
     def set_burst_state(self, value: int) -> None:
@@ -108,21 +104,17 @@ class AFGChannel:
         """
         self._afg.set_if_needed(f"{self.name}:BURST:NCYCLES", value)
 
-    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._afg.set_if_needed(
             f"{self._name}:FREQUENCY:FIXED",
             value,
-            tolerance=tolerance,
-            percentage=percentage,
+            tolerance=absolute_tolerance,
         )
 
     def set_function(self, value: SignalGeneratorFunctionsAFG) -> None:
@@ -141,21 +133,17 @@ class AFGChannel:
         """
         self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", value)
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
 
         Args:
             value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._afg.set_if_needed(
             f"{self._name}:VOLTAGE:OFFSET",
             value,
-            tolerance=tolerance,
-            percentage=percentage,
+            tolerance=absolute_tolerance,
         )
 
     def set_polarity(self, value: Literal["NORMAL", "INVERTED"]) -> None:
@@ -397,9 +385,9 @@ class AFG(SignalGenerator, ABC):
             # if termination is MAXIMUM or MINIMUM or INFINITY
             self.set_if_needed(f"OUTPUT{source_channel.num}:IMPEDANCE", termination)
         # Frequency
-        source_channel.set_frequency(frequency, tolerance=2, percentage=True)
+        source_channel.set_frequency(frequency)
         # Offset
-        source_channel.set_offset(offset, tolerance=0.01)
+        source_channel.set_offset(offset, absolute_tolerance=0.01)
         if function == SignalGeneratorFunctionsAFG.PULSE:
             # Duty cycle is only valid for pulse
             source_channel.set_pulse_duty_cycle(duty_cycle)
@@ -410,7 +398,7 @@ class AFG(SignalGenerator, ABC):
             source_channel.set_ramp_symmetry(symmetry)
         source_channel.set_function(function)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
-        source_channel.set_amplitude(amplitude, tolerance=0.01)
+        source_channel.set_amplitude(amplitude, absolute_tolerance=0.01)
         if burst_count > 0:
             source_channel.setup_burst_waveform(burst_count)
 

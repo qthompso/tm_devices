@@ -35,15 +35,12 @@ class AWG5200Channel(AWGChannel):
         super().__init__(awg, channel_name)
         self._awg = cast(AWG5200, awg)
 
-    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         # This is an overlapping command for the AWG5200, and will overlap the
         # next command and/or overlap the previous if it is still running.
@@ -57,23 +54,19 @@ class AWG5200Channel(AWGChannel):
         self._awg.ieee_cmds.opc()
         self._awg.ieee_cmds.cls()
         # ensure that the clock rate was actually set
-        self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=tolerance, percentage=percentage)
+        self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=absolute_tolerance)
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
 
         Args:
             value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._awg.set_if_needed(
             f"{self.name}:VOLTAGE:OFFSET",
             value,
-            tolerance=tolerance,
-            percentage=percentage,
+            tolerance=absolute_tolerance,
         )
 
     def set_output_signal_path(

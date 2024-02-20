@@ -57,54 +57,41 @@ class AWGChannel(ExtendableMixin):
         """Return the channel number."""
         return self._num
 
-    def set_amplitude(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the source channel.
 
         Args:
             value: The amplitude value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._awg.set_if_needed(
             f"{self.name}:VOLTAGE:AMPLITUDE",
             value,
-            tolerance=tolerance,
-            percentage=percentage,
+            tolerance=absolute_tolerance,
         )
 
-    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self._awg.set_if_needed(
-            f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage
-        )
+        self._awg.set_if_needed(f"{self.name}:FREQUENCY", value, tolerance=absolute_tolerance)
 
-    def set_offset(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
 
         Args:
             value: The offset value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         output_path = self._awg.query(f"OUTPUT{self.num}:PATH?")
         if output_path == self._awg.OutputSignalPath.DCA.value:
             self._awg.set_if_needed(
                 f"{self.name}:VOLTAGE:OFFSET",
                 value,
-                tolerance=tolerance,
-                percentage=percentage,
+                tolerance=absolute_tolerance,
             )
         elif value:
             # No error is raised when 0 is the offset value and the output signal path is
@@ -339,7 +326,7 @@ class AWG(SignalGenerator, ABC):
             offset: The offset of the signal to generate.
         """
         first_source_channel = self.source_channel["SOURCE1"]
-        first_source_channel.set_frequency(needed_sample_rate, tolerance=2, percentage=True)
+        first_source_channel.set_frequency(needed_sample_rate)
         source_channel.load_waveform(waveform_name)
         source_channel.set_amplitude(amplitude)
         source_channel.set_output_signal_path(output_signal_path)

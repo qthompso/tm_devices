@@ -21,18 +21,15 @@ from tm_devices.helpers import (
 class AWG70KAChannel(AWGChannel):
     """AWG70KA channel driver."""
 
-    def set_frequency(self, value: float, tolerance: float = 0, percentage: bool = False) -> None:
+    def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
-            tolerance: The acceptable difference between two floating point values.
-            percentage: A boolean indicating what kind of tolerance check to perform.
-                 False means absolute tolerance: +/- tolerance.
-                 True means percent tolerance: +/- (tolerance / 100) * value.
+            absolute_tolerance: The acceptable difference between two floating point values.
         """
         self._awg.set_if_needed(
-            f"{self.name}:FREQUENCY", value, tolerance=tolerance, percentage=percentage, opc=True
+            f"{self.name}:FREQUENCY", value, tolerance=absolute_tolerance, opc=True
         )
 
     def set_output_signal_path(
