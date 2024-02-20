@@ -111,7 +111,7 @@ class InternalAFGChannel:
         """Set the number of wavelengths to be generated when the internal AFG is set to burst.
 
         Args:
-            value: The number of wavelengths to be generated.
+            value: The number of wavelengths to be generated within [1, 1000000].
         """
         self._tekscope.set_if_needed("AFG:BURST:CCOUNT", f"{value}")
 
@@ -177,9 +177,9 @@ class InternalAFGChannel:
         """Set the symmetry of the ramp waveform on the internal AFG.
 
         Args:
-            value: The symmetry percentage.
+            value: The symmetry percentage within [0, 100].
         """
-        self._tekscope.set_if_needed("AFG:RAMP:SYMMETRY", round(value, 1))
+        self._tekscope.set_if_needed("AFG:RAMP:SYMMETRY", value)
 
     def set_state(self, value: int) -> None:
         """Set the output state to ON/OFF (1/0) on the internal AFG.
