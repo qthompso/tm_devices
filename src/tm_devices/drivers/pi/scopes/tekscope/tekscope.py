@@ -82,8 +82,6 @@ class TekScopeChannel:
 class InternalAFGChannel:
     """Internal AFG channel driver."""
 
-    _BOUNDS_SQUARE_DUTY_CYCLE = ParameterBounds(lower=10, upper=90)
-
     def __init__(self, tekscope: "TekScope") -> None:
         """Create an InternalAFG channel object.
 
@@ -146,7 +144,7 @@ class InternalAFGChannel:
         """Set the output load impedance on the internal AFG.
 
         Args:
-            value: The impedance value to set.
+            value: The impedance value to set (Options: "FIFTY", "HIGHZ").
         """
         self._tekscope.set_if_needed("AFG:OUTPUT:LOAD:IMPEDANCE", value)
 
@@ -171,7 +169,7 @@ class InternalAFGChannel:
         """Set the output mode on the internal AFG.
 
         Args:
-            value: The output mode to set.
+            value: The output mode to set (Options: "OFF", "CONTINUOUS", "BURST").
         """
         self._tekscope.set_if_needed("AFG:OUTPUT:MODE", value)
 
@@ -200,15 +198,6 @@ class InternalAFGChannel:
         Args:
             value: The duty cycle percentage within [10.0, 90.0].
         """
-        if not (
-            self._BOUNDS_SQUARE_DUTY_CYCLE.lower <= value <= self._BOUNDS_SQUARE_DUTY_CYCLE.upper
-        ):
-            error_message = (
-                "Duty cycle for SQUARE waveforms must be between "
-                f"{self._BOUNDS_SQUARE_DUTY_CYCLE.lower} and "
-                f"{self._BOUNDS_SQUARE_DUTY_CYCLE.upper} (inclusive)."
-            )
-            raise ValueError(error_message)
         self._tekscope.set_if_needed("AFG:SQUARE:DUTY", value)
 
     def setup_burst_waveform(self, burst_count: int) -> None:
