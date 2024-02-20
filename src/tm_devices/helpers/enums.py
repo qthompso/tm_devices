@@ -262,25 +262,25 @@ class SignalGeneratorFunctionsIAFG(SignalGeneratorFunctionBase):
 
 
 class SignalGeneratorOutputPathsBase(CustomStrEnum):
-    """Base output signal path names."""
+    """Base output signal path types."""
 
 
 class SignalGeneratorOutputPathsNon5200(SignalGeneratorOutputPathsBase):
-    """Output signal path names for non-AWG5200's."""
+    """Output signal path types for non-AWG5200's."""
 
     DCA = "DCA"
     DIR = "DIR"
 
 
 class SignalGeneratorOutputPaths5200(SignalGeneratorOutputPathsBase):
-    """Output signal path names for AWG5200's."""
+    """Output signal path types for AWG5200's."""
 
     DCHB = "DCHB"
     DCHV = "DCHV"
 
 
 class SASSetWaveformFileTypes(Enum):
-    """File types for the command ``MMEMory:OPEN:SASSet[:WAVeform]``."""
+    """Supported file types for the command ``MMEMory:OPEN:SASSet[:WAVeform]``."""
 
     AWG = ".awg"
     AWGX = ".awgx"
