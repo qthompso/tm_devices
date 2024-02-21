@@ -34,15 +34,15 @@ class AWGSourceDeviceConstants(SourceDeviceConstants):
 
 
 @family_base_class
-class AWGChannel(BaseSourceChannel, ExtendableMixin):
-    """AWG channel driver."""
+class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
+    """AWG source channel driver."""
 
     def __init__(self, awg: "AWG", channel_name: str) -> None:
-        """Create an AWG channel.
+        """Create an AWG source channel.
 
         Args:
             awg: An AWG.
-            channel_name: The channel name for the AWG channel.
+            channel_name: The channel name for the AWG source channel.
         """
         super().__init__(pi_device=awg, channel_name=channel_name)
 
@@ -145,11 +145,11 @@ class AWG(SignalGenerator, ABC):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":  # pragma: no cover
-        """Mapping of channel names to AWGChannel objects."""
-        channel_map: Dict[str, AWGChannel] = {}
+    def source_channel(self) -> "MappingProxyType[str, AWGSourceChannel]":  # pragma: no cover
+        """Mapping of channel names to AWGSourceChannel objects."""
+        channel_map: Dict[str, AWGSourceChannel] = {}
         for channel_name in self.all_channel_names_list:
-            channel_map[channel_name] = AWGChannel(self, channel_name)
+            channel_map[channel_name] = AWGSourceChannel(self, channel_name)
         return MappingProxyType(channel_map)
 
     @property
@@ -302,7 +302,7 @@ class AWG(SignalGenerator, ABC):
 
     def set_waveform_properties(
         self,
-        source_channel: AWGChannel,
+        source_channel: AWGSourceChannel,
         output_signal_path: Optional[SignalGeneratorOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,

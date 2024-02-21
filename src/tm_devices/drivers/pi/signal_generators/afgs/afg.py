@@ -30,15 +30,15 @@ class AFGSourceDeviceConstants(SourceDeviceConstants):
     functions: Type[SignalGeneratorFunctionsAFG] = SignalGeneratorFunctionsAFG
 
 
-class AFGChannel(BaseAFGSourceChannel):
-    """AFG channel driver."""
+class AFGSourceChannel(BaseAFGSourceChannel):
+    """AFG source channel driver."""
 
     def __init__(self, afg: "AFG", channel_name: str) -> None:
-        """Create an AFG channel.
+        """Create an AFG source channel.
 
         Args:
             afg: An AFG.
-            channel_name: The channel name for the AFG channel.
+            channel_name: The channel name for the AFG source channel.
         """
         super().__init__(pi_device=afg, channel_name=channel_name)
 
@@ -204,11 +204,11 @@ class AFG(SignalGenerator, ABC):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> "MappingProxyType[str, AFGChannel]":
-        """Mapping of channel names to AFGChannel objects."""
-        channel_map: Dict[str, AFGChannel] = {}
+    def source_channel(self) -> "MappingProxyType[str, AFGSourceChannel]":
+        """Mapping of channel names to AFGSourceChannel objects."""
+        channel_map: Dict[str, AFGSourceChannel] = {}
         for channel_name in self.all_channel_names_list:
-            channel_map[channel_name] = AFGChannel(self, channel_name)
+            channel_map[channel_name] = AFGSourceChannel(self, channel_name)
         return MappingProxyType(channel_map)
 
     @property
@@ -349,7 +349,7 @@ class AFG(SignalGenerator, ABC):
         function: SignalGeneratorFunctionsAFG,
         amplitude: float,
         offset: float,
-        source_channel: AFGChannel,
+        source_channel: AFGSourceChannel,
         burst_count: int = 0,
         termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
         duty_cycle: float = 50.0,

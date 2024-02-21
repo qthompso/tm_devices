@@ -9,7 +9,7 @@ from tm_devices.commands import AWG5200Mixin
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
-    AWGChannel,
+    AWGSourceChannel,
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
@@ -22,8 +22,8 @@ from tm_devices.helpers import (
 )
 
 
-class AWG5200Channel(AWGChannel):
-    """AWG5200 channel driver."""
+class AWG5200SourceChannel(AWGSourceChannel):
+    """AWG5200 source channel driver."""
 
     @property
     def awg(self) -> "AWG5200":
@@ -101,11 +101,11 @@ class AWG5200(AWG5200Mixin, AWG):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
-        """Mapping of channel names to AWGChannel objects."""
-        channel_map: Dict[str, AWG5200Channel] = {}
+    def source_channel(self) -> "MappingProxyType[str, AWGSourceChannel]":
+        """Mapping of channel names to AWG5200SourceChannel objects."""
+        channel_map: Dict[str, AWG5200SourceChannel] = {}
         for channel_name in self.all_channel_names_list:
-            channel_map[channel_name] = AWG5200Channel(self, channel_name)
+            channel_map[channel_name] = AWG5200SourceChannel(self, channel_name)
         return MappingProxyType(channel_map)
 
     ################################################################################################
@@ -210,7 +210,7 @@ class AWG5200(AWG5200Mixin, AWG):
         # clear queue
         self.ieee_cmds.cls()
         for channel_name in self._validate_channels(channel):
-            source_channel = cast(AWG5200Channel, self.source_channel[channel_name])
+            source_channel = cast(AWG5200SourceChannel, self.source_channel[channel_name])
             # turn channel off
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
             self.set_waveform_properties(
@@ -239,7 +239,7 @@ class AWG5200(AWG5200Mixin, AWG):
 
     def set_waveform_properties(
         self,
-        source_channel: AWGChannel,
+        source_channel: AWGSourceChannel,
         output_signal_path: Optional[SignalGeneratorOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
@@ -258,7 +258,7 @@ class AWG5200(AWG5200Mixin, AWG):
         """
         if waveform_name not in self.query("WLISt:LIST?").split(","):
             self.load_waveform_set()
-        source_channel = cast(AWG5200Channel, source_channel)
+        source_channel = cast(AWG5200SourceChannel, source_channel)
         super().set_waveform_properties(
             source_channel=source_channel,
             output_signal_path=output_signal_path,

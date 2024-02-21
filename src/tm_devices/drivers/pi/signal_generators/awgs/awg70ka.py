@@ -7,7 +7,7 @@ from tm_devices.commands import AWG70KAMixin
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
-    AWGChannel,
+    AWGSourceChannel,
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
@@ -18,8 +18,8 @@ from tm_devices.helpers import (
 )
 
 
-class AWG70KAChannel(AWGChannel):
-    """AWG70KA channel driver."""
+class AWG70KASourceChannel(AWGSourceChannel):
+    """AWG70KA source channel driver."""
 
     def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the source channel.
@@ -85,11 +85,11 @@ class AWG70KA(AWG70KAMixin, AWG):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
-        """Mapping of channel names to AWGChannel objects."""
-        channel_map: Dict[str, AWG70KAChannel] = {}
+    def source_channel(self) -> "MappingProxyType[str, AWGSourceChannel]":
+        """Mapping of channel names to AWG70KASourceChannel objects."""
+        channel_map: Dict[str, AWG70KASourceChannel] = {}
         for channel_name in self.all_channel_names_list:
-            channel_map[channel_name] = AWG70KAChannel(self, channel_name)
+            channel_map[channel_name] = AWG70KASourceChannel(self, channel_name)
         return MappingProxyType(channel_map)
 
     ################################################################################################
@@ -120,7 +120,7 @@ class AWG70KA(AWG70KAMixin, AWG):
 
     def set_waveform_properties(
         self,
-        source_channel: AWGChannel,
+        source_channel: AWGSourceChannel,
         output_signal_path: Optional[SignalGeneratorOutputPathsBase],
         waveform_name: str,
         needed_sample_rate: float,
@@ -139,7 +139,7 @@ class AWG70KA(AWG70KAMixin, AWG):
         """
         if waveform_name not in self.query("WLISt:LIST?", allow_empty=True):
             self.load_waveform_set()
-        source_channel = cast(AWG70KAChannel, source_channel)
+        source_channel = cast(AWG70KASourceChannel, source_channel)
         super().set_waveform_properties(
             source_channel=source_channel,
             output_signal_path=output_signal_path,

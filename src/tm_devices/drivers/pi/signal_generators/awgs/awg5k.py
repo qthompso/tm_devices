@@ -6,7 +6,7 @@ from tm_devices.commands import AWG5KMixin
 from tm_devices.drivers.device import family_base_class
 from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWG,
-    AWGChannel,
+    AWGSourceChannel,
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
@@ -16,8 +16,8 @@ from tm_devices.helpers import (
 )
 
 
-class AWG5KChannel(AWGChannel):
-    """AWG5K channel driver."""
+class AWG5KSourceChannel(AWGSourceChannel):
+    """AWG5K source channel driver."""
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
@@ -79,11 +79,11 @@ class AWG5K(AWG5KMixin, AWG):
     # Properties
     ################################################################################################
     @ReadOnlyCachedProperty
-    def source_channel(self) -> "MappingProxyType[str, AWGChannel]":
-        """Mapping of channel names to AWGChannel objects."""
-        channel_map: Dict[str, AWG5KChannel] = {}
+    def source_channel(self) -> "MappingProxyType[str, AWGSourceChannel]":
+        """Mapping of channel names to AWG5KSourceChannel objects."""
+        channel_map: Dict[str, AWG5KSourceChannel] = {}
         for channel_name in self.all_channel_names_list:
-            channel_map[channel_name] = AWG5KChannel(self, channel_name)
+            channel_map[channel_name] = AWG5KSourceChannel(self, channel_name)
         return MappingProxyType(channel_map)
 
     ################################################################################################
