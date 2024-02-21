@@ -132,9 +132,11 @@ class AWG(SignalGenerator, ABC):
     OutputSignalPath = SignalGeneratorOutputPathsNon5200
 
     _DEVICE_TYPE = DeviceTypes.AWG.value
+    # The record lengths for the predefined SIN waveforms.
     _PRE_DEFINED_SIGNAL_RECORD_LENGTH_SIN: ClassVar[List[int]] = [3600, 1000, 960, 360, 100, 36, 10]
+    # The record lengths for the predefined CLOCK waveforms.
     _PRE_DEFINED_SIGNAL_RECORD_LENGTH_CLOCK: ClassVar[List[int]] = [960]
-    # all waveforms have sample sizes of 10, 100 and 1000
+    # All predefined waveforms have these record lengths.
     _PRE_DEFINED_SIGNAL_RECORD_LENGTH_DEFAULT: ClassVar[List[int]] = [1000, 960, 100, 10]
 
     ################################################################################################
