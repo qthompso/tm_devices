@@ -28,7 +28,7 @@ class AWG70KAChannel(AWGChannel):
             value: The frequency value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self._awg.set_if_needed(
+        self.awg.set_if_needed(
             f"{self.name}:FREQUENCY", value, tolerance=absolute_tolerance, opc=True
         )
 
@@ -46,8 +46,8 @@ class AWG70KAChannel(AWGChannel):
         if not value:
             # Attempt to set the output signal path to DCA.
             try:
-                self._awg.set_and_check(
-                    f"OUTPUT{self.num}:PATH", self._awg.OutputSignalPath.DCA.value
+                self.awg.set_and_check(
+                    f"OUTPUT{self.num}:PATH", self.awg.OutputSignalPath.DCA.value
                 )
             except AssertionError:  # pragma: no cover
                 # If error, set output signal path to DIR.
@@ -55,15 +55,15 @@ class AWG70KAChannel(AWGChannel):
                     '-222,"Data out of range;Data Out of Range - '
                     f'OUTPUT{self.num}:PATH DCA\r\n"\n0,"No error"'
                 )
-                self._awg.expect_esr("16", expected_esr_message)
-                self._awg.set_and_check(
-                    f"OUTPUT{self.num}:PATH", self._awg.OutputSignalPath.DIR.value
+                self.awg.expect_esr("16", expected_esr_message)
+                self.awg.set_and_check(
+                    f"OUTPUT{self.num}:PATH", self.awg.OutputSignalPath.DIR.value
                 )
-        elif value in self._awg.OutputSignalPath:
-            self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
+        elif value in self.awg.OutputSignalPath:
+            self.awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
         else:
             output_signal_path_error = (
-                f"{value.value} is an invalid output signal path for {self._awg.model}."
+                f"{value.value} is an invalid output signal path for {self.awg.model}."
             )
             raise ValueError(output_signal_path_error)
 

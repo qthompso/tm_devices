@@ -27,11 +27,11 @@ class AWG7KChannel(AWG5KChannel):
             value: The offset value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        output_path = float(self._awg.query(f"AWGCONTROL:DOUTPUT{self.num}:STATE?"))
-        if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string) and not output_path:
+        output_path = float(self.awg.query(f"AWGCONTROL:DOUTPUT{self.num}:STATE?"))
+        if not ("02" in self.awg.opt_string or "06" in self.awg.opt_string) and not output_path:
             # Can only set offset on AWG7k's without 02 and 06 options and when then
             # output state is 0.
-            self._awg.set_if_needed(
+            self.awg.set_if_needed(
                 f"{self.name}:VOLTAGE:OFFSET",
                 value,
                 tolerance=absolute_tolerance,
@@ -40,9 +40,9 @@ class AWG7KChannel(AWG5KChannel):
             # No error is raised when 0 is the offset value and the output signal path
             # is in a state where offset cannot be set.
             offset_error = (
-                f"The offset can only be set on {self._awg.model} without an 02 or 06 "
+                f"The offset can only be set on {self.awg.model} without an 02 or 06 "
                 "option and with an output signal path of "
-                f"{self._awg.OutputSignalPath.DCA.value} "
+                f"{self.awg.OutputSignalPath.DCA.value} "
                 f"(AWGCONTROL:DOUTPUT{self.num}:STATE set to 0)."
             )
             raise ValueError(offset_error)
@@ -55,7 +55,7 @@ class AWG7KChannel(AWG5KChannel):
         Args:
             value: The output signal path.
         """
-        if not ("02" in self._awg.opt_string or "06" in self._awg.opt_string):
+        if not ("02" in self.awg.opt_string or "06" in self.awg.opt_string):
             # Can only set the output signal path on AWG7k's without 02 and 06 options.
             super().set_output_signal_path(value)
 
