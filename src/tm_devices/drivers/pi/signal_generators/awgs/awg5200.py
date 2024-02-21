@@ -147,7 +147,7 @@ class AWG5200(AWG5200Mixin, AWG):
         polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
         symmetry: float = 50.0,
     ) -> None:
-        """Generate a signal given the following parameters.
+        """Generate a predefined waveform given the following parameters.
 
         Args:
             frequency: The frequency of the waveform to generate.
