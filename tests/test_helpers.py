@@ -35,11 +35,13 @@ from tm_devices.helpers import (
     get_visa_backend,
     ping_address,
     print_with_timestamp,
-    ReadOnlyCachedProperty,
     sanitize_enum,
     SupportedModels,
     VALID_DEVICE_CONNECTION_TYPES,
 )
+
+# noinspection PyPep8Naming
+from tm_devices.helpers import ReadOnlyCachedProperty as cached_property  # noqa: N813
 
 MODEL_SERIES_LIST = SupportedModels.list_values()
 
@@ -81,11 +83,9 @@ def test_create_ping_command() -> None:
         ("AWG5012", "AWG5K"),
         ("AWG70002B", "AWG70KB"),
         ("AFG3252", "AFG3K"),
-        ("AFG30021", "AFG30K"),
         ("AFG31021", "AFG31K"),
         ("AFG3152C", "AFG3KC"),
         ("TSOVu", "TSOVu"),
-        ("MODEL 15", "15"),  # Just for complete coverage
         ("MODEL 2470", "SMU2470"),
         ("2470", "SMU2470"),
         (" Model 2606B", "SMU2606B"),
@@ -101,7 +101,6 @@ def test_create_ping_command() -> None:
         ("DMM6500", "DMM6500"),
         ("MODEL 6517B", "SMU6517B"),
         ("2231A-30-3", "PSU2231A"),
-        ("Tester-100", "Tester100"),
     ],
 )
 def test_get_model_series(input_string: str, expected_abbrev_model: str) -> None:
@@ -429,6 +428,10 @@ def test_get_visa_backend() -> None:
         ("TCPIP0::127.0.0.9::inst0::INSTR", ("TCPIP", "127.0.0.9")),
         ("TCPIP::127.0.0.9::inst::INST", ("TCPIP", "127.0.0.9")),
         ("USB0::0x0699::0x0522::SERIAL1::INSTR", ("USB", "MSO5-SERIAL1")),
+        ("TCPIP0::127.0.0.9::4000::SOCKET", ("SOCKET", "127.0.0.9:4000")),
+        ("GPIB0::1::INSTR", ("GPIB", "1")),
+        ("ASRL1::INSTR", ("SERIAL", "1")),
+        ("MOCK0::127.0.0.9::INSTR", ("MOCK", "127.0.0.9")),
     ],
 )
 def test_detect_visa_resource_expression(
@@ -470,7 +473,7 @@ def test_read_only_cached_property() -> None:
         counter = 0
         previous_values: ClassVar[List[int]] = []
 
-        @ReadOnlyCachedProperty
+        @cached_property
         def c(self) -> int:
             self.counter += 1
             while True:
@@ -486,9 +489,11 @@ def test_read_only_cached_property() -> None:
     assert val_1 == val_2
 
     with pytest.raises(AttributeError):
+        # noinspection PyPropertyAccess
         instance.c = -1234
     assert instance.c == val_1
     assert instance.counter == 1
+    # noinspection PyPropertyAccess
     del instance.c
     assert instance.c != val_1
     assert instance.counter == 2

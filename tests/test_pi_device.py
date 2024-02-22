@@ -114,16 +114,25 @@ def test_pi_device(  # noqa: PLR0915
     assert f"VISA timeout set to: {old_timeout}ms" in stdout
     assert scope.visa_timeout == old_timeout
 
+    # Test closing a device that is powered off
+    with mock.patch(
+        "pyvisa.resources.resource.Resource.close",
+        mock.MagicMock(side_effect=visa.VisaIOError(123)),
+    ), pytest.warns(Warning):
+        scope._close()  # noqa: SLF001
+        assert scope._visa_resource is None  # noqa: SLF001
+        assert not scope._is_open  # noqa: SLF001
+
+    # Re-open the device for device manager teardown
+    with mock.patch.dict("os.environ", {"TM_DEVICES_UNIT_TESTS_REBOOT_ALLOW": "true"}, clear=True):
+        assert scope._open()  # noqa: SLF001
+
     # Ensure VERBose is off
     scope.set_and_check(":VERBose", 0)
     # Expect set not needed since verbose is already off.
-    set_needed, value = scope.set_if_needed(":VERBose", 0)
-    assert not set_needed
-    assert value == "0"
+    assert scope.set_if_needed(":VERBose", 0) == (False, "0")
     # Expect set needed
-    set_needed, value = scope.set_if_needed(":VERBose", 1)
-    assert set_needed
-    assert value == "1"
+    assert scope.set_if_needed(":VERBose", 1) == (True, "1")
     # Set VERBose back to off
     scope.set_and_check(":VERBose", "0")
 

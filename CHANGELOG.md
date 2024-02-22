@@ -18,17 +18,56 @@ ______________________________________________________________________
 
 Things to be included in the next release go here.
 
+### Changed
+
+- Updated the `get_model_series()` function to use a regex mapping instead of complicated logic to reduce maintenance costs.
+
+### Fixed
+
+- Updated import statements for the `ReadOnlyCachedProperty` decorator to allow PyCharm auto-complete to work properly.
+
+______________________________________________________________________
+
+## v1.2.0 (2024-02-09)
+
+### Merged Pull Requests
+
+- fix: Removed unused command files. ([#143](https://github.com/tektronix/tm_devices/issues/143))
+- fix: modified API under MSO 2,4,5,6 modules  ([#142](https://github.com/tektronix/tm_devices/issues/142))
+- Update PI Device close method to catch VisaIOErrors ([#141](https://github.com/tektronix/tm_devices/issues/141))
+- ci: Update pre-commit hooks and linter versions. ([#139](https://github.com/tektronix/tm_devices/issues/139))
+- gh-actions(deps): Bump the gh-actions-dependencies group with 1 update ([#123](https://github.com/tektronix/tm_devices/issues/123))
+- python-deps(deps): Bump the python-dependencies group with 1 update ([#136](https://github.com/tektronix/tm_devices/issues/136))
+- fix: Update the function that detects a VISA resource expression to work properly for SOCKET resource expressions. ([#134](https://github.com/tektronix/tm_devices/issues/134))
+- style: Update linting rules. ([#132](https://github.com/tektronix/tm_devices/issues/132))
+- Pin the linters used (ruff, pyright, pylint) to specific versions ([#131](https://github.com/tektronix/tm_devices/issues/131))
+- Update doc workflow runners ([#128](https://github.com/tektronix/tm_devices/issues/128))
+- build: Update version of ruff for pre-commit. Remove unused noqa comment. ([#126](https://github.com/tektronix/tm_devices/issues/126))
+- MSO5k, DPO5k, and DPO7k full driver support ([#125](https://github.com/tektronix/tm_devices/issues/125))
+- gh-actions(deps): Bump the gh-actions-dependencies group with 3 updates ([#121](https://github.com/tektronix/tm_devices/issues/121))
+- Update GitHub action versions used in workflows ([#120](https://github.com/tektronix/tm_devices/issues/120))
+- feat: Added a mechanism to reset cached properties whenever a device is rebooted. ([#118](https://github.com/tektronix/tm_devices/issues/118))
+- refactor(code-style): Switch to `ruff format` instead of `black` for code formatting. ([#117](https://github.com/tektronix/tm_devices/issues/117))
+- gh-actions(deps): Bump the gh-actions-dependencies group with 2 updates ([#116](https://github.com/tektronix/tm_devices/issues/116))
+
 ### Added
 
 - Added a step during a device reboot that will reset all the cached properties in the event that one of them changed.
 - Added command API support for MSO5K, DPO5K, and DPO7K models.
 - Added a custom, read-only implementation of the [`cached_property`](https://docs.python.org/3/library/functools.html#functools.cached_property) decorator.
+- Added default buffer API for SMU 26xx series models.
 
 ### Changed
 
 - Switched to ruff's formatter instead of black's formatter for python code.
 - Updated the version of `python-semantic-release` that is used to avoid needing to store a copy of the previous changelog in the repo.
 - Pinned the linters (ruff, pyright, pylint, docformatter) to specific versions to reduce failures when updates are released that add new rules or break existing rules.
+
+### Fixed
+
+- Fixed the code that detects VISA resource expressions to be able to detect SOCKET resource expressions properly.
+- Fixed PI device close method to catch VisaIOErrors and throw a warning, rather than an exception, when closing a PI device connection.
+- Fixed APIs with query attributes missing under MSO4, MSO5, MSO6 and MSO2 model drivers.
 
 ______________________________________________________________________
 

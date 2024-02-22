@@ -45,10 +45,12 @@ from tm_devices.drivers.pi.scopes.scope import Scope
 from tm_devices.helpers import (
     DeviceConfigEntry,
     LoadImpedanceAFG,
-    ReadOnlyCachedProperty,
     SignalGeneratorFunctionsIAFG,
     SignalGeneratorOutputPathsBase,
 )
+
+# noinspection PyPep8Naming
+from tm_devices.helpers import ReadOnlyCachedProperty as cached_property  # noqa: N813
 from tm_devices.helpers.constants_and_dataclasses import UNIT_TEST_TIMEOUT
 
 
@@ -260,7 +262,7 @@ class TekScope(
     ################################################################################################
     # Properties
     ################################################################################################
-    @ReadOnlyCachedProperty
+    @cached_property
     def channel(self) -> "MappingProxyType[str, TekScopeChannel]":
         """Mapping of channel names to any detectable properties, attributes, and settings."""
         # TODO: overwrite in MSO2 driver, would remove need for try-except
@@ -309,7 +311,7 @@ class TekScope(
             self.set_and_check(":VERBose", old_pi_verbosity)
         return MappingProxyType(channel_map)
 
-    @ReadOnlyCachedProperty
+    @cached_property
     def internal_afg(self) -> InternalAFGChannel:
         """The scope's internal AFG."""
         return InternalAFGChannel(self)
@@ -330,12 +332,12 @@ class TekScope(
         """Return the device commands."""
         return self._commands  # pragma: no cover
 
-    @ReadOnlyCachedProperty
+    @cached_property
     def hostname(self) -> str:
         """Return the hostname of the device or an empty string if unable to fetch that."""
         return self.query(":ETHERNET:NAME?", verbose=False, remove_quotes=True)
 
-    @ReadOnlyCachedProperty
+    @cached_property
     def license_list(self) -> Tuple[str, ...]:
         """Return the list of license AppIDs installed on the scope."""
         license_list = self.query(
@@ -354,7 +356,7 @@ class TekScope(
         """Return the device constants."""
         return self._DEVICE_CONSTANTS
 
-    @ReadOnlyCachedProperty
+    @cached_property
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
         try:
@@ -362,7 +364,7 @@ class TekScope(
         except ValueError:
             return 0
 
-    @ReadOnlyCachedProperty
+    @cached_property
     def usb_drives(self) -> Tuple[str, ...]:
         """Return a list of all connected USB drives."""
         # Find all USB drives connected to the device

@@ -41,7 +41,7 @@ repos:
       - id: check-github-actions
       - id: check-github-workflows
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.14.1
+    rev: v3.15.0
     hooks:
       - id: commitizen
         stages: [commit-msg]
@@ -50,6 +50,7 @@ repos:
     hooks:
       - id: blacken-docs
         files: \.(rst|md|markdown|tex)$
+        additional_dependencies: [black==23.12.1]  # This may need to be updated/removed in the future once ruff supports formatting python code blocks in markdown
   - repo: https://github.com/lyz-code/yamlfix
     rev: 1.16.0
     hooks:
@@ -66,6 +67,7 @@ repos:
           - mdformat-frontmatter
           - mdformat-beautysh
           - mdformat-black
+          - black==23.12.1  # This may need to be updated/removed in the future once ruff supports formatting python code blocks in markdown
           - mdformat-config
           - mdformat-shfmt
           - mdformat-web
@@ -123,13 +125,13 @@ repos:
         always_run: true
         args: [., --min=10]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.2.1
+    rev: v0.2.2
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
   - repo: https://github.com/PyCQA/docformatter
-    rev: v1.7.5  # can't update due to https://github.com/PyCQA/docformatter/issues/174
+    rev: v1.7.0  # can't update due to https://github.com/PyCQA/docformatter/issues/174
     hooks:
       - id: docformatter
         additional_dependencies: [tomli]

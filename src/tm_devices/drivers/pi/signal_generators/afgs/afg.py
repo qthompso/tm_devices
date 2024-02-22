@@ -17,10 +17,12 @@ from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGener
 from tm_devices.helpers import (
     DeviceTypes,
     LoadImpedanceAFG,
-    ReadOnlyCachedProperty,
     SignalGeneratorFunctionsAFG,
     SignalGeneratorOutputPathsBase,
 )
+
+# noinspection PyPep8Naming
+from tm_devices.helpers import ReadOnlyCachedProperty as cached_property  # noqa: N813
 
 
 @dataclass(frozen=True)
@@ -203,7 +205,7 @@ class AFG(SignalGenerator, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
-    @ReadOnlyCachedProperty
+    @cached_property
     def source_channel(self) -> "MappingProxyType[str, AFGSourceChannel]":
         """Mapping of channel names to AFGSourceChannel objects."""
         channel_map: Dict[str, AFGSourceChannel] = {}
@@ -216,7 +218,7 @@ class AFG(SignalGenerator, ABC):
         """Return the device constants."""
         return self._DEVICE_CONSTANTS  # type: ignore[attr-defined]
 
-    @ReadOnlyCachedProperty
+    @cached_property
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
         if match := re.match(r"AFG\d+(\d)", self.model):

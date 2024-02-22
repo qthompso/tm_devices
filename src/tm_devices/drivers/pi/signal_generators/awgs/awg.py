@@ -19,11 +19,13 @@ from tm_devices.drivers.pi.signal_generators.signal_generator import SignalGener
 from tm_devices.helpers import (
     DeviceTypes,
     LoadImpedanceAFG,
-    ReadOnlyCachedProperty,
     SignalGeneratorFunctionsAWG,
     SignalGeneratorOutputPathsBase,
     SignalGeneratorOutputPathsNon5200,
 )
+
+# noinspection PyPep8Naming
+from tm_devices.helpers import ReadOnlyCachedProperty as cached_property  # noqa: N813
 
 
 @dataclass(frozen=True)
@@ -146,7 +148,7 @@ class AWG(SignalGenerator, ABC):
     ################################################################################################
     # Properties
     ################################################################################################
-    @ReadOnlyCachedProperty
+    @cached_property
     def source_channel(self) -> "MappingProxyType[str, AWGSourceChannel]":  # pragma: no cover
         """Mapping of channel names to AWGSourceChannel objects."""
         channel_map: Dict[str, AWGSourceChannel] = {}
@@ -159,7 +161,7 @@ class AWG(SignalGenerator, ABC):
         """Return the device constants."""
         return self._DEVICE_CONSTANTS  # type: ignore[attr-defined]
 
-    @ReadOnlyCachedProperty
+    @cached_property
     def total_channels(self) -> int:
         """Return the total number of channels (all types)."""
         return int(self.query("AWGControl:CONFigure:CNUMber?", verbose=False))
