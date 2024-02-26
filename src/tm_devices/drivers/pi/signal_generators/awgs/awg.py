@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
-from typing import cast, ClassVar, Dict, List, Literal, Optional, Tuple, Type
+from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Type
 
 from tm_devices.driver_mixins.class_extension_mixin import ExtendableMixin
 from tm_devices.driver_mixins.signal_generator_mixin import (
@@ -47,11 +47,7 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
             channel_name: The channel name for the AWG source channel.
         """
         super().__init__(pi_device=awg, channel_name=channel_name)
-
-    @property
-    def awg(self) -> "AWG":
-        """Returns the AWG."""
-        return cast(AWG, self._pi_device)
+        self._awg = awg
 
     def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the source channel.
@@ -60,7 +56,7 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
             value: The amplitude value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.awg.set_if_needed(
+        self._awg.set_if_needed(
             f"{self.name}:VOLTAGE:AMPLITUDE",
             value,
             tolerance=absolute_tolerance,
@@ -73,7 +69,7 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
             value: The frequency value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.awg.set_if_needed(f"{self.name}:FREQUENCY", value, tolerance=absolute_tolerance)
+        self._awg.set_if_needed(f"{self.name}:FREQUENCY", value, tolerance=absolute_tolerance)
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
@@ -82,9 +78,9 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
             value: The offset value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        output_path = self.awg.query(f"OUTPUT{self.num}:PATH?")
-        if output_path == self.awg.OutputSignalPath.DCA.value:
-            self.awg.set_if_needed(
+        output_path = self._awg.query(f"OUTPUT{self.num}:PATH?")
+        if output_path == self._awg.OutputSignalPath.DCA.value:
+            self._awg.set_if_needed(
                 f"{self.name}:VOLTAGE:OFFSET",
                 value,
                 tolerance=absolute_tolerance,
@@ -94,7 +90,7 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
             # in a state where offset cannot be set.
             offset_error = (
                 f"The offset can only be set with an output signal path of "
-                f"{self.awg.OutputSignalPath.DCA.value}."
+                f"{self._awg.OutputSignalPath.DCA.value}."
             )
             raise ValueError(offset_error)
 
@@ -107,7 +103,7 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
         if value not in [0, 1]:
             error_message = "Output state value must be 1 (ON) or 0 (OFF)."
             raise ValueError(error_message)
-        self.awg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
+        self._awg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
 
     def set_output_signal_path(
         self, value: Optional[SignalGeneratorOutputPathsBase] = None
@@ -125,7 +121,7 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
         Args:
             waveform_name: The name of the waveform to load.
         """
-        self.awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{waveform_name}"', allow_empty=True)
+        self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{waveform_name}"', allow_empty=True)
 
 
 class AWG(SignalGenerator, ABC):

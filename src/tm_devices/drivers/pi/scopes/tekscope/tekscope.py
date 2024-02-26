@@ -92,11 +92,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
             tekscope: A TekScope.
         """
         super().__init__(pi_device=tekscope, channel_name="AFG")
-
-    @property
-    def tekscope(self) -> "TekScope":
-        """Returns the TekScope."""
-        return cast(TekScope, self._pi_device)
+        self._tekscope = tekscope
 
     def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the internal AFG.
@@ -105,7 +101,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
             value: The amplitude value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.tekscope.set_if_needed(
+        self._tekscope.set_if_needed(
             f"{self.name}:AMPLITUDE",
             value,
             tolerance=absolute_tolerance,
@@ -117,7 +113,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         Args:
             value: The number of wavelengths to be generated within [1, 1000000].
         """
-        self.tekscope.set_if_needed(f"{self.name}:BURST:CCOUNT", f"{value}")
+        self._tekscope.set_if_needed(f"{self.name}:BURST:CCOUNT", f"{value}")
 
     def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the internal AFG.
@@ -126,7 +122,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
             value: The frequency value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.tekscope.set_if_needed(
+        self._tekscope.set_if_needed(
             f"{self.name}:FREQUENCY",
             value,
             tolerance=absolute_tolerance,
@@ -138,7 +134,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         Args:
             value: The name of the function to output.
         """
-        self.tekscope.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
+        self._tekscope.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
 
     def set_impedance(self, value: Literal["FIFTY", "HIGHZ"]) -> None:
         """Set the output load impedance on the internal AFG.
@@ -146,7 +142,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         Args:
             value: The impedance value to set (Options: "FIFTY", "HIGHZ").
         """
-        self.tekscope.set_if_needed(f"{self.name}:OUTPUT:LOAD:IMPEDANCE", value)
+        self._tekscope.set_if_needed(f"{self.name}:OUTPUT:LOAD:IMPEDANCE", value)
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the internal AFG.
@@ -155,7 +151,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
             value: The offset value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.tekscope.set_if_needed(
+        self._tekscope.set_if_needed(
             f"{self.name}:OFFSET",
             value,
             tolerance=absolute_tolerance,
@@ -167,7 +163,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         Args:
             value: The output mode to set (Options: "OFF", "CONTINUOUS", "BURST").
         """
-        self.tekscope.set_if_needed(f"{self.name}:OUTPUT:MODE", value)
+        self._tekscope.set_if_needed(f"{self.name}:OUTPUT:MODE", value)
 
     def set_ramp_symmetry(self, value: float) -> None:
         """Set the symmetry of the ramp waveform on the internal AFG.
@@ -175,7 +171,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         Args:
             value: The symmetry percentage within [0, 100].
         """
-        self.tekscope.set_if_needed(f"{self.name}:RAMP:SYMMETRY", value)
+        self._tekscope.set_if_needed(f"{self.name}:RAMP:SYMMETRY", value)
 
     def set_state(self, value: int) -> None:
         """Set the output state to ON/OFF (1/0) on the internal AFG.
@@ -186,7 +182,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         if value not in [0, 1]:
             error_message = "Output state value must be 1 (ON) or 0 (OFF)."
             raise ValueError(error_message)
-        self.tekscope.set_if_needed(f"{self.name}:OUTPUT:STATE", value)
+        self._tekscope.set_if_needed(f"{self.name}:OUTPUT:STATE", value)
 
     def set_square_duty_cycle(self, value: float) -> None:
         """Set the duty cycle of the square waveform on the internal AFG.
@@ -194,7 +190,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         Args:
             value: The duty cycle percentage within [10.0, 90.0].
         """
-        self.tekscope.set_if_needed(f"{self.name}:SQUARE:DUTY", value)
+        self._tekscope.set_if_needed(f"{self.name}:SQUARE:DUTY", value)
 
     def setup_burst_waveform(self, burst_count: int) -> None:
         """Prepare the internal AFG for a burst waveform.
@@ -208,7 +204,7 @@ class InternalAFGChannel(BaseAFGSourceChannel):
 
     def trigger_burst(self) -> None:
         """Trigger a burst on the internal AFG."""
-        self.tekscope.write(f"{self.name}:BURST:TRIGGER")
+        self._tekscope.write(f"{self.name}:BURST:TRIGGER")
 
 
 # pylint: disable=too-many-public-methods

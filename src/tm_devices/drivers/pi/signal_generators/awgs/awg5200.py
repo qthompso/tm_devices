@@ -25,10 +25,15 @@ from tm_devices.helpers import (
 class AWG5200SourceChannel(AWGSourceChannel):
     """AWG5200 source channel driver."""
 
-    @property
-    def awg(self) -> "AWG5200":
-        """Returns the AWG object."""
-        return cast(AWG5200, self._pi_device)
+    def __init__(self, awg: "AWG5200", channel_name: str) -> None:
+        """Create an AWG5200 source channel.
+
+        Args:
+            awg: An AWG.
+            channel_name: The channel name for the AWG source channel.
+        """
+        super().__init__(awg=awg, channel_name=channel_name)
+        self._awg = awg
 
     def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the source channel.
@@ -39,17 +44,17 @@ class AWG5200SourceChannel(AWGSourceChannel):
         """
         # This is an overlapping command for the AWG5200, and will overlap the
         # next command and/or overlap the previous if it is still running.
-        self.awg.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
+        self._awg.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
         # there is a known issue where setting other parameters while clock rate is being set
         # may lock the AWG5200 software.
 
         # wait a fraction of a second for overlapping command CLOCK:SRATE to proceed
         time.sleep(0.1)
         # wait till overlapping command finishes
-        self.awg.ieee_cmds.opc()
-        self.awg.ieee_cmds.cls()
+        self._awg.ieee_cmds.opc()
+        self._awg.ieee_cmds.cls()
         # ensure that the clock rate was actually set
-        self.awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=absolute_tolerance)
+        self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=absolute_tolerance)
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
@@ -58,7 +63,7 @@ class AWG5200SourceChannel(AWGSourceChannel):
             value: The offset value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.awg.set_if_needed(
+        self._awg.set_if_needed(
             f"{self.name}:VOLTAGE:OFFSET",
             value,
             tolerance=absolute_tolerance,
@@ -73,13 +78,13 @@ class AWG5200SourceChannel(AWGSourceChannel):
             value: The output signal path.
         """
         if not value:
-            value = self.awg.OutputSignalPath.DCHB
-        if value not in self.awg.OutputSignalPath:
+            value = self._awg.OutputSignalPath.DCHB
+        if value not in self._awg.OutputSignalPath:
             output_signal_path_error = (
-                f"{value.value} is an invalid output signal path for {self.awg.model}."
+                f"{value.value} is an invalid output signal path for {self._awg.model}."
             )
             raise ValueError(output_signal_path_error)
-        self.awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
+        self._awg.set_if_needed(f"OUTPUT{self.num}:PATH", value.value)
 
 
 @family_base_class

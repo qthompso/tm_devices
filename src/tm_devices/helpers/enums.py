@@ -212,10 +212,6 @@ class SignalGeneratorFunctionBase(Enum):
     """Base Enum function names."""
 
 
-class SignalGeneratorFunctionBaseAFG(SignalGeneratorFunctionBase):
-    """Base Enum function names for AFG's."""
-
-
 class SignalGeneratorFunctionsAWG(SignalGeneratorFunctionBase):
     """AWG function names."""
 
@@ -227,7 +223,7 @@ class SignalGeneratorFunctionsAWG(SignalGeneratorFunctionBase):
     DC = "DC"
 
 
-class SignalGeneratorFunctionsAFG(SignalGeneratorFunctionBaseAFG):
+class SignalGeneratorFunctionsAFG(SignalGeneratorFunctionBase):
     """AFG function names."""
 
     SIN = "SIN"
@@ -245,7 +241,7 @@ class SignalGeneratorFunctionsAFG(SignalGeneratorFunctionBaseAFG):
     ARBITRARY = "ARB"
 
 
-class SignalGeneratorFunctionsIAFG(SignalGeneratorFunctionBaseAFG):
+class SignalGeneratorFunctionsIAFG(SignalGeneratorFunctionBase):
     """IAFG function names."""
 
     SIN = "SINE"

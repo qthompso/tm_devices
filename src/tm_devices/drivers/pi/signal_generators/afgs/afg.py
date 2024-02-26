@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import cast, Dict, Literal, Optional, Tuple, Type
+from typing import Dict, Literal, Optional, Tuple, Type
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
@@ -43,18 +43,14 @@ class AFGSourceChannel(BaseAFGSourceChannel):
             channel_name: The channel name for the AFG source channel.
         """
         super().__init__(pi_device=afg, channel_name=channel_name)
-
-    @property
-    def afg(self) -> "AFG":
-        """Returns the AFG."""
-        return cast(AFG, self._pi_device)
+        self._afg = afg
 
     def initiate_phase_sync(self) -> None:
         """Initialize a phase sync between SOURCE1 and SOURCE2 on the device.
 
         Does the same operation if called on SOURCE1 or SOURCE2.
         """
-        self.afg.write(f"{self.name}:PHASE:INITIATE")
+        self._afg.write(f"{self.name}:PHASE:INITIATE")
 
     def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the source channel.
@@ -63,7 +59,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
             value: The amplitude value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.afg.set_if_needed(
+        self._afg.set_if_needed(
             f"{self._name}:VOLTAGE:AMPLITUDE",
             value,
             tolerance=absolute_tolerance,
@@ -78,7 +74,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
         if value not in [0, 1]:
             error_message = "Burst state value must be 1 (ON) or 0 (OFF)."
             raise ValueError(error_message)
-        self.afg.set_if_needed(f"{self.name}:BURST:STATE", value)
+        self._afg.set_if_needed(f"{self.name}:BURST:STATE", value)
 
     def set_burst_mode(self, value: Literal["TRIGGERED", "GATED"]) -> None:
         """Set the burst mode on the source channel.
@@ -90,7 +86,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
             "TRIGGERED": "TRIG",
             "GATED": "GAT",
         }
-        self.afg.set_if_needed(f"{self.name}:BURST:MODE", burst_mode_mapping[value])
+        self._afg.set_if_needed(f"{self.name}:BURST:MODE", burst_mode_mapping[value])
 
     def set_burst_count(self, value: int) -> None:
         """Set the number of wavelengths to be generated when the source channel is set to burst.
@@ -98,7 +94,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
         Args:
             value: The number of wavelengths to be generated within [1, 1000000].
         """
-        self.afg.set_if_needed(f"{self.name}:BURST:NCYCLES", value)
+        self._afg.set_if_needed(f"{self.name}:BURST:NCYCLES", value)
 
     def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the frequency on the source channel.
@@ -107,7 +103,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
             value: The frequency value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.afg.set_if_needed(
+        self._afg.set_if_needed(
             f"{self._name}:FREQUENCY:FIXED",
             value,
             tolerance=absolute_tolerance,
@@ -119,7 +115,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
         Args:
             value: The name of the function to output.
         """
-        self.afg.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
+        self._afg.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
 
     def set_impedance(self, value: float) -> None:
         """Set the output load impedance on the source channel.
@@ -127,7 +123,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
         Args:
             value: The impedance value to set within [1, 10e3] or 99e36.
         """
-        self.afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", value)
+        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", value)
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
@@ -136,7 +132,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
             value: The offset value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
         """
-        self.afg.set_if_needed(
+        self._afg.set_if_needed(
             f"{self._name}:VOLTAGE:OFFSET",
             value,
             tolerance=absolute_tolerance,
@@ -154,7 +150,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
             "NORMAL": "NORM",
             "INVERTED": "INV",
         }
-        self.afg.set_if_needed(f"OUTPUT{self.num}:POLARITY", polarity_mapping[value])
+        self._afg.set_if_needed(f"OUTPUT{self.num}:POLARITY", polarity_mapping[value])
 
     def set_pulse_duty_cycle(self, value: float) -> None:
         """Set the duty cycle of the pulse waveform on the source channel.
@@ -162,7 +158,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
         Args:
             value: The duty cycle percentage within [0.4, 99.6].
         """
-        self.afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", value)
+        self._afg.set_if_needed(f"{self.name}:PULSE:DCYCLE", value)
 
     def set_ramp_symmetry(self, value: float) -> None:
         """Set the symmetry of the ramp waveform on the source channel.
@@ -170,7 +166,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
         Args:
             value: The symmetry value to set within [0, 100].
         """
-        self.afg.set_if_needed(f"{self.name}:FUNCTION:RAMP:SYMMETRY", value)
+        self._afg.set_if_needed(f"{self.name}:FUNCTION:RAMP:SYMMETRY", value)
 
     def set_state(self, value: int) -> None:
         """Set the output state to ON/OFF (1/0) on the source channel.
@@ -181,7 +177,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
         if value not in [0, 1]:
             error_message = "Output state value must be 1 (ON) or 0 (OFF)."
             raise ValueError(error_message)
-        self.afg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
+        self._afg.set_if_needed(f"OUTPUT{self.num}:STATE", value)
 
     def setup_burst_waveform(self, burst_count: int) -> None:
         """Prepare the source channel for a burst waveform.
@@ -190,7 +186,7 @@ class AFGSourceChannel(BaseAFGSourceChannel):
             burst_count: The number of wavelengths to be generated.
         """
         # set to external as to not burst every millisecond
-        self.afg.set_if_needed("TRIGGER:SEQUENCE:SOURCE", "EXT")
+        self._afg.set_if_needed("TRIGGER:SEQUENCE:SOURCE", "EXT")
         self.set_burst_state(1)
         self.set_burst_mode("TRIGGERED")
         self.set_burst_count(burst_count)

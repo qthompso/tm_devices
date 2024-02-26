@@ -3,7 +3,7 @@ from abc import abstractmethod
 
 from tm_devices.drivers.pi._base_source_channel import BaseSourceChannel
 from tm_devices.drivers.pi.pi_device import PIDevice
-from tm_devices.helpers.enums import SignalGeneratorFunctionBaseAFG
+from tm_devices.helpers.enums import SignalGeneratorFunctionBase
 
 
 class BaseAFGSourceChannel(BaseSourceChannel):
@@ -28,7 +28,7 @@ class BaseAFGSourceChannel(BaseSourceChannel):
         raise NotImplementedError
 
     @abstractmethod
-    def set_function(self, value: SignalGeneratorFunctionBaseAFG) -> None:
+    def set_function(self, value: SignalGeneratorFunctionBase) -> None:
         """Set the function to output on the source channel.
 
         Args:
