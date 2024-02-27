@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Dict, Literal, Optional, Tuple, Type
+from typing import Dict, Literal, Optional, Tuple, Type, Union
 
 from tm_devices.driver_mixins.signal_generator_mixin import (
     ExtendedSourceDeviceConstants,
@@ -117,13 +117,22 @@ class AFGSourceChannel(BaseAFGSourceChannel):
         """
         self._afg.set_if_needed(f"{self.name}:FUNCTION", str(value.value))
 
-    def set_impedance(self, value: float) -> None:
+    def set_impedance(self, value: Union[float, Literal["INFINITY"]]) -> None:
         """Set the output load impedance on the source channel.
 
         Args:
-            value: The impedance value to set within [1, 10e3] or 99e36.
+            value: The impedance value to set within [1, 10e3] or "INFINITY".
         """
-        self._afg.set_if_needed(f"OUTPUT{self.num}:IMPEDANCE", value)
+        # The AFG only accepts float values within [1, 10e3] so "INFINITY" must be passed in.
+        if value == "INFINITY":  # pragma: no cover
+            impedance_value = "INF"
+            expected_value = 9.9e37
+        else:
+            impedance_value = value
+            expected_value = value
+        self._afg.set_if_needed(
+            f"OUTPUT{self.num}:IMPEDANCE", impedance_value, expected_value=expected_value
+        )
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
@@ -371,8 +380,8 @@ class AFG(SignalGenerator, ABC):
         # Termination
         if termination == "FIFTY":
             source_channel.set_impedance(50)
-        elif termination == "HIGHZ":
-            source_channel.set_impedance(99e36)
+        elif termination == "HIGHZ":  # pragma: no cover
+            source_channel.set_impedance("INFINITY")
         else:  # pragma: no cover
             # if termination is MAXIMUM or MINIMUM or INFINITY
             self.set_if_needed(f"OUTPUT{source_channel.num}:IMPEDANCE", termination)

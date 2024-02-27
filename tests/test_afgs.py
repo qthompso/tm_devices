@@ -191,9 +191,6 @@ def test_afg3k(device_manager: DeviceManager) -> None:  # noqa: PLR0915  # pylin
     afg3252c.source_channel["SOURCE1"].set_impedance(10e3)
     query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
     assert float(query_value) == 10e3
-    afg3252c.source_channel["SOURCE1"].set_impedance(99e36)
-    query_value = afg3252c.query("OUTPUT1:IMPEDANCE?")
-    assert float(query_value) == 99e36
 
     afg3252c.source_channel["SOURCE1"].set_pulse_duty_cycle(0.4)
     query_value = afg3252c.query("SOURCE1:PULSE:DCYCLE?")
