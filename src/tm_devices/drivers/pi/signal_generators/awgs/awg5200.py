@@ -261,7 +261,9 @@ class AWG5200(AWG5200Mixin, AWG):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
         """
-        if waveform_name not in self.query("WLISt:LIST?").replace('"', "").split(","):
+        if waveform_name not in self.query("WLISt:LIST?", allow_empty=True).replace('"', "").split(
+            ","
+        ):
             self.load_waveform_set()
         source_channel = cast(AWG5200SourceChannel, source_channel)
         super().set_waveform_properties(

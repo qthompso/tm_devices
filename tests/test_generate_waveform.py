@@ -9,11 +9,14 @@ from tm_devices.drivers import AWG5K, AWG7K, AWG70KA, AWG5200, MSO5
 from tm_devices.helpers import SignalGeneratorOutputPaths5200, SignalGeneratorOutputPathsNon5200
 
 
-def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
+def test_awg5200_gen_waveform(
+    device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]
+) -> None:
     """Test generate waveform for AWG5200.
 
     Args:
         device_manager: The DeviceManager object.
+        capsys: The captured stdout and stderr.
     """
     awg520050 = cast(AWG5200, device_manager.add_awg("awg5200opt50-hostname", alias="awg520050a"))
 
@@ -59,6 +62,19 @@ def test_awg5200_gen_waveform(device_manager: DeviceManager) -> None:
             channel="SOURCE1",
             output_signal_path=SignalGeneratorOutputPathsNon5200.DIR,
         )
+
+    # Call generate_function with only *DC in the waveform list.
+    awg520025 = cast(AWG5200, device_manager.add_awg("awg5200opt25-hostname", alias="awg520025a"))
+    _ = capsys.readouterr().out  # throw away stdout
+    awg520025.generate_function(
+        10e3,
+        awg520025.source_device_constants.functions.SIN,
+        1.0,
+        0,
+        channel="SOURCE1",
+    )
+    stdout = capsys.readouterr().out
+    assert "MMEMORY:OPEN:SASSET" in stdout
 
 
 def test_awg70k_gen_waveform(

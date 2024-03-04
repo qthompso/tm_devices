@@ -137,7 +137,9 @@ class AWG70KA(AWG70KAMixin, AWG):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
         """
-        if waveform_name not in self.query("WLISt:LIST?", allow_empty=True):
+        if waveform_name not in self.query("WLISt:LIST?", allow_empty=True).replace('"', "").split(
+            ","
+        ):
             self.load_waveform_set()
         source_channel = cast(AWG70KASourceChannel, source_channel)
         super().set_waveform_properties(

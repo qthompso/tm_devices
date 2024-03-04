@@ -156,12 +156,13 @@ devices:
         r: 25,DC
       - q: '*RST'
       - q: '*CLS'
+      - q: '*WAI'
+      - q: AWGCONTROL:RUN
       - q: AWGControl:CONFigure:CNUMber?
         r: '4'
       - q: 'MMEMory:IMPort '
       - q: WLISt:LIST?
-        r: '"*Triangle960,*Triangle1000,*Triangle100,*Triangle10,*Square960,*Square1000,*Square100,*Square10,*Sine960,*Sine3600,*Sine360,*Sine36,*Sine1000,*Sine100,*Sine10,*Ramp96
-          0,*Ramp1000,*Ramp100,*Ramp10,*DC"'
+        r: '"*DC"'
     error:
       status_register:
         - q: '*ESR?'
@@ -182,6 +183,16 @@ devices:
         specs:
           min: 0
           max: 255
+          type: int
+      output_1_state:
+        default: 0
+        getter:
+          q: OUTPUT1:STATE?
+          r: '{:d}'
+        setter:
+          q: OUTPUT1:STATE {:d}
+        specs:
+          valid: [0, 1]
           type: int
       clock_srate:
         default: 5000000000.0
