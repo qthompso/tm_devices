@@ -55,6 +55,7 @@ def check_constraints(
     )
 
 
+# pylint: disable=too-many-locals
 def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[str]) -> None:
     """Test the AWG5200 driver.
 
@@ -156,6 +157,11 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
 
     with pytest.raises(ValueError, match=r"Output state value must be 1 \(ON\) or 0 \(OFF\)\."):
         awg520025.source_channel["SOURCE1"].set_state(-1)
+
+    # Coverage for setting frequency with absolute tolerance.
+    awg520050.source_channel["SOURCE1"].set_frequency(5000000000, absolute_tolerance=0)
+    query_val = awg520050.query("CLOCK:SRATE?")
+    assert float(query_val) == 5000000000
 
 
 def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
@@ -270,6 +276,11 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
             "unittest.txt",
         )
 
+    # Coverage for setting frequency with absolute tolerance.
+    awg70ka150.source_channel["SOURCE1"].set_frequency(5000000000, absolute_tolerance=0)
+    query_val = awg70ka150.query("SOURCE1:FREQUENCY?")
+    assert float(query_val) == 5000000000
+
 
 def test_awg7k(device_manager: DeviceManager) -> None:  # pylint: disable=too-many-locals
     """Test the AWG7K driver.
@@ -358,3 +369,8 @@ def test_awg5k(device_manager: DeviceManager) -> None:
         offset_range,
         length_range,
     )
+
+    # Coverage for setting frequency with absolute tolerance.
+    awg5k.source_channel["SOURCE1"].set_frequency(10.0e6, absolute_tolerance=0)
+    query_val = awg5k.query("SOURCE1:FREQUENCY?")
+    assert float(query_val) == 10.0e6

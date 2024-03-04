@@ -35,13 +35,18 @@ class AWG5200SourceChannel(AWGSourceChannel):
         super().__init__(awg=awg, channel_name=channel_name)
         self._awg = awg
 
-    def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
+    def set_frequency(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
         """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
+                                Default value is 0.1% of the provided value.
         """
+        if absolute_tolerance is None:
+            # Default the absolute tolerance to 0.1% of the provided frequency value
+            # due to 32 bit rounding.
+            absolute_tolerance = value * 0.001
         # This is an overlapping command for the AWG5200, and will overlap the
         # next command and/or overlap the previous if it is still running.
         self._awg.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)

@@ -62,13 +62,18 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
             tolerance=absolute_tolerance,
         )
 
-    def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
+    def set_frequency(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
         """Set the frequency on the source channel.
 
         Args:
             value: The frequency value to set.
             absolute_tolerance: The acceptable difference between two floating point values.
+                                Default value is 0.1% of the provided value.
         """
+        if absolute_tolerance is None:
+            # Default the absolute tolerance to 0.1% of the provided frequency value
+            # due to 32 bit rounding.
+            absolute_tolerance = value * 0.001
         self._awg.set_if_needed(f"{self.name}:FREQUENCY", value, tolerance=absolute_tolerance)
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
