@@ -1,4 +1,5 @@
 """Base AWG device driver module."""
+
 import struct
 
 from abc import ABC, abstractmethod

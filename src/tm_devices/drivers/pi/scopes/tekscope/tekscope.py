@@ -1,4 +1,5 @@
 """Base TekScope scope device driver module."""
+
 # pylint: disable=too-many-lines
 import math
 import os

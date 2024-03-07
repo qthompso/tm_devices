@@ -1,5 +1,6 @@
 # pyright: reportPrivateUsage=none
 """Test the AWGs."""
+
 from typing import cast, Optional
 
 import pytest

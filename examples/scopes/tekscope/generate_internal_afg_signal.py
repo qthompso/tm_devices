@@ -2,6 +2,7 @@
 
 This can also be done with generate_function (see generate_function.py for an example).
 """
+
 from tm_devices import DeviceManager
 from tm_devices.drivers import MSO5
 

@@ -1,4 +1,5 @@
 """Module containing helpers for the tm_devices package."""
+
 import contextlib
 import datetime
 import importlib.metadata
@@ -58,7 +59,7 @@ __SUPPORTED_MODEL_REGEX_STRING = (
     rf"|(?P<{SupportedModels.AWG7K.value}>^AWG7\d\d\d$)"
     rf"|(?P<{SupportedModels.AWG7KB.value}>^AWG7\d\d\dB$)"
     rf"|(?P<{SupportedModels.AWG7KC.value}>^AWG7\d\d\dC$)"
-    rf"|(?P<{SupportedModels.AWG70KA.value}>^AWG70\d\d\dA$)"
+    rf"|(?P<{SupportedModels.AWG70KA.value}>^AWG70\d\d\dA?$)"
     rf"|(?P<{SupportedModels.AWG70KB.value}>^AWG70\d\d\dB$)"
     # Scopes
     rf"|(?P<{SupportedModels.DPO5K.value}>^DPO5\d\d\d$)"
@@ -444,9 +445,11 @@ def get_model_series(model: str) -> str:
         with contextlib.suppress(StopIteration):
             model_series = next(iter(filtered_dict.keys()))
 
-    # Warn the user if the model is not in the regex mapping, and therefore not officially supported
+    # Warn the user if the model is not in the regex mapping or list of supported models,
+    # and therefore not officially supported.
     if not model_series:
-        warnings.warn(f'The "{model}" model is not supported by {PACKAGE_NAME}', stacklevel=2)
+        if model not in SupportedModels.list_values():
+            warnings.warn(f'The "{model}" model is not supported by {PACKAGE_NAME}', stacklevel=2)
         model_series = model
     return model_series
 

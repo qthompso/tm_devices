@@ -1,4 +1,5 @@
 """AWG5K device driver module."""
+
 from types import MappingProxyType
 from typing import Dict, Optional, Tuple
 

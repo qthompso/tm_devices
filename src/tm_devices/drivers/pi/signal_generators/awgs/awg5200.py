@@ -1,4 +1,5 @@
 """AWG5200 device driver module."""
+
 import time
 
 from pathlib import Path

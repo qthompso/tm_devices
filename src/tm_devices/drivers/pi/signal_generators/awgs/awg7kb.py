@@ -1,4 +1,5 @@
 """AWG7KB device driver module."""
+
 from tm_devices.drivers.pi.signal_generators.awgs.awg7k import AWG7K
 
 

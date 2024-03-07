@@ -1,4 +1,5 @@
 """AWG70KA device driver module."""
+
 from pathlib import Path
 from types import MappingProxyType
 from typing import cast, Dict, Optional, Tuple
