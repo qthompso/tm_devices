@@ -95,6 +95,50 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         super().__init__(pi_device=tekscope, channel_name="AFG")
         self._tekscope = tekscope
 
+    def set_function_properties(  # noqa: PLR0913  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        frequency: float,
+        function: SignalGeneratorFunctionsIAFG,
+        amplitude: float,
+        offset: float,
+        burst_count: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 50.0,
+    ) -> None:
+        """Set the given parameters on the internal AFG.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The waveform shape to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            burst_count: The number of wavelengths to be generated.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        del polarity
+        if burst_count > 0:
+            self.setup_burst_waveform(burst_count)
+        # Generate the waveform from the Internal AFG
+        # Frequency
+        self.set_frequency(frequency)
+        # Offset
+        self.set_offset(offset)
+        # Duty Cycle
+        self.set_square_duty_cycle(duty_cycle)
+        # Function
+        if function == SignalGeneratorFunctionsIAFG.RAMP:
+            self.set_ramp_symmetry(symmetry)
+        self.set_function(function)
+        # Termination impedance
+        self.set_impedance(termination)
+        # Amplitude, needs to be after termination so that the amplitude is properly adjusted
+        self.set_amplitude(amplitude)
+
     def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the internal AFG.
 
@@ -550,7 +594,7 @@ class TekScope(
         self._validate_generated_function(function)
         # Turn off the Internal AFG
         self.internal_afg.set_state(0)
-        self.set_waveform_properties(
+        self.internal_afg.set_function_properties(
             frequency=frequency,
             function=function,
             amplitude=amplitude,
@@ -595,7 +639,7 @@ class TekScope(
         """
         del polarity, channel, output_signal_path  # these aren't used
         self._validate_generated_function(function)
-        self.set_waveform_properties(
+        self.internal_afg.set_function_properties(
             frequency=frequency,
             function=function,
             amplitude=amplitude,
@@ -610,47 +654,6 @@ class TekScope(
         """Generate a burst of waveforms by forcing trigger."""
         self.internal_afg.trigger_burst()
         # Don't check for errors as any measurement with low amplitude will generate an error
-
-    def set_waveform_properties(  # noqa: PLR0913
-        self,
-        frequency: float,
-        function: SignalGeneratorFunctionsIAFG,
-        amplitude: float,
-        offset: float,
-        burst_count: int = 0,
-        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
-        duty_cycle: float = 50.0,
-        symmetry: float = 50.0,
-    ) -> None:
-        """Set the given parameters on the internal AFG.
-
-        Args:
-            frequency: The frequency of the waveform to generate.
-            function: The waveform shape to generate.
-            amplitude: The amplitude of the signal to generate.
-            offset: The offset of the signal to generate.
-            burst_count: The number of wavelengths to be generated.
-            termination: The impedance this device's ``channel`` expects to see at the received end.
-            duty_cycle: The duty cycle percentage within [10.0, 90.0].
-            symmetry: The symmetry to set the signal to, only applicable to certain functions.
-        """
-        if burst_count > 0:
-            self.internal_afg.setup_burst_waveform(burst_count)
-        # Generate the waveform from the Internal AFG
-        # Frequency
-        self.internal_afg.set_frequency(frequency)
-        # Offset
-        self.internal_afg.set_offset(offset)
-        # Duty Cycle
-        self.internal_afg.set_square_duty_cycle(duty_cycle)
-        # Function
-        if function == SignalGeneratorFunctionsIAFG.RAMP:
-            self.internal_afg.set_ramp_symmetry(symmetry)
-        self.internal_afg.set_function(function)
-        # Termination impedance
-        self.internal_afg.set_impedance(termination)
-        # Amplitude, needs to be after termination so that the amplitude is properly adjusted
-        self.internal_afg.set_amplitude(amplitude)
 
     # pylint: disable=too-many-locals
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]

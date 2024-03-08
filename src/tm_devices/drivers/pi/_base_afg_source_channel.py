@@ -1,5 +1,7 @@
 """Base AFG source channel driver module."""
+
 from abc import abstractmethod
+from typing import Literal
 
 from tm_devices.drivers.pi._base_source_channel import BaseSourceChannel
 from tm_devices.drivers.pi.pi_device import PIDevice
@@ -17,6 +19,34 @@ class BaseAFGSourceChannel(BaseSourceChannel):
             channel_name: The channel name for the AFG source channel.
         """
         super().__init__(pi_device=pi_device, channel_name=channel_name)
+
+    @abstractmethod
+    def set_function_properties(  # noqa: PLR0913
+        self,
+        frequency: float,
+        function: SignalGeneratorFunctionBase,
+        amplitude: float,
+        offset: float,
+        burst_count: int = 0,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 100.0,
+    ) -> None:
+        """Set the given parameters on the provided source channel.
+
+        Args:
+            frequency: The frequency of the waveform to generate.
+            function: The waveform shape to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+            burst_count: The number of wavelengths to be generated.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [0.4, 99.6].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def set_burst_count(self, value: int) -> None:
