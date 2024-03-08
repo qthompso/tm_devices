@@ -1,5 +1,6 @@
 # pyright: reportPrivateUsage=none
 """Test generate_function."""
+
 from typing import cast
 
 import pytest
@@ -380,8 +381,6 @@ def test_internal_afg_gen_waveform(
     assert float(frequency) == 10e3
     offset = scope.query("AFG:OFFSET?")
     assert not float(offset)
-    square_duty = scope.query("AFG:SQUARE:DUTY?")
-    assert float(square_duty) == 50
     assert "AFG:RAMP:SYMMETRY" not in stdout
     function = scope.query("AFG:FUNCTION?")
     assert function == "SINE"
@@ -394,8 +393,15 @@ def test_internal_afg_gen_waveform(
     assert "AFG:BURST:TRIGGER" not in stdout
 
     scope.generate_function(
-        10e3, scope.source_device_constants.functions.SIN, 0.5, 0.0, termination="HIGHZ"
+        frequency=10e3,
+        function=scope.source_device_constants.functions.SQUARE,
+        amplitude=0.5,
+        offset=0.0,
+        termination="HIGHZ",
+        duty_cycle=50,
     )
+    square_duty = scope.query("AFG:SQUARE:DUTY?")
+    assert float(square_duty) == 50
     impedance = scope.query("AFG:OUTPUT:LOAD:IMPEDANCE?")
     assert impedance == "HIGHZ"
 

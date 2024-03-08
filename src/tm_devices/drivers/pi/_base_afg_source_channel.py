@@ -58,6 +58,16 @@ class BaseAFGSourceChannel(BaseSourceChannel):
         raise NotImplementedError
 
     @abstractmethod
+    def set_frequency(self, value: float, absolute_tolerance: float = 0) -> None:
+        """Set the frequency on the source channel.
+
+        Args:
+            value: The frequency value to set.
+            absolute_tolerance: The acceptable difference between two floating point values.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def set_function(self, value: SignalGeneratorFunctionBase) -> None:
         """Set the function to output on the source channel.
 

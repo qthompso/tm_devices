@@ -36,32 +36,6 @@ class AWG5200SourceChannel(AWGSourceChannel):
         super().__init__(awg=awg, channel_name=channel_name)
         self._awg = awg
 
-    def set_frequency(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
-        """Set the frequency on the source channel.
-
-        Args:
-            value: The frequency value to set.
-            absolute_tolerance: The acceptable difference between two floating point values.
-                                Default value is 0.1% of the provided value.
-        """
-        if absolute_tolerance is None:
-            # Default the absolute tolerance to 0.1% of the provided frequency value
-            # due to 32 bit rounding.
-            absolute_tolerance = value * 0.001
-        # This is an overlapping command for the AWG5200, and will overlap the
-        # next command and/or overlap the previous if it is still running.
-        self._awg.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
-        # there is a known issue where setting other parameters while clock rate is being set
-        # may lock the AWG5200 software.
-
-        # wait a fraction of a second for overlapping command CLOCK:SRATE to proceed
-        time.sleep(0.1)
-        # wait till overlapping command finishes
-        self._awg.ieee_cmds.opc()
-        self._awg.ieee_cmds.cls()
-        # ensure that the clock rate was actually set
-        self._awg.poll_query(30, "CLOCK:SRATE?", value, tolerance=absolute_tolerance)
-
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
 
@@ -227,9 +201,7 @@ class AWG5200(AWG5200Mixin, AWG):
         ):
             self.load_waveform_set()
         for channel_name in self._validate_channels(channel):
-            # Setting the frequency will set it on all source channels.
-            first_source_channel = self.source_channel["SOURCE1"]
-            first_source_channel.set_frequency(needed_sample_rate)
+            self.set_sample_rate(needed_sample_rate)
             source_channel = cast(AWG5200SourceChannel, self.source_channel[channel_name])
             # turn channel off
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
@@ -254,6 +226,32 @@ class AWG5200(AWG5200Mixin, AWG):
         self.poll_query(30, "AWGControl:RSTate?", 2.0)
         # we expect no errors
         self.expect_esr(0)
+
+    def set_sample_rate(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
+        """Set the rate at which samples are generated/transmitted.
+
+        Args:
+            value: The sample rate to set.
+            absolute_tolerance: The acceptable difference between two floating point values.
+                                Default value is 0.1% of the provided value.
+        """
+        if absolute_tolerance is None:
+            # Default the absolute tolerance to 0.1% of the provided frequency value
+            # due to 32 bit rounding.
+            absolute_tolerance = value * 0.001
+        # This is an overlapping command for the AWG5200, and will overlap the
+        # next command and/or overlap the previous if it is still running.
+        self.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
+        # there is a known issue where setting other parameters while clock rate is being set
+        # may lock the AWG5200 software.
+
+        # wait a fraction of a second for overlapping command CLOCK:SRATE to proceed
+        time.sleep(0.1)
+        # wait till overlapping command finishes
+        self.ieee_cmds.opc()
+        self.ieee_cmds.cls()
+        # ensure that the clock rate was actually set
+        self.poll_query(30, "CLOCK:SRATE?", value, tolerance=absolute_tolerance)
 
     ################################################################################################
     # Private Methods

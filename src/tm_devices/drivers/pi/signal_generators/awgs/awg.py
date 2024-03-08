@@ -83,20 +83,6 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
             tolerance=absolute_tolerance,
         )
 
-    def set_frequency(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
-        """Set the frequency on the source channel.
-
-        Args:
-            value: The frequency value to set.
-            absolute_tolerance: The acceptable difference between two floating point values.
-                                Default value is 0.1% of the provided value.
-        """
-        if absolute_tolerance is None:
-            # Default the absolute tolerance to 0.1% of the provided frequency value
-            # due to 32 bit rounding.
-            absolute_tolerance = value * 0.001
-        self._awg.set_if_needed(f"{self.name}:FREQUENCY", value, tolerance=absolute_tolerance)
-
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
 
@@ -277,9 +263,7 @@ class AWG(SignalGenerator, ABC):
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         for channel_name in self._validate_channels(channel):
-            # Setting the frequency will set it on all source channels.
-            first_source_channel = self.source_channel["SOURCE1"]
-            first_source_channel.set_frequency(needed_sample_rate)
+            self.set_sample_rate(needed_sample_rate)
             source_channel = self.source_channel[channel_name]
             source_channel.set_state(0)
             source_channel.set_waveform_properties(
@@ -383,6 +367,20 @@ class AWG(SignalGenerator, ABC):
             frequency_range=frequency_range,
             sample_rate_range=sample_rate_range,
         )
+
+    def set_sample_rate(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
+        """Set the rate at which samples are generated/transmitted.
+
+        Args:
+            value: The sample rate to set.
+            absolute_tolerance: The acceptable difference between two floating point values.
+                                Default value is 0.1% of the provided value.
+        """
+        if absolute_tolerance is None:
+            # Default the absolute tolerance to 0.1% of the provided frequency value
+            # due to 32 bit rounding.
+            absolute_tolerance = value * 0.001
+        self.set_if_needed("SOURCE1:FREQUENCY", value, tolerance=absolute_tolerance)
 
     ################################################################################################
     # Private Methods

@@ -22,22 +22,6 @@ from tm_devices.helpers import (
 class AWG70KASourceChannel(AWGSourceChannel):
     """AWG70KA source channel driver."""
 
-    def set_frequency(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
-        """Set the frequency on the source channel.
-
-        Args:
-            value: The frequency value to set.
-            absolute_tolerance: The acceptable difference between two floating point values.
-                                Default value is 0.1% of the provided value.
-        """
-        if absolute_tolerance is None:
-            # Default the absolute tolerance to 0.1% of the provided frequency value
-            # due to 32 bit rounding.
-            absolute_tolerance = value * 0.001
-        self._awg.set_if_needed(
-            f"{self.name}:FREQUENCY", value, tolerance=absolute_tolerance, opc=True
-        )
-
     def set_output_signal_path(
         self, value: Optional[SignalGeneratorOutputPathsBase] = None
     ) -> None:
@@ -168,6 +152,20 @@ class AWG70KA(AWG70KAMixin, AWG):
             polarity=polarity,
             symmetry=symmetry,
         )
+
+    def set_sample_rate(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
+        """Set the rate at which samples are generated/transmitted.
+
+        Args:
+            value: The sample rate to set.
+            absolute_tolerance: The acceptable difference between two floating point values.
+                                Default value is 0.1% of the provided value.
+        """
+        if absolute_tolerance is None:
+            # Default the absolute tolerance to 0.1% of the provided frequency value
+            # due to 32 bit rounding.
+            absolute_tolerance = value * 0.001
+        self.set_if_needed("SOURCE1:FREQUENCY", value, tolerance=absolute_tolerance, opc=True)
 
     ################################################################################################
     # Private Methods
