@@ -128,12 +128,14 @@ class InternalAFGChannel(BaseAFGSourceChannel):
         self.set_frequency(frequency)
         # Offset
         self.set_offset(offset)
-        # Duty Cycle
-        self.set_square_duty_cycle(duty_cycle)
         # Function
+        self.set_function(function)
+        # Duty Cycle
+        if function == SignalGeneratorFunctionsIAFG.SQUARE:
+            self.set_square_duty_cycle(duty_cycle)
+        # Symmetry
         if function == SignalGeneratorFunctionsIAFG.RAMP:
             self.set_ramp_symmetry(symmetry)
-        self.set_function(function)
         # Termination impedance
         self.set_impedance(termination)
         # Amplitude, needs to be after termination so that the amplitude is properly adjusted
