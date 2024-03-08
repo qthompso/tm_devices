@@ -220,15 +220,22 @@ class AWG5200(AWG5200Mixin, AWG):
         self.ieee_cmds.opc()
         # clear queue
         self.ieee_cmds.cls()
+        # If the waveform is not in the waveform list, load in the waveform set defined at
+        # self.sample_waveform_set_file
+        if waveform_name not in self.query("WLISt:LIST?", allow_empty=True).replace('"', "").split(
+            ","
+        ):
+            self.load_waveform_set()
         for channel_name in self._validate_channels(channel):
+            # Setting the frequency will set it on all source channels.
+            first_source_channel = self.source_channel["SOURCE1"]
+            first_source_channel.set_frequency(needed_sample_rate)
             source_channel = cast(AWG5200SourceChannel, self.source_channel[channel_name])
             # turn channel off
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            self.set_waveform_properties(
-                source_channel=source_channel,
+            source_channel.set_waveform_properties(
                 output_signal_path=output_signal_path,
                 waveform_name=waveform_name,
-                needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
                 offset=offset,
             )
@@ -247,39 +254,6 @@ class AWG5200(AWG5200Mixin, AWG):
         self.poll_query(30, "AWGControl:RSTate?", 2.0)
         # we expect no errors
         self.expect_esr(0)
-
-    def set_waveform_properties(
-        self,
-        source_channel: AWGSourceChannel,
-        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
-        waveform_name: str,
-        needed_sample_rate: float,
-        amplitude: float,
-        offset: float,
-    ) -> None:
-        """Set the given parameters on the provided source channel.
-
-        Args:
-            source_channel: The source channel class for the requested channel.
-            output_signal_path: The output signal path of the specified channel.
-            waveform_name: The name of the waveform from the waveform list to generate.
-            needed_sample_rate: The required sample rate.
-            amplitude: The amplitude of the signal to generate.
-            offset: The offset of the signal to generate.
-        """
-        if waveform_name not in self.query("WLISt:LIST?", allow_empty=True).replace('"', "").split(
-            ","
-        ):
-            self.load_waveform_set()
-        source_channel = cast(AWG5200SourceChannel, source_channel)
-        super().set_waveform_properties(
-            source_channel=source_channel,
-            output_signal_path=output_signal_path,
-            waveform_name=waveform_name,
-            needed_sample_rate=needed_sample_rate,
-            amplitude=amplitude,
-            offset=offset,
-        )
 
     ################################################################################################
     # Private Methods

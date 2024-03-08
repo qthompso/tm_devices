@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from types import MappingProxyType
-from typing import cast, Dict, Optional, Tuple
+from typing import Dict, Literal, Optional, Tuple
 
 from tm_devices.commands import AWG70KAMixin
 from tm_devices.drivers.device import family_base_class
@@ -124,37 +124,49 @@ class AWG70KA(AWG70KAMixin, AWG):
         """
         self._load_waveform_or_set(waveform_set_file=waveform_set_file, waveform_name=waveform_name)
 
-    def set_waveform_properties(
+    def generate_waveform(  # noqa: PLR0913
         self,
-        source_channel: AWGSourceChannel,
-        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
-        waveform_name: str,
         needed_sample_rate: float,
+        waveform_name: str,
         amplitude: float,
         offset: float,
+        channel: str = "all",
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase] = None,
+        termination: Literal["FIFTY", "HIGHZ"] = "FIFTY",  # noqa: ARG002
+        duty_cycle: float = 50.0,
+        polarity: Literal["NORMAL", "INVERTED"] = "NORMAL",
+        symmetry: float = 50.0,
     ) -> None:
-        """Set the given parameters on the provided source channel.
+        """Generate a waveform given the following parameters.
 
         Args:
-            source_channel: The source channel class for the requested channel.
-            output_signal_path: The output signal path of the specified channel.
-            waveform_name: The name of the waveform from the waveform list to generate.
             needed_sample_rate: The required sample rate.
+            waveform_name: The name of the waveform to generate.
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
+            channel: The channel name to output the signal from, or 'all'.
+            output_signal_path: The output signal path of the specified channel.
+            termination: The impedance this device's ``channel`` expects to see at the received end.
+            duty_cycle: The duty cycle percentage within [10.0, 90.0].
+            polarity: The polarity to set the signal to.
+            symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
+        # If the waveform is not in the waveform list, load in the waveform set defined at
+        # self.sample_waveform_set_file
         if waveform_name not in self.query("WLISt:LIST?", allow_empty=True).replace('"', "").split(
             ","
         ):
             self.load_waveform_set()
-        source_channel = cast(AWG70KASourceChannel, source_channel)
-        super().set_waveform_properties(
-            source_channel=source_channel,
-            output_signal_path=output_signal_path,
-            waveform_name=waveform_name,
+        super().generate_waveform(
             needed_sample_rate=needed_sample_rate,
+            waveform_name=waveform_name,
             amplitude=amplitude,
             offset=offset,
+            channel=channel,
+            output_signal_path=output_signal_path,
+            duty_cycle=duty_cycle,
+            polarity=polarity,
+            symmetry=symmetry,
         )
 
     ################################################################################################

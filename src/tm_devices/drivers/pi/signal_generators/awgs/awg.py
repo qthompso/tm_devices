@@ -50,6 +50,26 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
         super().__init__(pi_device=awg, channel_name=channel_name)
         self._awg = awg
 
+    def set_waveform_properties(
+        self,
+        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
+        waveform_name: str,
+        amplitude: float,
+        offset: float,
+    ) -> None:
+        """Set the given parameters on the provided source channel.
+
+        Args:
+            output_signal_path: The output signal path of the specified channel.
+            waveform_name: The name of the waveform from the waveform list to generate.
+            amplitude: The amplitude of the signal to generate.
+            offset: The offset of the signal to generate.
+        """
+        self.load_waveform(waveform_name)
+        self.set_amplitude(amplitude)
+        self.set_output_signal_path(output_signal_path)
+        self.set_offset(offset)
+
     def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the source channel.
 
@@ -257,13 +277,14 @@ class AWG(SignalGenerator, ABC):
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
         for channel_name in self._validate_channels(channel):
+            # Setting the frequency will set it on all source channels.
+            first_source_channel = self.source_channel["SOURCE1"]
+            first_source_channel.set_frequency(needed_sample_rate)
             source_channel = self.source_channel[channel_name]
             source_channel.set_state(0)
-            self.set_waveform_properties(
-                source_channel=source_channel,
+            source_channel.set_waveform_properties(
                 output_signal_path=output_signal_path,
                 waveform_name=waveform_name,
-                needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
                 offset=offset,
             )
@@ -305,32 +326,6 @@ class AWG(SignalGenerator, ABC):
     def generate_burst(self) -> None:
         """Generate a burst of waveforms by forcing trigger."""
         raise NotImplementedError
-
-    def set_waveform_properties(
-        self,
-        source_channel: AWGSourceChannel,
-        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
-        waveform_name: str,
-        needed_sample_rate: float,
-        amplitude: float,
-        offset: float,
-    ) -> None:
-        """Set the given parameters on the provided source channel.
-
-        Args:
-            source_channel: The source channel class for the requested channel.
-            output_signal_path: The output signal path of the specified channel.
-            waveform_name: The name of the waveform from the waveform list to generate.
-            needed_sample_rate: The required sample rate.
-            amplitude: The amplitude of the signal to generate.
-            offset: The offset of the signal to generate.
-        """
-        first_source_channel = self.source_channel["SOURCE1"]
-        first_source_channel.set_frequency(needed_sample_rate)
-        source_channel.load_waveform(waveform_name)
-        source_channel.set_amplitude(amplitude)
-        source_channel.set_output_signal_path(output_signal_path)
-        source_channel.set_offset(offset)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
