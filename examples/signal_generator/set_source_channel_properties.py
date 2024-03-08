@@ -1,4 +1,4 @@
-"""An example showing the use of the source channel."""
+"""An example showing the use of an AWG source channel."""
 
 from tm_devices import DeviceManager
 from tm_devices.drivers import AWG5K
