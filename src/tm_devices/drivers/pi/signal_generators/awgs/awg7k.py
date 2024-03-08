@@ -12,10 +12,10 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     ParameterBounds,
 )
 from tm_devices.drivers.pi.signal_generators.awgs.awg5k import AWG5KSourceChannel
-from tm_devices.helpers import (
-    ReadOnlyCachedProperty,
-    SignalGeneratorOutputPathsBase,
-)
+
+# noinspection PyPep8Naming
+from tm_devices.helpers import ReadOnlyCachedProperty as cached_property  # noqa: N813
+from tm_devices.helpers import SignalGeneratorOutputPathsBase
 
 
 class AWG7KSourceChannel(AWG5KSourceChannel):
@@ -74,7 +74,7 @@ class AWG7K(AWG7KMixin, AWG):
     ################################################################################################
     # Properties
     ################################################################################################
-    @ReadOnlyCachedProperty
+    @cached_property
     def source_channel(self) -> "MappingProxyType[str, AWGSourceChannel]":
         """Mapping of channel names to AWG7KSourceChannel objects."""
         channel_map: Dict[str, AWG7KSourceChannel] = {}

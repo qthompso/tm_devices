@@ -14,8 +14,8 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
+from tm_devices.helpers import ReadOnlyCachedProperty as cached_property  # noqa: N813
 from tm_devices.helpers import (
-    ReadOnlyCachedProperty,
     SASSetWaveformFileTypes,
     SignalGeneratorFunctionsAWG,
     SignalGeneratorOutputPaths5200,
@@ -111,7 +111,7 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Properties
     ################################################################################################
-    @ReadOnlyCachedProperty
+    @cached_property
     def source_channel(self) -> "MappingProxyType[str, AWGSourceChannel]":
         """Mapping of channel names to AWG5200SourceChannel objects."""
         channel_map: Dict[str, AWG5200SourceChannel] = {}
