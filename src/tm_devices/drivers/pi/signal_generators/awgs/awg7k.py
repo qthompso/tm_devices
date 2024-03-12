@@ -96,14 +96,13 @@ class AWG7K(AWG7KMixin, AWG):
         if "02" in self.opt_string or "06" in self.opt_string:
             amplitude_range = ParameterBounds(lower=500.0e-3, upper=1.0)
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
-        else:
+        elif output_signal_path == self.OutputSignalPath.DCA:
             amplitude_range = ParameterBounds(lower=50e-3, upper=2.0)
-            # if the DIR path is disconnected
-            if output_signal_path == self.OutputSignalPath.DCA:
-                offset_range = ParameterBounds(lower=-0.5, upper=0.5)
-            # if the DIR path is connected
-            else:
-                offset_range = ParameterBounds(lower=-0.0, upper=0.0)
+            offset_range = ParameterBounds(lower=-0.5, upper=0.5)
+        # if the DIR path is connected
+        else:
+            amplitude_range = ParameterBounds(lower=50e-3, upper=1.0)
+            offset_range = ParameterBounds(lower=-0.0, upper=0.0)
         # AWG(Arbitrary Waveform Generator)7(Series)xx(GS/s)x(Channels)z(Model)
         # AWG7122C means the sample rate max is 12 GHz, a AWG7062C would have a 6 GHz max
         sample_rate_range = ParameterBounds(lower=10.0e6, upper=int(self.model[4:6]) * 1.0e9)

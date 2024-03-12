@@ -326,10 +326,10 @@ class AWG(SignalGenerator, ABC):
         """
         first_source_channel = self.source_channel["SOURCE1"]
         first_source_channel.set_frequency(needed_sample_rate)
-        source_channel.load_waveform(waveform_name)
         source_channel.set_amplitude(amplitude)
         source_channel.set_output_signal_path(output_signal_path)
         source_channel.set_offset(offset)
+        source_channel.load_waveform(waveform_name)
 
     def get_waveform_constraints(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
