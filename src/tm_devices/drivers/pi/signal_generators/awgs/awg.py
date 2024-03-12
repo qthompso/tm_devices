@@ -65,10 +65,10 @@ class AWGSourceChannel(BaseSourceChannel, ExtendableMixin):
             amplitude: The amplitude of the signal to generate.
             offset: The offset of the signal to generate.
         """
-        self.load_waveform(waveform_name)
         self.set_amplitude(amplitude)
         self.set_output_signal_path(output_signal_path)
         self.set_offset(offset)
+        self.load_waveform(waveform_name)
 
     def set_amplitude(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the amplitude on the source channel.

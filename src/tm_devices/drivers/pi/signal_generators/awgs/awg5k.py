@@ -98,12 +98,13 @@ class AWG5K(AWG5KMixin, AWG):
         if not output_signal_path:
             output_signal_path = self.OutputSignalPath.DCA
 
-        amplitude_range = ParameterBounds(lower=20.0e-3, upper=4.5)
         # if DIR output path is disconnected
         if output_signal_path == self.OutputSignalPath.DCA:
+            amplitude_range = ParameterBounds(lower=20.0e-3, upper=4.5)
             offset_range = ParameterBounds(lower=-2.25, upper=2.25)
         # otherwise the DIR output path is connected
         else:
+            amplitude_range = ParameterBounds(lower=50e-3, upper=1.0)
             offset_range = ParameterBounds(lower=-0.0, upper=0.0)
 
         # AWG(Arbitrary Waveform Generator)5(Series)0x(.6 + .6x GS/s)x(x Channels)z(Model)

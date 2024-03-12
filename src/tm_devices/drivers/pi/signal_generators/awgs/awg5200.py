@@ -1,7 +1,5 @@
 """AWG5200 device driver module."""
 
-import time
-
 from pathlib import Path
 from types import MappingProxyType
 from typing import cast, Dict, Literal, Optional, Tuple
@@ -35,6 +33,15 @@ class AWG5200SourceChannel(AWGSourceChannel):
         """
         super().__init__(awg=awg, channel_name=channel_name)
         self._awg = awg
+
+    def load_waveform(self, waveform_name: str) -> None:
+        """Load in a waveform from the waveform list to the source channel.
+
+        Args:
+            waveform_name: The name of the waveform to load.
+        """
+        self._awg.ieee_cmds.opc()
+        self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{waveform_name}"', allow_empty=True)
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
@@ -189,11 +196,6 @@ class AWG5200(AWG5200Mixin, AWG):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
-        # wait for operation complete from PI commands before setting up attributes
-        # an overlapping command being set while frequency is being set may lock up the source
-        self.ieee_cmds.opc()
-        # clear queue
-        self.ieee_cmds.cls()
         # If the waveform is not in the waveform list, load in the waveform set defined at
         # self.sample_waveform_set_file
         if waveform_name not in self.query("WLISt:LIST?", allow_empty=True).replace('"', "").split(
@@ -211,19 +213,10 @@ class AWG5200(AWG5200Mixin, AWG):
                 amplitude=amplitude,
                 offset=offset,
             )
-            self.ieee_cmds.wai()
-            self.ieee_cmds.opc()
-            self.ieee_cmds.cls()
             self.set_if_needed(f"OUTPUT{source_channel.num}:STATE", "1")
-        self.ieee_cmds.opc()
         # this is an overlapping command
         self.write("AWGCONTROL:RUN")
-        # wait a fraction of a second for overlapping command AWGCONTROL:RUN to proceed
-        time.sleep(0.1)
         self.ieee_cmds.opc()
-        self.ieee_cmds.cls()
-        # ensure that the control run was actually set
-        self.poll_query(30, "AWGControl:RSTate?", 2.0)
         # we expect no errors
         self.expect_esr(0)
 
@@ -242,16 +235,6 @@ class AWG5200(AWG5200Mixin, AWG):
         # This is an overlapping command for the AWG5200, and will overlap the
         # next command and/or overlap the previous if it is still running.
         self.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
-        # there is a known issue where setting other parameters while clock rate is being set
-        # may lock the AWG5200 software.
-
-        # wait a fraction of a second for overlapping command CLOCK:SRATE to proceed
-        time.sleep(0.1)
-        # wait till overlapping command finishes
-        self.ieee_cmds.opc()
-        self.ieee_cmds.cls()
-        # ensure that the clock rate was actually set
-        self.poll_query(30, "CLOCK:SRATE?", value, tolerance=absolute_tolerance)
 
     ################################################################################################
     # Private Methods
