@@ -1,4 +1,5 @@
 """AFG3K device driver module."""
+
 from typing import Optional, Tuple
 
 from tm_devices.commands import AFG3KMixin

@@ -1,4 +1,8 @@
-"""An example showing how to generate a signal using the scope's internal AFG."""
+"""An example showing how to generate a signal using the scope's internal AFG.
+
+This can also be done with generate_function (see generate_function.py for an example).
+"""
+
 from tm_devices import DeviceManager
 from tm_devices.drivers import MSO5
 

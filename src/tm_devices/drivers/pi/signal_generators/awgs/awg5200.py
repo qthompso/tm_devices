@@ -12,8 +12,8 @@ from tm_devices.drivers.pi.signal_generators.awgs.awg import (
     AWGSourceDeviceConstants,
     ParameterBounds,
 )
+from tm_devices.helpers import ReadOnlyCachedProperty as cached_property  # noqa: N813
 from tm_devices.helpers import (
-    ReadOnlyCachedProperty,
     SASSetWaveformFileTypes,
     SignalGeneratorFunctionsAWG,
     SignalGeneratorOutputPaths5200,
@@ -42,22 +42,6 @@ class AWG5200SourceChannel(AWGSourceChannel):
         """
         self._awg.ieee_cmds.opc()
         self._awg.set_if_needed(f"{self.name}:WAVEFORM", f'"{waveform_name}"', allow_empty=True)
-
-    def set_frequency(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
-        """Set the frequency on the source channel.
-
-        Args:
-            value: The frequency value to set.
-            absolute_tolerance: The acceptable difference between two floating point values.
-                                Default value is 0.1% of the provided value.
-        """
-        if absolute_tolerance is None:
-            # Default the absolute tolerance to 0.1% of the provided frequency value
-            # due to 32 bit rounding.
-            absolute_tolerance = value * 0.001
-        # This is an overlapping command for the AWG5200, and will overlap the
-        # next command and/or overlap the previous if it is still running.
-        self._awg.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
 
     def set_offset(self, value: float, absolute_tolerance: float = 0) -> None:
         """Set the offset on the source channel.
@@ -108,7 +92,7 @@ class AWG5200(AWG5200Mixin, AWG):
     ################################################################################################
     # Properties
     ################################################################################################
-    @ReadOnlyCachedProperty
+    @cached_property
     def source_channel(self) -> "MappingProxyType[str, AWGSourceChannel]":
         """Mapping of channel names to AWG5200SourceChannel objects."""
         channel_map: Dict[str, AWG5200SourceChannel] = {}
@@ -212,15 +196,20 @@ class AWG5200(AWG5200Mixin, AWG):
             polarity: The polarity to set the signal to.
             symmetry: The symmetry to set the signal to, only applicable to certain functions.
         """
+        # If the waveform is not in the waveform list, load in the waveform set defined at
+        # self.sample_waveform_set_file
+        if waveform_name not in self.query("WLISt:LIST?", allow_empty=True).replace('"', "").split(
+            ","
+        ):
+            self.load_waveform_set()
         for channel_name in self._validate_channels(channel):
+            self.set_sample_rate(needed_sample_rate)
             source_channel = cast(AWG5200SourceChannel, self.source_channel[channel_name])
             # turn channel off
             self.set_and_check(f"OUTPUT{source_channel.num}:STATE", "0")
-            self.set_waveform_properties(
-                source_channel=source_channel,
+            source_channel.set_waveform_properties(
                 output_signal_path=output_signal_path,
                 waveform_name=waveform_name,
-                needed_sample_rate=needed_sample_rate,
                 amplitude=amplitude,
                 offset=offset,
             )
@@ -231,38 +220,21 @@ class AWG5200(AWG5200Mixin, AWG):
         # we expect no errors
         self.expect_esr(0)
 
-    def set_waveform_properties(
-        self,
-        source_channel: AWGSourceChannel,
-        output_signal_path: Optional[SignalGeneratorOutputPathsBase],
-        waveform_name: str,
-        needed_sample_rate: float,
-        amplitude: float,
-        offset: float,
-    ) -> None:
-        """Set the given parameters on the provided source channel.
+    def set_sample_rate(self, value: float, absolute_tolerance: Optional[float] = None) -> None:
+        """Set the rate at which samples are generated/transmitted.
 
         Args:
-            source_channel: The source channel class for the requested channel.
-            output_signal_path: The output signal path of the specified channel.
-            waveform_name: The name of the waveform from the waveform list to generate.
-            needed_sample_rate: The required sample rate.
-            amplitude: The amplitude of the signal to generate.
-            offset: The offset of the signal to generate.
+            value: The sample rate to set.
+            absolute_tolerance: The acceptable difference between two floating point values.
+                                Default value is 0.1% of the provided value.
         """
-        if waveform_name not in self.query("WLISt:LIST?", allow_empty=True).replace('"', "").split(
-            ","
-        ):
-            self.load_waveform_set()
-        source_channel = cast(AWG5200SourceChannel, source_channel)
-        super().set_waveform_properties(
-            source_channel=source_channel,
-            output_signal_path=output_signal_path,
-            waveform_name=waveform_name,
-            needed_sample_rate=needed_sample_rate,
-            amplitude=amplitude,
-            offset=offset,
-        )
+        if absolute_tolerance is None:
+            # Default the absolute tolerance to 0.1% of the provided frequency value
+            # due to 32 bit rounding.
+            absolute_tolerance = value * 0.001
+        # This is an overlapping command for the AWG5200, and will overlap the
+        # next command and/or overlap the previous if it is still running.
+        self.set_if_needed("CLOCK:SRATE", value, verify_value=False, opc=True)
 
     ################################################################################################
     # Private Methods

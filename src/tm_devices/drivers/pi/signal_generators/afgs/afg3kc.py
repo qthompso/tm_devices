@@ -1,4 +1,5 @@
 """AFG31K device driver module."""
+
 from typing import Tuple
 
 from tm_devices.drivers.pi.signal_generators.afgs.afg3k import (

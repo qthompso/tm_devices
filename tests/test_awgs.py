@@ -1,5 +1,6 @@
 # pyright: reportPrivateUsage=none
 """Test the AWGs."""
+
 from typing import cast, Optional
 
 import pytest
@@ -159,7 +160,7 @@ def test_awg5200(device_manager: DeviceManager, capsys: pytest.CaptureFixture[st
         awg520025.source_channel["SOURCE1"].set_state(-1)
 
     # Coverage for setting frequency with absolute tolerance.
-    awg520050.source_channel["SOURCE1"].set_frequency(5000000000, absolute_tolerance=0)
+    awg520050.set_sample_rate(5000000000, absolute_tolerance=0)
     query_val = awg520050.query("CLOCK:SRATE?")
     assert float(query_val) == 5000000000
 
@@ -252,7 +253,7 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
     offset = float(awg70ka150.query("SOURCE1:VOLTAGE:OFFSET?"))
     assert offset == 0.1
 
-    awg70ka150.source_channel["SOURCE1"].set_frequency(500000000)
+    awg70ka150.set_sample_rate(500000000)
     current_frequency = awg70ka150.query("SOURCE1:FREQUENCY?")
     assert float(current_frequency) == 500000000
 
@@ -277,7 +278,7 @@ def test_awg70k(  # noqa: PLR0915  # pylint: disable=too-many-locals
         )
 
     # Coverage for setting frequency with absolute tolerance.
-    awg70ka150.source_channel["SOURCE1"].set_frequency(5000000000, absolute_tolerance=0)
+    awg70ka150.set_sample_rate(5000000000, absolute_tolerance=0)
     query_val = awg70ka150.query("SOURCE1:FREQUENCY?")
     assert float(query_val) == 5000000000
 
@@ -371,6 +372,6 @@ def test_awg5k(device_manager: DeviceManager) -> None:
     )
 
     # Coverage for setting frequency with absolute tolerance.
-    awg5k.source_channel["SOURCE1"].set_frequency(10.0e6, absolute_tolerance=0)
+    awg5k.set_sample_rate(10.0e6, absolute_tolerance=0)
     query_val = awg5k.query("SOURCE1:FREQUENCY?")
     assert float(query_val) == 10.0e6

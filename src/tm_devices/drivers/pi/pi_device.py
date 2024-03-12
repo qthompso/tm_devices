@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines  # pyright: reportUnnecessaryTypeIgnoreComment=none
 """Base Programmable Interface (PI) device driver module."""
+
 import inspect
 import os
 import socket
