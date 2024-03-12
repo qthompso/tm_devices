@@ -10,12 +10,12 @@ A function is a limited set of common waveforms that are (usually) provided by d
 This means that the output parameters like waveform length, sample rate and cycle frequency are
 abstracted away in order to provide signals which easy to quantify and manipulate.
 
-Function generators utilize a phase increment process and a data lookup table to provide variable frequencies,
-called DDS. The phase increment is calculated depended on the waveform length and frequency requested. This has
+Arbitrary Function Generators (AFGs) utilize a phase increment process and a data lookup table to provide variable frequencies,
+called DDS. The phase increment calculated is dependent on the waveform length and frequency requested. This has
 a side effect where the phase increment can be larger than one index in the lookup table. Functions bypass this
 issue by being simplistic enough that waveform length reduction doesn't have a detrimental effect on the end output.
 
-Waveform generators enforce one cycle per sample, allowing the output to be the same shape regardless of clock rate.
+Arbitrary Waveform Generators (AWGs) enforce one cycle per sample, allowing the output to be the same shape regardless of clock rate.
 This does not exclude the use of functions, regardless of the name difference. Functionally, AWGs are usually more
 constrained in amplitude and offset.
 
@@ -23,11 +23,11 @@ ______________________________________________________________________
 
 ### Class Structure
 
-Each Source class (AFG, AWG) and Tekscope (If the AFG license is installed) will contain a dictionary of channel classes,
-which are defined on first access. Each of these channel classes represents an output channel on the source, or in the case
+Each Source class (AFG, AWG) and Tekscope (If the AFG license is installed) will contain a dictionary of source channel classes,
+which are defined on first access. Each of these source channel classes represents an output channel on the source, or in the case
 of Tekscope, the IAFG.
 
-These channels contain methods and properties which pertain to pi commands that apply changes to one output channel.
+These channels contain methods and properties which pertain to PI commands that apply changes to one output channel.
 For example: the afg.source_channel\["SOURCE1"\].set_amplitude() call will change the amplitude only for source output 1.
 
 ______________________________________________________________________
@@ -82,7 +82,7 @@ to set how long the pulses are. Symmetry decides what direction the skews toward
 is provided. After all parameters are set, the channel is turned back on.
 
 Setting up bursts of the IAFG is a simple process, which simply involves setting it to burst mode and
-loadin in a specified number of bursts.
+loading in a specified number of bursts.
 
 #### Stipulations:
 
@@ -164,8 +164,8 @@ AFG3011:
 | Amplitude   | 100mV to 10V<sup>3</sup> | 100mV to 10V              | 100mV to 10V              | 100mV to 10V                                                              | 100mV to 10V    |
 | Offset      | -5V to 5V                | -5V to 5V                 | -5V to 5V                 | -5V to 5V                                                                 | -5V to 5V       |
 
-&#8195; 1: AFG302XB has its upper bound for frequency halved for these functions.\
-2: Amplitude upper bound is re duced to 16 when frequency is greater than 100MHz.\
+1: AFG302XB has its upper bound for frequency halved for these functions.\
+2: Amplitude upper bound is reduced to 16 when frequency is greater than 100MHz.\
 3: Amplitude upper bound is reduced to 8 when frequency is greater than 200MHz.
 
 ### AFG31K
@@ -202,7 +202,7 @@ If the output termination matching is set to 50 ohms instead of high impedance t
 | Offset      | -5V to 5V              | -5V to 5V              | -5V to 5V      | -5V to 5V                                                                 | -5V to 5V         |
 | Sample Rate |                        |                        |                |                                                                           | 2GS/s<sup>1</sup> |
 
-&#8195; 1: When less than 16Kb, otherwise, the sample rate is 250MS/s.\
+1: When less than 16Kb, otherwise, the sample rate is 250MS/s.\
 2: Amplitude upper bound is reduced to 16 when the frequency is greater than 60MHz. It is further reduced to 12 when the frequency is greater than 80 MHz\
 3: Amplitude upper bound is reduced to 8 when the frequency is greater than 200MHz.
 
@@ -217,7 +217,7 @@ are then loaded from the hard drive into the waveform list for the AWG5200 and A
 and will be set through the source class. The channel provided has its waveform, offset, amplitude and signal path set.
 If the waveform is ramp, a symmetry of 50 will set the waveform to a triangle.
 
-The AWG class has methods specific to it. generate_waveform allows for a waveform name from the waveform list
+The AWG class has methods specific to it. `generate_waveform` allows for a waveform name from the waveform list
 to be provided, instead of a function. This is distinctly different from generate function as it relies on a sample
 rate also being provided to actually generate the waveform.
 
@@ -245,7 +245,7 @@ All waveforms must be of the same length on requesting AWGCONTROL:RUN.
 
 The AWG5K series offers a upper sample rate range from 600 MS/s to 1.2 GS/s dependent on the model number. The amplitude range is dependent on
 the signal output path, and if the direct option is selected, it will reduce the amplitude range to 50mV to 1 V and the
-offset to 0. Otherwise, the amplitude ranges from 20 mV to 2.25 V and an offset range of plut or minus 2.25 V.
+offset to 0. Otherwise, the amplitude ranges from 20 mV to 2.25 V and an offset range of plus or minus 2.25 V.
 
 |             | AWG500X/B/C       | AWG501X/B/C       |
 | ----------- | ----------------- | ----------------- |
@@ -261,7 +261,7 @@ AWG5K's have digitized outputs on the rear of the device.
 
 #### Constraints:
 
-The AWG7K series Functions identically to the AWG5K series, excluding the higher sample rate and lower amplitude and offset range.
+The AWG7K series functions identically to the AWG5K series, excluding the higher sample rate and lower amplitude and offset range.
 The AWG7K also includes varying options which directly effect these ranges, such as option 02 and 06. These options will enforce the
 output signal path to always be direct.
 
@@ -271,14 +271,11 @@ output signal path to always be direct.
 | Amplitude   | 50mV to 2V      | 50mV to 2V       | 0.5V to 1.0V                 | 50mV to 2V      | 50mV to 2V       | 50mV to 2V      | 0.5V to 1.0V                 | 0.5V to 1.0V    |
 | Offset      | -0.5V to 0.5V   | -0.5V to 0.5V    | N/A                          | -0.5V to 0.5V   | -0.5V to 0.5V    | -0.5V to 0.5V   | N/A                          | N/A             |
 
-&#8195; 1: Samples rates higher than 10GS/S(12GS/s for B/C) can only be done through Interleave.
+1: Samples rates higher than 10GS/S(12GS/s for B/C) can only be done through Interleave.
 
 ### AWG5200
 
-`set_output_signal_path` is uniquely defined within the AWG5200 as it has special .
-
-`set_offset` is conditioned to make sure that the AWG output signal path is not DIR, as the VISA query will time
-out otherwise.
+`set_output_signal_path` is uniquely defined within the AWG5200 as it has special output signal paths.
 
 #### Constraints:
 
@@ -296,7 +293,7 @@ Option 25 on the devices means that the maximum rate is 2.5 GS/s, whereas option
 The AWG5200's programming commands are seperated into three seperated categories: Sequential, Blocking, Overlapping.
 The type of command is important to consider as an incorrect order can lead to unintended results.
 
-Sequential commands function the as the standard PI commands, they will not start until the previous command has finished. These commands
+Sequential commands function as the standard PI commands. They will not start until the previous command has finished. These commands
 tend to be fast and will allow for quick response times even if they are queued in the input buffer.
 
 Blocking commands are very similar to sequential commands. However, these commands tend to take longer to execute. This means that
@@ -313,6 +310,12 @@ not set.
 The AWG70K is a special case, where only the direct signal output path is allowed (unless option AC is installed). This means the amplitude is limited,
 and offset is not allowed to be set by default. However, there is a secondary device which allows for DC amplification, the MDC4500-4B. The MDC4500-4B is an amplifier
 which provides an AWG70K the ability to utilize DC offset. It also provides a large range for amplitude.
+
+`set_output_signal_path` is uniquely defined within the AWG70KA and AWG70KB classes. By default, it will first attempt to set the output signal path to DCA.
+If this fails (implying an MDC4500-4B is not connected), then a direct (DIR) signal path will be set.
+
+`set_offset` is conditioned to make sure that the AWG output signal path is not DIR, as the VISA query will time
+out otherwise.
 
 |             | AWG70001A/B Option 150 | AWG70002A/B Option 225 | AWG70002A/B Option 216 | AWG70002A/B Option 208 | AWG7000XA/B MDC4500-4B DCA path |
 | ----------- | ---------------------- | ---------------------- | ---------------------- | ---------------------- | ------------------------------- |
