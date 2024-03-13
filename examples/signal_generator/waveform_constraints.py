@@ -6,13 +6,13 @@ from tm_devices.drivers import AWG5K
 from tm_devices.helpers import SignalGeneratorFunctionsAWG
 
 # The desired frequency.
-DESIRED_FREQUENCY = 10e3
+DESIRED_FREQUENCY = 10e18
 
 # The desired amplitude.
-DESIRED_AMPLITUDE = 0.5
+DESIRED_AMPLITUDE = 5.0
 
 # The desired sample rate.
-DESIRED_SAMPLE_RATE = 10000000
+DESIRED_SAMPLE_RATE = 1
 
 # The desired function to generate.
 DESIRED_FUNCTION = SignalGeneratorFunctionsAWG.SIN
@@ -47,7 +47,7 @@ with DeviceManager(verbose=True) as dm:
 
     # Raise an error if the desired frequency is not within the frequency constraints.
     if not frequency_range.lower <= DESIRED_FREQUENCY <= frequency_range.upper:
-        raise ValueError(
+        print(
             FORMAT_ERROR_MESSAGE_FUNCTION.format(
                 desired_prop_name="frequency",
                 desired_val=DESIRED_FREQUENCY,
@@ -62,7 +62,7 @@ with DeviceManager(verbose=True) as dm:
 
     # Raise an error if the desired amplitude is not within the amplitude constraints.
     if not amplitude_range.lower <= DESIRED_AMPLITUDE <= amplitude_range.upper:
-        raise ValueError(
+        print(
             FORMAT_ERROR_MESSAGE_FUNCTION.format(
                 desired_prop_name="amplitude",
                 desired_val=DESIRED_AMPLITUDE,
@@ -82,7 +82,7 @@ with DeviceManager(verbose=True) as dm:
 
     # Raise an error if the desired sample rate is not within the sample rate constraints.
     if not sample_rate_range.lower <= DESIRED_SAMPLE_RATE <= sample_rate_range.upper:
-        raise ValueError(
+        print(
             FORMAT_ERROR_MESSAGE_WAVEFORM_LENGTH.format(
                 desired_prop_name="sample rate",
                 desired_val=DESIRED_SAMPLE_RATE,
