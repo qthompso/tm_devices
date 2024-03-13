@@ -44,7 +44,7 @@ with DeviceManager(verbose=True) as dm:
     # Get the frequency constraints.
     frequency_range = awg5k_constraints_function.frequency_range
 
-    # Raise an error if the desired frequency is not within the frequency constraints.
+    # Print a message if the desired frequency is not within the frequency constraints.
     if not frequency_range.lower <= DESIRED_FREQUENCY <= frequency_range.upper:
         print(
             FORMAT_ERROR_MESSAGE_FUNCTION.format(
@@ -59,7 +59,7 @@ with DeviceManager(verbose=True) as dm:
     # Get the amplitude constraints.
     amplitude_range = awg5k_constraints_function.amplitude_range
 
-    # Raise an error if the desired amplitude is not within the amplitude constraints.
+    # Print a message if the desired amplitude is not within the amplitude constraints.
     if not amplitude_range.lower <= DESIRED_AMPLITUDE <= amplitude_range.upper:
         print(
             FORMAT_ERROR_MESSAGE_FUNCTION.format(
@@ -79,7 +79,7 @@ with DeviceManager(verbose=True) as dm:
     # Get the frequency constraints.
     sample_rate_range = awg5k_constraints_waveform_length.sample_rate_range
 
-    # Raise an error if the desired sample rate is not within the sample rate constraints.
+    # Print a message if the desired sample rate is not within the sample rate constraints.
     if not sample_rate_range.lower <= DESIRED_SAMPLE_RATE <= sample_rate_range.upper:
         print(
             FORMAT_ERROR_MESSAGE_WAVEFORM_LENGTH.format(
