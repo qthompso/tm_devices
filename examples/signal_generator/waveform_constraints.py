@@ -1,7 +1,6 @@
 """An example showing the use of waveform constraints for an AWG."""
 
 from tm_devices import DeviceManager
-from tm_devices.driver_mixins.signal_generator_mixin import ParameterBounds
 from tm_devices.drivers import AWG5K
 from tm_devices.helpers import SignalGeneratorFunctionsAWG
 
@@ -78,7 +77,7 @@ with DeviceManager(verbose=True) as dm:
     )
 
     # Get the frequency constraints.
-    sample_rate_range: ParameterBounds = awg5k_constraints_waveform_length.sample_rate_range  # pyright: ignore[reportAssignmentType]
+    sample_rate_range = awg5k_constraints_waveform_length.sample_rate_range
 
     # Raise an error if the desired sample rate is not within the sample rate constraints.
     if not sample_rate_range.lower <= DESIRED_SAMPLE_RATE <= sample_rate_range.upper:

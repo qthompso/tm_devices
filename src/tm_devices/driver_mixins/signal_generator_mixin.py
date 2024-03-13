@@ -29,7 +29,7 @@ class ExtendedSourceDeviceConstants:
     amplitude_range: ParameterBounds
     offset_range: ParameterBounds
     frequency_range: ParameterBounds
-    sample_rate_range: Optional[ParameterBounds] = None
+    sample_rate_range: ParameterBounds
     square_duty_cycle_range: Optional[ParameterBounds] = None
     pulse_width_range: Optional[ParameterBounds] = None
     ramp_symmetry_range: Optional[ParameterBounds] = None
