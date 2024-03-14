@@ -89,6 +89,16 @@ language: python
 ---
 ```
 
+## Generate a function using an AFG
+
+Call `generate_function` to generate a 0.5 V, 10 MHz RAMP wave on SOURCE1 of the AFG.
+
+```{literalinclude} ../examples/signal_generators/generate_function.py
+---
+language: python
+---
+```
+
 ## Curve query saved to csv
 
 Perform a curve query and save the results to a csv file.
