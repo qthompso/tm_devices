@@ -234,7 +234,7 @@ class AWG5200(AWG5200Mixin, AWG):
             absolute_tolerance = value * 0.001
         # This is an overlapping command for the AWG5200, and will overlap the
         # next command and/or overlap the previous if it is still running.
-        self.set_if_needed("CLOCK:SRATE", value, verify_value=False)
+        self.set_if_needed("CLOCK:SRATE", value, verify_value=False, tolerance=absolute_tolerance)
 
     ################################################################################################
     # Private Methods

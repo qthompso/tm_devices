@@ -16,35 +16,75 @@ a side effect where the phase increment can be larger than one index in the look
 issue by being simplistic enough that waveform length reduction doesn't have a detrimental effect on the end output.
 
 Arbitrary Waveform Generators (AWGs) enforce one cycle per sample, allowing the output to be the same shape regardless of clock rate.
-This does not exclude the use of functions, regardless of the name difference. Functionally, AWGs are usually more
-constrained in amplitude and offset.
+This does not exclude the use of functions, regardless of the name difference. With low frequency outputs, AWGs are functionally
+are usually more identical, except offering more constrained amplitudes and offsets.
 
 ______________________________________________________________________
 
 ### Class Structure
 
-Each Source class (AFG, AWG) and Tekscope (If the AFG license is installed) will contain a dictionary of source channel classes,
-which are defined on first access. Each of these source channel classes represents an output channel on the source, or in the case
-of Tekscope, the IAFG.
+```{mermaid}
+classDiagram
+    direction LR
 
-These channels contain methods and properties which pertain to PI commands that apply changes to one output channel.
-For example: the afg.source_channel\["SOURCE1"\].set_amplitude() call will change the amplitude only for source output 1.
+    SignalGeneratorMixin <|-- Tekscope
+    SignalGeneratorMixin <|-- AFG
+    SignalGeneratorMixin <|-- AWG
 
-______________________________________________________________________
-
-### Class Methods
+```
 
 The `SignalGenerator` class is responsible for most waveform generators, including `AWG` and `AFG`.
 Similarily, `Tekscope` is responsible for AFGs internal to the scopes themselves, commonly referred to as
 IAFGs. Both classes inheret `SignalGeneratorMixin` for a list of methods which share functionality throughout
 all signal sources. These public properties, functions and methods include:
 
+:::\{note}
+SignalGeneratorMixin only contains abstract methods, defining the class by itself will only raise NotImplemented errors.
+:::
+
+Each Source class (`AFG`, `AWG`) and `Tekscope` (If the AFG license is installed) will contain a dictionary of source channel classes,
+which are defined on first access. Each of these source channel classes represents an output channel on the source, or in the case
+of an oscilloscope, the IAFG.
+
+These channels contain methods and properties which pertain to PI commands that apply changes to one output channel.
+For example: the afg.source_channel\["SOURCE1"\].set_amplitude() call will change the amplitude only for source output 1.
+
+:::\{tip}
+These channel classes not only provide easy access to basic scipy commands, but also helper functions, like `set_function_properties`
+:::
+
+```{mermaid}
+classDiagram
+    direction LR
+
+    Tekscope <|-- InternalAFGChannel
+    AFG <|-- AFGSourceChannel
+
+    AWG <|-- AWGSourceChannel
+    AWGSourceChannel <|-- AWG5KSourceChannel
+    AWG5KSourceChannel <|-- AWG7KSourceChannel
+    AWGSourceChannel <|-- AWG5200SourceChannel
+    AWGSourceChannel <|-- AWG70KSourceChannel
+```
+
+Each class has children classes which inherit the base abstracted methods, specifically tailored to each signal generator so the
+functions function similarly.
+
+______________________________________________________________________
+
+### Class Methods
+
 Each function exclude most attempts at validation, as the end developer can change aspects outside its purview.
 There are several distinct instances where this can cause unwanted behavior or errors depending on source and what
-state it was in before it is used.
+state it was in before it is used. However, attempting validation when changes can occur outside it's scope leads to many redundant checks.
+As such, it is up to the developer to implement these checks.
 
 `source_device_constants` is a property which holds information about what functions
 and memory sizes are allowed.
+
+:::\{tip}
+`source_device_constants.functions` will provide an enum of possible functions to generate on the signal generator used.
+:::
 
 `generate_function` is a method which allows for the user to request a function from
 any source channel provided an amplitude, frequency and offset is supplied. Other key features
@@ -53,9 +93,20 @@ waveforms and duty cycle for pulse functions. The termination of the IAFG and an
 specified, along with customizable polarity specifically for AFGs. Finally, AWGs can have their signal output path
 changed, value dependent on specific model types.
 
+:::\{warning}
+`generate_function` allows function parameters which can exceed actual generation bounds.
+`get_waveform_constraints` should be used in tandem with `generate_function`, or utilizing the constraints provided in
+[Signal Generators](#SignalGenerators).
+:::
+
 The `setup_burst` method places the source into a state where it can allow for waveforms to be generated a set number
 of times. All parameters passed into the method are functionaly identical to generate_function, besides burst_count,
 which specifies how many cycles of the waveform are to be generated.
+
+:::\{warning}
+`setup_burst` will set parameters which can effect the signal generators behavior. Changing these parameters
+will likely cause burst to stop functioning.
+:::
 
 `generate_burst` simply writes a trigger to the source, to initiate the burst of waveforms.
 
@@ -70,11 +121,22 @@ the same goes for what impedance is expected to be set.
 `set_waveform_properties` is functionally identical to generate_function, but does not turn the channel
 off or on, nor will it stop or start an AWG.
 
-# Signal Generators
+# Signal Generators<a name="SignalGenerators"></a>
+
+An overview of the different signal generators which are covered when using `tm_devices`.
 
 ______________________________________________________________________
 
-## Internal Arbitrary Function Generator
+## Internal Arbitrary Function Generators
+
+```{autoclasstree} tm_devices.drivers.pi.scopes.tekscope
+---
+full:
+namespace: tm_devices.drivers.pi.scopes.tekscope
+align: center
+alt: Complete device driver class diagram
+---
+```
 
 Requesting function generation will turn off the channel provided. The frequency, function,
 amplitude, impedance and offset are set. If the function is a square wave, the duty cycle is used
@@ -84,16 +146,26 @@ is provided. After all parameters are set, the channel is turned back on.
 Setting up bursts of the IAFG is a simple process, which simply involves setting it to burst mode and
 loading in a specified number of bursts.
 
-#### Stipulations:
-
 Internal arbitrary signal generators are only accessable if the oscilloscope has the AFG license installed.
-IAFGs contain no waveform list, editable memory or user defined waveforms. Arbitrary waveforms
+IAFGs contain no waveform list, editable memory or user defined waveforms. This means arbitrary waveforms
 must be loaded from the hard drive.
 
 AFGs have access to the following functions:
-SIN, SQUARE, RAMP, PULSE, PRNOISE, DC, SINC, GAUSSIAN, LORENTZ, ERISE, EDECAY, HAVERSINE, CARDIAC, ARBITRARY
+`SIN`, `SQUARE`, `RAMP`, `PULSE`, `PRNOISE`, `DC`, `SINC`, `GAUSSIAN`, `LORENTZ`, `ERISE`, `EDECAY`, `HAVERSINE`, `CARDIAC`, `ARBITRARY`
 
-### MSO2, MSO4, MSO4B, MSO5, MSO5LP, MSO6, MSO6B, LPD6
+:::\{note}
+Some functions, like `SINC`, `GAUSSIAN`, `LORENTZ`, `ERISE`, `EDECAY` and `HAVERSINE` already have an inbuilt offset.
+:::
+
+:::\{note}
+If the output termination matching is set to FIFTY ohms instead of HIGHZ, then the offset and amplitude bounds will be halved.
+:::
+
+:::\{caution}
+Although `Arbitrary` is a valid function, it will not generate properly when using `generate_function`.
+:::
+
+### MSO2, MSO4, MSO4B, MSO5, MSO5LP, MSO6, MSO6B, LPD6<a name="TekscopeIAFG"></a>
 
 #### Constraints:
 
@@ -101,21 +173,36 @@ The amplitude and frequency range for the Internal AFG varies dependant on the f
 All functions have the same lower bound, 20 mV and 100 mHz. Similarily, all offset ranges stay consistent,
 plus or minus 2.5 volts. The higher bound for functions, however, consist of the following:
 
-|           | Sin             | Square<br/>Pulse<br/>Arbitrary | Ramp<br/>Triangle | Sinc           | Gaussian<br/>Haversine | Lorentz        | Cardiac          | Arbitrary       |
-| --------- | --------------- | ------------------------------ | ----------------- | -------------- | ---------------------- | -------------- | ---------------- | --------------- |
-| Frequency | 100mHz to 50MHz | 100mHz to 25MHz                | 100mHz to 500kHz  | 100mHz to 2MHz | 100mHz to 5MHz         | 100mHz to 5MHz | 100mHz to 500kHz | 100mHz to 25MHz |
-| Amplitude | 20mV to 5V      | 20mV to 5V                     | 20mV to 5V        | 20mV to 3V     | 20mV to 5V             | 20mV to 2.4V   | 20mV to 5V       | 20mV to 5V      |
-| Offset    | -2.5V to 2.5V   | -2.5V to 2.5V                  | -2.5V to 2.5V     | -2.5V to 2.5V  | -2.5V to 2.5V          | -2.5V to 2.5V  | -2.5V to 2.5V    | -2.5V to 2.5V   |
+:::\{table} IAFG Constraints
+:widths: auto
+:width: 50%
+:align: center
+
+|                | Sin      | Square<br/>Pulse<br/>Arbitrary | Ramp<br/>Triangle<br/>Cardiac | Sinc     | Gaussian<br/>Haversine | Lorentz  |
+| -------------- | -------- | ------------------------------ | ----------------------------- | -------- | ---------------------- | -------- |
+| Frequency (Hz) | 0.1–50M  | 0.1–25M                        | 0.1–0.5M                      | 0.1–2M   | 0.1–5M                 | 0.1–5M   |
+| Amplitude (V)  | 20m–5    | 20m–5                          | 20m–5                         | 20m–3    | 20m–5                  | 20m–2.4  |
+| Offset (V)     | -2.5–2.5 | -2.5–2.5                       | -2.5–2.5                      | -2.5–2.5 | -2.5–2.5               | -2.5–2.5 |
+| :::            |          |                                |                               |          |                        |          |
 
 ### MSO5B
 
 #### Constraints:
 
-The constraints for the MSO5B are identical, except the upper frequency bound is doubled.
+The constraints for the MSO5B are identical to [other tekscope models](#TekscopeIAFG), except the upper frequency bound is doubled.
 
 ______________________________________________________________________
 
 ## Arbitrary Function Generators
+
+```{autoclasstree} tm_devices.drivers.pi.signal_generators.afgs
+---
+full:
+namespace: tm_devices.drivers.pi.signal_generators.afgs
+align: center
+alt: Complete device driver class diagram
+---
+```
 
 Requesting function generation will turn off the channel requested. The frequency, function,
 amplitude, impedance and offset are set. If the function is a square wave, the duty cycle is used
@@ -126,107 +213,141 @@ Setting up bursts of the AFG involves setting the AFG trigger to external, so th
 on the internal trigger. Then the burst state is set on and mode set to triggered.
 
 AFGs have access to the following functions:
-SIN, SQUARE, RAMP, PULSE, DC, SINC, GAUSSIAN, LORENTZ, ERISE, EDECAY, HAVERSINE, CARDIAC, NOISE, ARBITRARY
+`SIN`, `SQUARE`, `RAMP`, `PULSE`, `DC`, `SINC`, `GAUSSIAN`, `LORENTZ`, `ERISE`, `EDECAY`, `HAVERSINE`, `CARDIAC`, `NOISE`, `ARBITRARY`
+
+:::\{note}
+If the output termination matching is set to 50 ohms instead of INFINITY, then the offset and amplitude bounds will be halved.
+:::
+
+:::\{caution}
+Although `Arbitrary` is a valid function, it will not generate properly when using `generate_function`.
+:::
 
 ### AFG3K, AFG3KB, AFG3KC
+
+The AFG3K series are function generating devices that also offer the capacity to generate arbitrary waveforms. They accept
+communication through LAN, TCPIP and GPIB interfaces.
 
 #### Constraints:
 
 The amplitude, offset and frequency range for AFG3Ks is extremely varied dependent on model number, frequency and function. The sample rate of the entire AFG3K series is 250MS/s.
-If the output termination matching is set to 50 ohms instead of high impedance then the offset and amplitude bounds will be halved.
 
-AFG3011:
+:::\{table} AFG3K Constraints
+:widths: auto
+:width: 50%
+:align: center
 
-|             | Sin                      | Square                    | Pulse                     | Ramp<br/>Sinc<br/>Gaussian<br/>Lorentz<br/>ERise<br/>EDecay<br/>Haversine | Arbitrary       |
-| ----------- | ------------------------ | ------------------------- | ------------------------- | ------------------------------------------------------------------------- | --------------- |
-| AFG3011/C:  |                          |                           |                           |                                                                           |                 |
-| Frequency   | 1uHz to 10MHz            | 1uHz to 5MHz              | 1mHz to 5MHz              | 1uHz to 100kHz                                                            | 1mHz to 5MHz    |
-| Amplitude   | 40mV to 40V              | 40mV to 40V               | 40mV to 40V               | 40mV to 40V                                                               | 40mV to 40V     |
-| Offset      | -20V to 20V              | -20V to 20V               | -20V to 20V               | -20V to 20V                                                               | -20V to 20V     |
-| AFG302XB/C: |                          |                           |                           |                                                                           |                 |
-| Frequency   | 1uHz to 25MHz            | 1uHz to 25MHz<sup>1</sup> | 1mHz to 25MHz<sup>1</sup> | 1uHz to 500kHz<sup>1</sup>                                                | 1mHz to 12.5MHz |
-| Amplitude   | 20mV to 20V              | 20mV to 20V               | 20mV to 20V               | 20mV to 20V                                                               | 20mV to 20V     |
-| Offset      | -10V to 10V              | -10V to 10V               | -10V to 10V               | -10V to 10V                                                               | -10V to 10V     |
-| AFG305XC:   |                          |                           |                           |                                                                           |                 |
-| Frequency   | 1uHz to 50MHz            | 1uHz to 40MHz             | 1mHz to 40MHz             | 1uHz to 800kHz                                                            | 1mHz to 25MHz   |
-| Amplitude   | 20mV to 20V              | 20mV to 20V               | 20mV to 20V               | 20mV to 20V                                                               | 20mV to 20V     |
-| Offset      | -10V to 10V              | -10V to 10V               | -10V to 10V               | -10V to 10V                                                               | -10V to 10V     |
-| AFG310X/C:  |                          |                           |                           |                                                                           |                 |
-| Frequency   | 1uHz to 100MHz           | 1uHz to 50MHz             | 1mHz to 50MHz             | 1uHz to 1MHz                                                              | 1mHz to 50MHz   |
-| Amplitude   | 40mV to 20V              | 40mV to 20V               | 40mV to 20V               | 4 mV to 20V                                                               | 40mV to 20V     |
-| Offset      | -10V to 10V              | -10V to 10V               | -10V to 10V               | -10V to 10V                                                               | -10V to 10V     |
-| AFG315XC:   |                          |                           |                           |                                                                           |                 |
-| Frequency   | 1uHz to 150MHz           | 1uHz to 100MHz            | 1mHz to 100MHz            | 1uHz to 1.5MHz                                                            | 1mHz to 100MHz  |
-| Amplitude   | 40mV to 20V<sup>2</sup>  | 40mV to 20V               | 40mV to 20V               | 40mV to 20V                                                               | 40mV to 20V     |
-| Offset      | -10V to 10V              | -10V to 10V               | -10V to 10V               | -10V to 10V                                                               | -10V to 10V     |
-| AFG325X/C:  |                          |                           |                           |                                                                           |                 |
-| Frequency   | 1uHz to 240MHz           | 1uHz to 120MHz            | 1mHz to 120MHz            | 1uHz to 2.4MHz                                                            | 1mHz to 120MHz  |
-| Amplitude   | 100mV to 10V<sup>3</sup> | 100mV to 10V              | 100mV to 10V              | 100mV to 10V                                                              | 100mV to 10V    |
-| Offset      | -5V to 5V                | -5V to 5V                 | -5V to 5V                 | -5V to 5V                                                                 | -5V to 5V       |
+|              | Sin           | Square        | Pulse         | Ramp<br/>Sinc<br/>Gaussian<br/>Lorentz<br/>ERise<br/>EDecay<br/>Haversine | Arbitrary     |
+| ------------ | ------------- | ------------- | ------------- | ------------------------------------------------------------------------- | ------------- |
+| **3011/C:**  |               |               |               |                                                                           |               |
+| Frequency    | 1µ–10M        | 1µ–5M         | 1m–5M         | 1µ–0.1M                                                                   | 1m–5M         |
+| Amplitude    | 40m–40        | 40m–40        | 40m–40        | 40m–40                                                                    | 40m–40        |
+| Offset       | -20–20        | -20–20        | -20–20        | -20–20                                                                    | -20–20        |
+| **302XB/C:** |               |               |               |                                                                           |               |
+| Frequency    | 1µ–25M        | 1µ–25M\[^TA\] | 1m–25M\[^TA\] | 1µ–0.5M\[^TA\]                                                            | 1m–12.5M      |
+| Amplitude    | 20m–20        | 20m–20        | 20m–20        | 20m–20                                                                    | 20m–20        |
+| Offset       | -10–10        | -10–10        | -10–10        | -10–10                                                                    | -10–10        |
+| **305XC:**   |               |               |               |                                                                           |               |
+| Frequency    | 1µ–50M        | 1µ–40M        | 1m–40M        | 1µ–0.8M                                                                   | 1m–25M        |
+| Amplitude    | 20m–20        | 20m–20        | 20m–20        | 20m–20                                                                    | 20m–20        |
+| Offset       | -10–10        | -10–10        | -10–10        | -10–10                                                                    | -10–10        |
+| **310X/C:**  |               |               |               |                                                                           |               |
+| Frequency    | 1µ–0.1G       | 1µ–50M        | 1m–50M        | 1µ–1M                                                                     | 1m–50M        |
+| Amplitude    | 40m–20        | 40m–20        | 40m–20        | 4m–20                                                                     | 40m–20        |
+| Offset       | -10–10        | -10–10        | -10–10        | -10–10                                                                    | -10–10        |
+| **315XC:**   |               |               |               |                                                                           |               |
+| Frequency    | 1µ–0.15G      | 1µ–0.1G       | 1m–0.1G       | 1µ–1.5M                                                                   | 1m–0.1G       |
+| Amplitude    | 40m–20\[^TB\] | 40m–20        | 40m–20        | 40m–20                                                                    | 40m–20        |
+| Offset       | -10–10        | -10–10        | -10–10        | -10–10                                                                    | -10–10        |
+| **325X/C:**  |               |               |               |                                                                           |               |
+| Frequency    | 1µ–0.24G      | 1µ–0.12G      | 1m–0.12G      | 1µ–2.4M                                                                   | 1m–0.12G<br/> |
+| Amplitude    | 0.1–10\[^TC\] | 0.1–10        | 0.1–10        | 0.1–10                                                                    | 0.1–10        |
+| Offset       | -5–5          | -5–5          | -5–5          | -5–5                                                                      | -5–5          |
 
-1: AFG302XB has its upper bound for frequency halved for these functions.\
-2: Amplitude upper bound is reduced to 16 when frequency is greater than 100MHz.\
-3: Amplitude upper bound is reduced to 8 when frequency is greater than 200MHz.
+\[^TA\] AFG302XB has its upper bound for frequency halved for these functions.
+\[^TB\] Amplitude upper bound is reduced to 16 when frequency is greater than 100MHz.
+\[^TC\] Amplitude upper bound is reduced to 8 when frequency is greater than 200MHz.
+:::
 
 ### AFG31K
 
+The AFG31K series are function generating devices that also offer the capacity to generate arbitrary waveforms. They accept
+communication through LAN, TCPIP and GPIB interfaces.
+
 #### Constraints:
 
-If the output termination matching is set to 50 ohms instead of high impedance then the offset and amplitude bounds will be halved.
+:::\{table} AFG31K Constraints
+:widths: auto
+:width: 50%
+:align: center
 
-|             | Sin                    | Square<br/>Pulse       | Pulse          | Ramp<br/>Sinc<br/>Gaussian<br/>Lorentz<br/>ERise<br/>EDecay<br/>Haversine | Arbitrary         |
-| ----------- | ---------------------- | ---------------------- | -------------- | ------------------------------------------------------------------------- | ----------------- |
-| AFG3102X:   |                        |                        |                |                                                                           |                   |
-| Frequency   | 1uHz to 25MHz          | 1uHz to 20MHz          | 1mHz to 25MHz  | 1uHz to 500kHz                                                            | 1mHz to 12.5MHz   |
-| Amplitude   | 2mV to 20V             | 2mV to 20V             | 2mV to 20V     | 2mV to 20V                                                                | 2mV to 20V        |
-| Offset      | -10V to 10V            | -10V to 10V            | -10V to 10V    | -10V to 10V                                                               | -10V to 10V       |
-| Sample Rate |                        |                        |                |                                                                           | 250MS/s           |
-| AFG3105X:   |                        |                        |                |                                                                           |                   |
-| Frequency   | 1uHz to 50MHz          | 1uHz to 40MHz          | 1mHz to 40MHz  | 1uHz to 800kHz                                                            | 1mHz to 25MHz     |
-| Amplitude   | 2mV to 20V             | 2mV to 20V             | 2mV to 20V     | 2mV to 20V                                                                | 2mV to 20V        |
-| Offset      | -10V to 10V            | -10V to 10V            | -10V to 10V    | -10V to 10V                                                               | -10V to 10V       |
-| Sample Rate |                        |                        |                |                                                                           | 1GS/s<sup>1</sup> |
-| AFG3110X:   |                        |                        |                |                                                                           |                   |
-| Frequency   | 1uHz to 100MHz         | 1uHz to 80MHz          | 1mHz to 50MHz  | 1uHz to 1MHz                                                              | 1mHz to 50MHz     |
-| Amplitude   | 2mV to 20V<sup>2</sup> | 2mV to 20V<sup>2</sup> | 2mV to 20V     | 2mV to 20V                                                                | 2mV to 20V        |
-| Offset      | -10V to 10V            | -10V to 10V            | -10V to 10V    | -10V to 10V                                                               | -10V to 10V       |
-| Sample Rate |                        |                        |                |                                                                           | 1GS/s<sup>1</sup> |
-| AFG3115X:   |                        |                        |                |                                                                           |                   |
-| Frequency   | 1uHz to 150MHz         | 1uHz to 120MHz         | 1mHz to 100MHz | 1uHz to 1.5MHz                                                            | 1mHz to 75MHz     |
-| Amplitude   | 2mV to 10V             | 2mV to 10V             | 2mV to 10V     | 2mV to 10V                                                                | 2mV to 10V        |
-| Offset      | -5V to 5V              | -5V to 5V              | -5V to 5V      | -5V to 5V                                                                 | -5V to 5V         |
-| Sample Rate |                        |                        |                |                                                                           | 2GS/s<sup>1</sup> |
-| AFG3125X:   |                        |                        |                |                                                                           |                   |
-| Frequency   | 1uHz to 250MHz         | 1uHz to 160MHz         | 1mHz to 120MHz | 1uHz to 2.5MHz                                                            | 1mHz to 125MHz    |
-| Amplitude   | 2mV to 10V<sup>3</sup> | 2mV to 10V             | 2mV to 10V     | 2mV to 10V                                                                | 2mV to 10V        |
-| Offset      | -5V to 5V              | -5V to 5V              | -5V to 5V      | -5V to 5V                                                                 | -5V to 5V         |
-| Sample Rate |                        |                        |                |                                                                           | 2GS/s<sup>1</sup> |
+|                   | Sin           | Square<br/>Pulse | Pulse    | Ramp<br/>Sinc<br/>Gaussian<br/>Lorentz<br/>ERise<br/>EDecay<br/>Haversine | Arbitrary  |
+| ----------------- | ------------- | ---------------- | -------- | ------------------------------------------------------------------------- | ---------- |
+| **3102X:**        |               |                  |          |                                                                           |            |
+| Frequency (Hz)    | 1µ–25M        | 1µ–20M           | 1m–25M   | 1µ–0.5M                                                                   | 1m–12.5M   |
+| Amplitude (V)     | 2m–20         | 2m–20            | 2m–20    | 2m–20                                                                     | 2m–20      |
+| Offset (V)        | -10–10        | -10–10           | -10–10   | -10–10                                                                    | -10–10     |
+| Sample Rate (S/s) |               |                  |          |                                                                           | 250M       |
+| **3105X:**        |               |                  |          |                                                                           |            |
+| Frequency         | 1µ–50M        | 1µ–40M           | 1m–40M   | 1µ–0.8M                                                                   | 1m–25M     |
+| Amplitude         | 2m–20         | 2m–20            | 2m–20    | 2m–20                                                                     | 2m–20      |
+| Offset            | -10–10        | -10–10           | -10–10   | -10–10                                                                    | -10–10     |
+| Sample Rate       |               |                  |          |                                                                           | 1G\[^TOA\] |
+| **3110X:**        |               |                  |          |                                                                           |            |
+| Frequency         | 1µ–0.1G       | 1µ–80M           | 1m–50M   | 1µ–1M                                                                     | 1m–50M     |
+| Amplitude         | 2m–20\[^TOB\] | 2m–20\[^TOB\]    | 2m–20    | 2m–20                                                                     | 2m–20      |
+| Offset            | -10–10        | -10–10           | -10–10   | -10–10                                                                    | -10–10     |
+| Sample Rate       |               |                  |          |                                                                           | 1G\[^TOA\] |
+| **3115X:**        |               |                  |          |                                                                           |            |
+| Frequency         | 1µ–0.15G      | 1µ–0.12G         | 1m–0.1G  | 1µ–1.5M                                                                   | 1m–75M     |
+| Amplitude         | 2m–10         | 2m–10            | 2m–10    | 2m–10                                                                     | 2m–10      |
+| Offset            | -5–5          | -5–5             | -5–5     | -5–5                                                                      | -5–5       |
+| Sample Rate       |               |                  |          |                                                                           | 2G\[^TOA\] |
+| **3125X:**        |               |                  |          |                                                                           |            |
+| Frequency         | 1µ–0.25G      | 1µ–0.16G         | 1m–0.12G | 1µ–2.5M                                                                   | 1m–0.125G  |
+| Amplitude         | 2m–10\[^TOC\] | 2m–10            | 2m–10    | 2m–10                                                                     | 2m–10      |
+| Offset            | -5–5          | -5–5             | -5–5     | -5–5                                                                      | -5–5       |
+| Sample Rate       |               |                  |          |                                                                           | 2G\[^TOA\] |
 
-1: When less than 16Kb, otherwise, the sample rate is 250MS/s.\
-2: Amplitude upper bound is reduced to 16 when the frequency is greater than 60MHz. It is further reduced to 12 when the frequency is greater than 80 MHz\
-3: Amplitude upper bound is reduced to 8 when the frequency is greater than 200MHz.
+\[^TOA\] When waveform length is greater than 16Kb, otherwise, the sample rate is 250MS/s.
+\[^TOB\] Amplitude upper bound is reduced to 16 when the frequency is greater than 60MHz. It is further reduced to 12 when the frequency is greater than 80 MHz
+\[^TOC\] Amplitude upper bound is reduced to 8 when the frequency is greater than 200MHz.
+:::
 
 ______________________________________________________________________
 
 ## Arbitrary Waveform Generators
 
-Arbitrary Waveform Generators require several different parameters to be specified for a waveform to be generated
+```{autoclasstree} tm_devices.drivers.pi.signal_generators.awgs
+---
+full:
+namespace: tm_devices.drivers.pi.signal_generators.awgs
+align: center
+alt: Complete device driver class diagram
+---
+```
+
+Arbitrary Waveform Generators require several different parameters to be specified for a waveform to be generated.
 
 Requesting function generation will turn off the channel requested. Predefined waveforms provided with the AWG
 are then loaded from the hard drive into the waveform list for the AWG5200 and AWG70K. Sample rate is not channel dependant,
 and will be set through the source class. The channel provided has its waveform, offset, amplitude and signal path set.
-If the waveform is ramp, a symmetry of 50 will set the waveform to a triangle.
+
+:::\{note}
+If the waveform is `RAMP`, a symmetry of 50 will set the waveform to a `TRIANGLE`.
+:::
 
 The AWG class has methods specific to it. `generate_waveform` allows for a waveform name from the waveform list
 to be provided, instead of a function. This is distinctly different from generate function as it relies on a sample
 rate also being provided to actually generate the waveform.
 
-The other method
-
 AWGs have access to the following functions:
-SIN, SQUARE, RAMP, TRIANGLE, DC, CLOCK
+`SIN`, `SQUARE`, `RAMP`, `TRIANGLE`, `DC`, `CLOCK`
 
 ### AWG5K/AWG7K
+
+The AWG5K/7K series are signal sources focused on waveform generation which operate on Windows XP (Windows 7 for model C).
+They accept communication through LAN and GPIB interfaces.
 
 `set_output_signal_path` is uniquely defined within the AWG5K and AWG7K classes, as it will set the value for
 `AWGCONTROL:DOUTPUTx:STATE`, which is a unique option not seen in the other AWGs.
@@ -234,12 +355,14 @@ SIN, SQUARE, RAMP, TRIANGLE, DC, CLOCK
 `set_offset` is conditioned to make sure that the AWG output signal path is not DIR, as the VISA query will time
 out otherwise.
 
-#### Stipulations:
-
+:::\{note}
 Operation complete commands will always return 1 on the AWG5K/7K series.
+:::
+:::\{caution}
 All waveforms must be of the same length on requesting AWGCONTROL:RUN.
+:::
 
-#### AWG5K, AWG5KB, AWG5KC
+#### AWG5K, AWG5KB, AWG5KC<a name="AWG5K"></a>
 
 #### Constraints:
 
@@ -247,48 +370,86 @@ The AWG5K series offers a upper sample rate range from 600 MS/s to 1.2 GS/s depe
 the signal output path, and if the direct option is selected, it will reduce the amplitude range to 50mV to 1 V and the
 offset to 0. Otherwise, the amplitude ranges from 20 mV to 2.25 V and an offset range of plus or minus 2.25 V.
 
-|             | AWG500X/B/C       | AWG501X/B/C       |
-| ----------- | ----------------- | ----------------- |
-| Sample Rate | 10MS/S to 600MS/s | 10MS/S to 1.2MS/s |
-| Amplitude   | 20mV to 2.25V     | 20mV to 2.25V     |
-| Offset      | -2.25V to 2.25V   | -2.25V to 2.25V   |
+:::\{table} AWG5K Constraints
+:widths: auto
+:width: 50%
+:align: center
 
-#### Stipulations:
+|                   | 500X/B/C   | AWG501X/B/C |
+| ----------------- | ---------- | ----------- |
+| Sample Rate (S/s) | 10M–600M   | 10M–1.2M    |
+| Amplitude (V)     | 20m–2.25   | 20m–2.25    |
+| Offset (V)        | -2.25–2.25 | -2.25–2.25  |
+| :::               |            |             |
 
+:::\{note}
 AWG5K's have digitized outputs on the rear of the device.
+:::
 
 #### AWG7K, AWG7KB, AWG7KC
 
 #### Constraints:
 
-The AWG7K series functions identically to the AWG5K series, excluding the higher sample rate and lower amplitude and offset range.
+The AWG7K series functions identically to the [AWG5K](#AWG5K) series, excluding the higher sample rate and lower amplitude and offset range.
+
+:::\{table} AWG7K Constraints
+:widths: auto
+:width: 50%
+:align: center
+
+|                   | 705X     | 710X     | 706XB    | 712XB/C  | 708XC    |
+| ----------------- | -------- | -------- | -------- | -------- | -------- |
+| Sample Rate (S/s) | 10M–5G   | 10M–10G  | 10M–6G   | 10M–12G  | 8M–10G   |
+| Amplitude (V)     | 50m–2    | 50m–2    | 50m–2    | 50m–2    | 50m–2    |
+| Offset (V)        | -0.5–0.5 | -0.5–0.5 | -0.5–0.5 | -0.5–0.5 | -0.5–0.5 |
+
+:::
+
 The AWG7K also includes varying options which directly effect these ranges, such as option 02 and 06. These options will enforce the
 output signal path to always be direct.
 
-|             | AWG705X         | AWG710X          | AWG7102 Option 06            | AWG706XB        | AWG712XB/C       | AWG708XC        | AWG7122B/C Option 06         | AWG7K Option 02 |
-| ----------- | --------------- | ---------------- | ---------------------------- | --------------- | ---------------- | --------------- | ---------------------------- | --------------- |
-| Sample Rate | 10MS/s to 5GS/s | 10MS/s to 10GS/s | 10MS/s to 20GS/s<sup>1</sup> | 10MS/s to 6GS/s | 10MS/s to 12GS/s | 8MS/s to 10GS/s | 10MS/s to 24GS/s<sup>1</sup> | "               |
-| Amplitude   | 50mV to 2V      | 50mV to 2V       | 0.5V to 1.0V                 | 50mV to 2V      | 50mV to 2V       | 50mV to 2V      | 0.5V to 1.0V                 | 0.5V to 1.0V    |
-| Offset      | -0.5V to 0.5V   | -0.5V to 0.5V    | N/A                          | -0.5V to 0.5V   | -0.5V to 0.5V    | -0.5V to 0.5V   | N/A                          | N/A             |
+:::\{table} AWG7K Option Constraints
+:widths: auto
+:width: 50%
+:align: center
 
-1: Samples rates higher than 10GS/S(12GS/s for B/C) can only be done through Interleave.
+|                   | 7102 OPT 06    | 7122B/C OPT 06 | 7XXX OPT 02 |
+| ----------------- | -------------- | -------------- | ----------- |
+| Sample Rate (S/s) | 10M–20G\[^SA\] | 10M–24G\[^SA\] | "           |
+| Amplitude (V)     | 0.5–1.0        | 0.5–1.0        | 0.5–1.0     |
+| Offset (V)        | N/A            | N/A            | N/A         |
+| :::               |                |                |             |
+
+\[^SA\] Samples rates higher than 10GS/S(12GS/s for B/C) can only be done through Interleave.
 
 ### AWG5200
 
+The AWG5200 series are signal sources focused on waveform generation which operate on Windows 10.
+They accept communication through USB, LAN and GPIB interfaces.
+
 `set_output_signal_path` is uniquely defined within the AWG5200 as it has special output signal paths.
+
+`load_waveform` inherently has an operation complete check as attempting to run overlapping commands while loading a waveform can lead to
+unintended behavior.
 
 #### Constraints:
 
 The AWG5200 does not have a sample rate range dependent on model number, but instead of what option is installed.
 Option 25 on the devices means that the maximum rate is 2.5 GS/s, whereas option 50
 
-|             | AWG5200 Option 25 | AWG5200 Option 50 | AWG5200 Option DC |
-| ----------- | ----------------- | ----------------- | ----------------- |
-| Sample Rate | 298S/s to 2.5GS/s | 298S/s to 5.0GS/s | "                 |
-| Amplitude   | 25mV to 750mV     | 25mV to 750mV     | 25mV to 1.5V      |
-| Offset      | -2.0V to 2.0V     | -2.0V to 2.0V     | -2.0V to 2.0V     |
+:::\{table} AWG5200 Constraints
+:widths: auto
+:width: 50%
+:align: center
 
-#### Stipulations:
+|                   | 520X OPT 25 | 520X OPT 50 | AWG520X OPT DC |
+| ----------------- | ----------- | ----------- | -------------- |
+| Sample Rate (S/s) | 0.298k–2.5G | 0.298k–5.0G | "              |
+| Amplitude (V)     | 25m–0.75    | 25m–0.75    | 25m–1.5        |
+| Offset (V)        | -2–2        | -2–2        | -2–2           |
+| :::               |             |             |                |
+
+#### Stipulations:<a name="Stipulations5200"></a>
 
 The AWG5200's programming commands are seperated into three seperated categories: Sequential, Blocking, Overlapping.
 The type of command is important to consider as an incorrect order can lead to unintended results.
@@ -296,14 +457,34 @@ The type of command is important to consider as an incorrect order can lead to u
 Sequential commands function as the standard PI commands. They will not start until the previous command has finished. These commands
 tend to be fast and will allow for quick response times even if they are queued in the input buffer.
 
-Blocking commands are very similar to sequential commands. However, these commands tend to take longer to execute. This means that
-if a number of blocking commands are performed in sequence, a query may time out when sent.
+Blocking commands are very similar to sequential commands. The main difference between these commands is that
+blocking commands tend to take longer to execute.
 
+:::\{warning}
+Due to the length of blocking commands, a query may time out when sent if performed immediately after a large series consecutive blocking commands.
+:::
 Some commands can perform data analysis on another thread, these are referred to as overlapping commands. They allow any command to be executed
-while they are being executed. They cannot be executed if the previous command was blocking or sequential, or if the operation complete status register is
+while they are being executed. They cannot be executed immediately if the previous command was blocking or sequential, or if the operation complete status register is
 not set.
 
+:::\{tip}
+Overlapping commands be run in parralel with any other command, so placing them first in a sequence is always preferable.
+:::
+:::\{tip}
+There are multiple ways of synchronizing overlapping commands. This includes using OPC and WAI to wait for the operation complete
+to clear in the SESR. This can also be done using an SRQ, along with the waiting for trigger bit in the OCR.
+:::
+:::\{warning} The operation complete register will only wait for the first overlapping command to finish before clearing. This means
+that if multiple overlapping commands are run, then subsequent overlapping commands being finished will be ignored.
+:::
+:::\{danger} Overlapping commands can cause unintended behavior when performed alongside critical hardware functionality.
+If the AWG5200 is experiencing problems, this may be a cause.
+:::
+
 ### AWG70KA, AWG70KB
+
+The AWG70K series are signal sources focused on waveform generation which operate on Windows 10.
+They accept communication through USB, LAN and GPIB interfaces.
 
 #### Constraints:
 
@@ -311,18 +492,31 @@ The AWG70K is a special case, where only the direct signal output path is allowe
 and offset is not allowed to be set by default. However, there is a secondary device which allows for DC amplification, the MDC4500-4B. The MDC4500-4B is an amplifier
 which provides an AWG70K the ability to utilize DC offset. It also provides a large range for amplitude.
 
+:::\{tip}
+Though the AWG70K has no offset by default, one can be simulated by changing the raw data in the waveform.
+As long as all points are within the amplitude bounds, this can be achieved using WLIST:WAVEFORM:AOFFSET.
+:::
+
 `set_output_signal_path` is uniquely defined within the AWG70KA and AWG70KB classes. By default, it will first attempt to set the output signal path to DCA.
 If this fails (implying an MDC4500-4B is not connected), then a direct (DIR) signal path will be set.
 
 `set_offset` is conditioned to make sure that the AWG output signal path is not DIR, as the VISA query will time
 out otherwise.
 
-|             | AWG70001A/B Option 150 | AWG70002A/B Option 225 | AWG70002A/B Option 216 | AWG70002A/B Option 208 | AWG7000XA/B MDC4500-4B DCA path |
-| ----------- | ---------------------- | ---------------------- | ---------------------- | ---------------------- | ------------------------------- |
-| Sample Rate | 1.49kS/s to 50GS/s     | 1.49kS/s to 25GS/s     | 1.49kS/s to 16GS/s     | 1.49kS/s to 8GS/s      | "                               |
-| Amplitude   | 125mV to 500mV         | 125mV to 500mV         | 125mV to 500mV         | 125mV to 500mV         | 31mV to 1.6V<sup>1</sup>        |
-| Offset      | N/A                    | N/A                    | N/A                    | N/A                    | -400mV to 800mv                 |
+:::\{table} AWG70K Constraints
+:widths: auto
+:width: 50%
+:align: center
+
+|                   | OPT 150   | OPT 225   | OPT 216   | OPT 208   | MDC4500         |
+| ----------------- | --------- | --------- | --------- | --------- | --------------- |
+| Sample Rate (S/s) | 1.49k–50G | 1.49k–25G | 1.49k–16G | 1.49k–8G  | "               |
+| Amplitude (V)     | 0.125–0.5 | 0.125–0.5 | 0.125–0.5 | 0.125–0.5 | 31m–1.6\[^SZA\] |
+| Offset (V)        | N/A       | N/A       | N/A       | N/A       | -0.4–0.8        |
+| :::               |           |           |           |           |                 |
+
+\[^SZA\] Although the MOD4500-4B allows for greater than 1.0 amplitude, there is a drop off in accuracy.
 
 #### Stipulations:
 
-The AWG70K also houses infrastructure to support sequential, blocking and overlapping commands.
+The AWG70K also houses infrastructure to support [sequential, blocking and overlapping commands](#Stipulations5200).
