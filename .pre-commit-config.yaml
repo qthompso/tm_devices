@@ -62,17 +62,20 @@ repos:
         args: [--number, --end-of-line, keep]
         additional_dependencies:
           - setuptools  # This is required since Python 3.12 no longer installs setuptools by default in virtual environments
-          - mdformat-myst
-          - mdformat-toc
-          - mdformat-frontmatter
+          - black==23.12.1  # This may need to be updated/removed in the future once ruff supports formatting python code blocks in markdown
           - mdformat-beautysh
           - mdformat-black
-          - black==23.12.1  # This may need to be updated/removed in the future once ruff supports formatting python code blocks in markdown
           - mdformat-config
           - mdformat-shfmt
           - mdformat-web
+#          - mdformat-admon  # covered by mdformat-myst
+#          - mdformat-deflist  # covered by mdformat-myst
+#          - mdformat-footnote  # covered by mdformat-myst
+#          - mdformat-frontmatter  # covered by mdformat-myst
           - mdformat-gfm
-          - mdformat-footnote
+          - mdformat-myst
+#          - mdformat-tables  # covered by mdformat-myst
+          - mdformat-toc
 # Currently rstcheck doesn't work with the templates
 #  - repo: https://github.com/rstcheck/rstcheck
 #    rev: v6.1.2

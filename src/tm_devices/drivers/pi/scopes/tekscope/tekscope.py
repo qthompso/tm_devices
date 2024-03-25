@@ -255,6 +255,8 @@ class InternalAFGChannel(BaseAFGSourceChannel):
 
 
 # pylint: disable=too-many-public-methods
+# TODO: Move signal generator mixin to different abstract class, so that tekscope software
+#   does not inherit the IAFG.
 @family_base_class
 class TekScope(
     Scope,
