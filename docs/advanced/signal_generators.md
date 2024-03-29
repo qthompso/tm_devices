@@ -32,10 +32,10 @@ classDiagram
 
 ```
 
-The `SignalGenerator` class is responsible for most waveform generators, including `AWG` and `AFG`.
-Similarly, `TekScope` is responsible for AFGs internal to the scopes themselves, commonly referred to as
-IAFGs. All of these classes inherit `SignalGeneratorMixin` for a list of methods which share functionality throughout
-all signal sources.
+The `SignalGenerator` class is responsible for most waveform generators, including the `AWG` and `AFG`.
+Similarly, `TekScope` is responsible for the AFG's internal to the scopes themselves, commonly referred to as
+an IAFG. All of these classes inherit `SignalGeneratorMixin`, which includes a list of methods which share
+functionality throughout all signal sources.
 
 ```{note}
 SignalGeneratorMixin only contains abstract methods, defining the class by itself and calling methods in it will only raise NotImplemented errors.
@@ -56,10 +56,10 @@ classDiagram
 ```
 
 Each Source class (`AFG`, `AWG`) and `Tekscope` (If the AFG license is installed) will contain a dictionary of source channel classes,
-which are defined on first access. Each of these source channel classes represents an output channel on the source, or the IAFG in the case
+which are defined on first access. Each of these source channel classes represents an output on the source, or the IAFG in the case
 of an oscilloscope.
 
-These channels contain methods and properties which pertain to PI commands that apply changes to one output channel.
+These channels contain methods and properties which pertain to PI commands which only apply changes to one output channel.
 For example: the afg.source_channel\["SOURCE1"\].set_amplitude() call will change the amplitude only for source output 1.
 
 ```{tip}
@@ -71,10 +71,10 @@ ______________________________________________________________________
 ### Class Methods
 
 ```{warning}
-Each method exclude most attempts at validation, as the end developer can change aspects outside its purview.
-There are several distinct instances where this can cause unwanted behavior or errors depending on source and what
+Each method exclude most attempts at validation, as the end user can change aspects outside its purview.
+There are several distinct instances where this can cause unwanted behavior, depending on the source and what
 state it was in before it is used. Attempting validation when changes can occur outside it's scope leads to many redundant checks.
-As such, it is up to the developer to implement these checks.
+As such, it is up to the user to implement these checks.
 ```
 
 Each class has children which inherit the base abstracted methods. These methods are tailored to each signal generator so the
@@ -90,7 +90,7 @@ methods handle similarly, regardless of the different PI commands required.
 `generate_function` is a method which allows for the user to request a function from
 any source channel provided an amplitude, frequency and offset is supplied. Other key features
 include the ability to manipulate specific aspects of certain functions. Ramp waveforms can have their symmetry changed
-duty cycle can be altered for pulse functions. The termination of the IAFG and any AFG can be
+and duty cycle can be altered for pulse functions. The termination of the IAFG and any AFG can be
 specified using `HIGHZ` or `FIFTY` string literals. If the output needs to be inverted,
 the polarity can be changed on AFGs.
 
@@ -111,7 +111,7 @@ will likely cause burst to stop functioning.
 
 `generate_burst`  writes a trigger to the source, initiating the generation of a burst of waveforms.
 
-`get_waveform_constraints` will return a list of constraints that the signal generators must be within to be generated.
+`get_waveform_constraints` will return a series of constraints that the signal generators must be within to be generated.
 These constraints can be used before generating a function to make sure that the parameters you will be supplying
 are not outside the bounds. The method only requires the function (except on AWGs) to be provided.
 However, different aspects may need to be provided to get a more accurate representation of what can actually be generated.
@@ -123,7 +123,7 @@ alongside the which impedance is set.
 `set_waveform_properties` is functionally identical to generate_function, but does not turn the channel
 off or on, nor will it stop or start an AWG.
 
-# Signal Generators
+## Signal Generators
 
 An overview of the different signal generators which are covered when using `tm_devices`.
 
@@ -178,7 +178,8 @@ Although `Arbitrary` is a valid function, it will not generate properly when usi
 
 The amplitude and frequency range for the Internal AFG varies on the function set.
 All functions have the same lower bound, 20 mV and 100 mHz. Similarly, all offset ranges stay consistent,
-plus or minus 2.5 volts. The higher bound for functions, however, consist of the following:
+plus or minus 2.5 volts along with all sample rates being 250 MHz.
+The higher bound of amplitude and frequency, however, vary between functions.
 
 ```{table} IAFG Constraints
 ---
@@ -245,34 +246,34 @@ widths: auto
 width: 50%
 align: center
 ---
-|              | Sin         | Square      | Pulse       | Ramp<br/>Sinc<br/>Gaussian<br/>Lorentz<br/>ERise<br/>EDecay<br/>Haversine | Arbitrary     |
-| ------------ | ----------- | ----------- | ----------- | ------------------------------------------------------------------------- | ------------- |
-| **3011/C:**  |             |             |             |                                                                           |               |
-| Frequency    | 1µ–10M      | 1µ–5M       | 1m–5M       | 1µ–0.1M                                                                   | 1m–5M         |
-| Amplitude    | 40m–40      | 40m–40      | 40m–40      | 40m–40                                                                    | 40m–40        |
-| Offset       | -20–20      | -20–20      | -20–20      | -20–20                                                                    | -20–20        |
-| **302XB/C:** |             |             |             |                                                                           |               |
-| Frequency    | 1µ–25M      | 1µ–25M[^TA] | 1m–25M[^TA] | 1µ–0.5M[^TA]                                                              | 1m–12.5M      |
-| Amplitude    | 20m–20      | 20m–20      | 20m–20      | 20m–20                                                                    | 20m–20        |
-| Offset       | -10–10      | -10–10      | -10–10      | -10–10                                                                    | -10–10        |
-| **305XC:**   |             |             |             |                                                                           |               |
-| Frequency    | 1µ–50M      | 1µ–40M      | 1m–40M      | 1µ–0.8M                                                                   | 1m–25M        |
-| Amplitude    | 20m–20      | 20m–20      | 20m–20      | 20m–20                                                                    | 20m–20        |
-| Offset       | -10–10      | -10–10      | -10–10      | -10–10                                                                    | -10–10        |
-| **310X/C:**  |             |             |             |                                                                           |               |
-| Frequency    | 1µ–0.1G     | 1µ–50M      | 1m–50M      | 1µ–1M                                                                     | 1m–50M        |
-| Amplitude    | 40m–20      | 40m–20      | 40m–20      | 4m–20                                                                     | 40m–20        |
-| Offset       | -10–10      | -10–10      | -10–10      | -10–10                                                                    | -10–10        |
-| **315XC:**   |             |             |             |                                                                           |               |
-| Frequency    | 1µ–0.15G    | 1µ–0.1G     | 1m–0.1G     | 1µ–1.5M                                                                   | 1m–0.1G       |
-| Amplitude    | 40m–20[^TB] | 40m–20      | 40m–20      | 40m–20                                                                    | 40m–20        |
-| Offset       | -10–10      | -10–10      | -10–10      | -10–10                                                                    | -10–10        |
-| **325X/C:**  |             |             |             |                                                                           |               |
-| Frequency    | 1µ–0.24G    | 1µ–0.12G    | 1m–0.12G    | 1µ–2.4M                                                                   | 1m–0.12G<br/> |
-| Amplitude    | 0.1–10[^TC] | 0.1–10      | 0.1–10      | 0.1–10                                                                    | 0.1–10        |
-| Offset       | -5–5        | -5–5        | -5–5        | -5–5                                                                      | -5–5          |
+|                | Sin         | Square      | Pulse       | Ramp<br/>Sinc<br/>Gaussian<br/>Lorentz<br/>ERise<br/>EDecay<br/>Haversine | Arbitrary     |
+|----------------| ----------- | ----------- | ----------- | ------------------------------------------------------------------------- | ------------- |
+| **3011/C:**    |             |             |             |                                                                           |               |
+| Frequency (Hz) | 1µ–10M      | 1µ–5M       | 1m–5M       | 1µ–0.1M                                                                   | 1m–5M         |
+| Amplitude (V)  | 40m–40      | 40m–40      | 40m–40      | 40m–40                                                                    | 40m–40        |
+| Offset (V)     | -20–20      | -20–20      | -20–20      | -20–20                                                                    | -20–20        |
+| **302xB/C:**   |             |             |             |                                                                           |               |
+| Frequency (Hz) | 1µ–25M      | 1µ–25M[^TA] | 1m–25M[^TA] | 1µ–0.5M[^TA]                                                              | 1m–12.5M      |
+| Amplitude (V)  | 20m–20      | 20m–20      | 20m–20      | 20m–20                                                                    | 20m–20        |
+| Offset (V)     | -10–10      | -10–10      | -10–10      | -10–10                                                                    | -10–10        |
+| **305xC:**     |             |             |             |                                                                           |               |
+| Frequency (Hz) | 1µ–50M      | 1µ–40M      | 1m–40M      | 1µ–0.8M                                                                   | 1m–25M        |
+| Amplitude (V)  | 20m–20      | 20m–20      | 20m–20      | 20m–20                                                                    | 20m–20        |
+| Offset (V)     | -10–10      | -10–10      | -10–10      | -10–10                                                                    | -10–10        |
+| **310x/C:**    |             |             |             |                                                                           |               |
+| Frequency (Hz) | 1µ–0.1G     | 1µ–50M      | 1m–50M      | 1µ–1M                                                                     | 1m–50M        |
+| Amplitude (V)  | 40m–20      | 40m–20      | 40m–20      | 4m–20                                                                     | 40m–20        |
+| Offset (V)     | -10–10      | -10–10      | -10–10      | -10–10                                                                    | -10–10        |
+| **315xC:**     |             |             |             |                                                                           |               |
+| Frequency (Hz) | 1µ–0.15G    | 1µ–0.1G     | 1m–0.1G     | 1µ–1.5M                                                                   | 1m–0.1G       |
+| Amplitude (V)  | 40m–20[^TB] | 40m–20      | 40m–20      | 40m–20                                                                    | 40m–20        |
+| Offset (V)     | -10–10      | -10–10      | -10–10      | -10–10                                                                    | -10–10        |
+| **325x/C:**    |             |             |             |                                                                           |               |
+| Frequency (Hz) | 1µ–0.24G    | 1µ–0.12G    | 1m–0.12G    | 1µ–2.4M                                                                   | 1m–0.12G<br/> |
+| Amplitude (V)  | 0.1–10[^TC] | 0.1–10      | 0.1–10      | 0.1–10                                                                    | 0.1–10        |
+| Offset (V)     | -5–5        | -5–5        | -5–5        | -5–5                                                                      | -5–5          |
 
-[^TA]: AFG302XB has its upper bound for frequency halved for these functions.
+[^TA]: AFG302xB has its upper bound for frequency halved for these functions.
 
 [^TB]: Amplitude upper bound is reduced to 16 when frequency is greater than 100MHz.
 
@@ -294,32 +295,32 @@ width: 50%
 align: center
 ---
 |                   | Sin         | Square<br/>Pulse | Pulse    | Ramp<br/>Sinc<br/>Gaussian<br/>Lorentz<br/>ERise<br/>EDecay<br/>Haversine | Arbitrary |
-| ----------------- | ----------- | ---------------- | -------- | ------------------------------------------------------------------------- | --------- |
-| **3102X:**        |             |                  |          |                                                                           |           |
+|-------------------| ----------- | ---------------- | -------- | ------------------------------------------------------------------------- | --------- |
+| **3102x:**        |             |                  |          |                                                                           |           |
 | Frequency (Hz)    | 1µ–25M      | 1µ–20M           | 1m–25M   | 1µ–0.5M                                                                   | 1m–12.5M  |
 | Amplitude (V)     | 2m–20       | 2m–20            | 2m–20    | 2m–20                                                                     | 2m–20     |
 | Offset (V)        | -10–10      | -10–10           | -10–10   | -10–10                                                                    | -10–10    |
 | Sample Rate (S/s) |             |                  |          |                                                                           | 250M      |
-| **3105X:**        |             |                  |          |                                                                           |           |
-| Frequency         | 1µ–50M      | 1µ–40M           | 1m–40M   | 1µ–0.8M                                                                   | 1m–25M    |
-| Amplitude         | 2m–20       | 2m–20            | 2m–20    | 2m–20                                                                     | 2m–20     |
-| Offset            | -10–10      | -10–10           | -10–10   | -10–10                                                                    | -10–10    |
+| **3105x:**        |             |                  |          |                                                                           |           |
+| Frequency (Hz)    | 1µ–50M      | 1µ–40M           | 1m–40M   | 1µ–0.8M                                                                   | 1m–25M    |
+| Amplitude (V)     | 2m–20       | 2m–20            | 2m–20    | 2m–20                                                                     | 2m–20     |
+| Offset (V)        | -10–10      | -10–10           | -10–10   | -10–10                                                                    | -10–10    |
+| Sample Rate (S/s) |             |                  |          |                                                                           | 1G[^TOA]  |
+| **3110x:**        |             |                  |          |                                                                           |           |
+| Frequency (Hz)    | 1µ–0.1G     | 1µ–80M           | 1m–50M   | 1µ–1M                                                                     | 1m–50M    |
+| Amplitude (V)     | 2m–20[^TOB] | 2m–20[^TOB]      | 2m–20    | 2m–20                                                                     | 2m–20     |
+| Offset (V)        | -10–10      | -10–10           | -10–10   | -10–10                                                                    | -10–10    |
 | Sample Rate       |             |                  |          |                                                                           | 1G[^TOA]  |
-| **3110X:**        |             |                  |          |                                                                           |           |
-| Frequency         | 1µ–0.1G     | 1µ–80M           | 1m–50M   | 1µ–1M                                                                     | 1m–50M    |
-| Amplitude         | 2m–20[^TOB] | 2m–20[^TOB]      | 2m–20    | 2m–20                                                                     | 2m–20     |
-| Offset            | -10–10      | -10–10           | -10–10   | -10–10                                                                    | -10–10    |
-| Sample Rate       |             |                  |          |                                                                           | 1G[^TOA]  |
-| **3115X:**        |             |                  |          |                                                                           |           |
-| Frequency         | 1µ–0.15G    | 1µ–0.12G         | 1m–0.1G  | 1µ–1.5M                                                                   | 1m–75M    |
-| Amplitude         | 2m–10       | 2m–10            | 2m–10    | 2m–10                                                                     | 2m–10     |
-| Offset            | -5–5        | -5–5             | -5–5     | -5–5                                                                      | -5–5      |
-| Sample Rate       |             |                  |          |                                                                           | 2G[^TOA]  |
-| **3125X:**        |             |                  |          |                                                                           |           |
-| Frequency         | 1µ–0.25G    | 1µ–0.16G         | 1m–0.12G | 1µ–2.5M                                                                   | 1m–0.125G |
-| Amplitude         | 2m–10[^TOC] | 2m–10            | 2m–10    | 2m–10                                                                     | 2m–10     |
-| Offset            | -5–5        | -5–5             | -5–5     | -5–5                                                                      | -5–5      |
-| Sample Rate       |             |                  |          |                                                                           | 2G[^TOA]  |
+| **3115x:**        |             |                  |          |                                                                           |           |
+| Frequency (Hz)    | 1µ–0.15G    | 1µ–0.12G         | 1m–0.1G  | 1µ–1.5M                                                                   | 1m–75M    |
+| Amplitude (V)     | 2m–10       | 2m–10            | 2m–10    | 2m–10                                                                     | 2m–10     |
+| Offset (V)        | -5–5        | -5–5             | -5–5     | -5–5                                                                      | -5–5      |
+| Sample Rate (S/s) |             |                  |          |                                                                           | 2G[^TOA]  |
+| **3125x:**        |             |                  |          |                                                                           |           |
+| Frequency (Hz)    | 1µ–0.25G    | 1µ–0.16G         | 1m–0.12G | 1µ–2.5M                                                                   | 1m–0.125G |
+| Amplitude (V)     | 2m–10[^TOC] | 2m–10            | 2m–10    | 2m–10                                                                     | 2m–10     |
+| Offset (V)        | -5–5        | -5–5             | -5–5     | -5–5                                                                      | -5–5      |
+| Sample Rate (S/s) |             |                  |          |                                                                           | 2G[^TOA]  |
 
 [^TOA]: When waveform length is greater than 16Kb, otherwise, the sample rate is 250MS/s.
 
@@ -395,7 +396,7 @@ widths: auto
 width: 50%
 align: center
 ---
-|                   | 500X/B/C   | AWG501X/B/C |
+|                   | 500x/B/C   | AWG501x/B/C |
 | ----------------- | ---------- | ----------- |
 | Sample Rate (S/s) | 10M–600M   | 10M–1.2M    |
 | Amplitude (V)     | 20m–2.25   | 20m–2.25    |
@@ -419,7 +420,7 @@ widths: auto
 width: 50%
 align: center
 ---
-|                   | 705X     | 710X     | 706XB    | 712XB/C  | 708XC    |
+|                   | 705x     | 710x     | 706xB    | 712xB/C  | 708xC    |
 | ----------------- | -------- | -------- | -------- | -------- | -------- |
 | Sample Rate (S/s) | 10M–5G   | 10M–10G  | 10M–6G   | 10M–12G  | 10M–8G   |
 | Amplitude (V)     | 50m–2    | 50m–2    | 50m–2    | 50m–2    | 50m–2    |
@@ -436,7 +437,7 @@ widths: auto
 width: 50%
 align: center
 ---
-|                   | 7102 OPT 06  | 7122B/C OPT 06 | 7XXX OPT 02 |
+|                   | 7102 OPT 06  | 7122B/C OPT 06 | 7xxx OPT 02 |
 | ----------------- | ------------ | -------------- | ----------- |
 | Sample Rate (S/s) | 10M–20G[^SA] | 10M–24G[^SA]   | "           |
 | Amplitude (V)     | 0.5–1.0      | 0.5–1.0        | 0.5–1.0     |
@@ -467,7 +468,7 @@ widths: auto
 width: 50%
 align: center
 ---
-|                   | 520X OPT 25 | 520X OPT 50 | AWG520X OPT DC |
+|                   | OPT 25      | OPT 50      | OPT DC         |
 | ----------------- | ----------- | ----------- | -------------- |
 | Sample Rate (S/s) | 0.298k–2.5G | 0.298k–5.0G | "              |
 | Amplitude (V)     | 25m–0.75    | 25m–0.75    | 25m–1.5        |
